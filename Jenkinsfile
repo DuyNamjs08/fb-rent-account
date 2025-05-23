@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DEPLOY_DIR = '/var/www/akat-BE' // Thư mục deploy trên VPS
+        DEPLOY_DIR = '/var/www/thue-tk-BE' // Thư mục deploy trên VPS
         SSH_CREDENTIALS_ID = 'vps-ssh-key' // ID của SSH credentials trên Jenkins
         VPS_USER = 'root' // Người dùng trên VPS
         VPS_IP = '103.82.24.164' // Địa chỉ IP của VPS

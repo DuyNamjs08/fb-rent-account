@@ -4,7 +4,12 @@ import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import UserService from '../services/User.service';
 import bcrypt from 'bcrypt';
+import { customAlphabet } from 'nanoid';
 
+const generateShortCode = () => {
+  const nanoid = customAlphabet('0123456789', 4); // chỉ 4 chữ số
+  return `NAP${nanoid()}`; // Ví dụ: NAP4921
+};
 const userController = {
   createUser: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -13,10 +18,20 @@ const userController = {
         errorResponse(res, 'Email đã tồn tại', {}, httpStatusCodes.CONFLICT);
         return;
       }
+      let shortCode: string = '';
+      let isUnique = false;
+      while (!isUnique) {
+        shortCode = generateShortCode();
+        const existingUser = await UserService.getUserByShortCode(shortCode);
+        if (!existingUser) isUnique = true;
+      }
       const { password } = req.body;
       const hashedPassword = await bcrypt.hash(password, 10);
       req.body.password = hashedPassword;
-      const user = await UserService.createUser(req.body);
+      const user = await UserService.createUser({
+        ...req.body,
+        short_code: shortCode,
+      });
       successResponse(res, 'Tạo người dùng thành công', user);
     } catch (error: any) {
       errorResponse(

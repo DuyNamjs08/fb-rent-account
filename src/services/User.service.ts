@@ -4,19 +4,27 @@ class UserService {
     email,
     password,
     role_id,
+    short_code,
   }: {
     email: string;
     password: string;
     role_id: string;
+    short_code: string;
   }) {
     const User = await prisma.user.create({
       data: {
         email,
         password,
         role_id,
+        short_code,
       },
     });
     return User;
+  }
+  async getUserByShortCode(code: string) {
+    return prisma.user.findUnique({
+      where: { short_code: code },
+    });
   }
   async getAllUsers() {
     return await prisma.user.findMany({
