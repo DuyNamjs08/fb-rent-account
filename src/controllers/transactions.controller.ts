@@ -6,10 +6,17 @@ import prisma from '../config/prisma';
 import redisClient from '../config/redis-config';
 const transactionController = {
   createTransaction: async (req: Request, res: Response): Promise<void> => {
-    const { user_id, amountVND, transactionID, description, bank, type, date } =
-      req.body;
+    const {
+      short_code,
+      amountVND,
+      transactionID,
+      description,
+      bank,
+      type,
+      date,
+    } = req.body;
     if (
-      !user_id ||
+      !short_code ||
       !amountVND ||
       isNaN(Number(amountVND)) ||
       Number(amountVND) <= 0
@@ -18,7 +25,7 @@ const transactionController = {
       return;
     }
     const amountVNDchange = Math.floor(Number(amountVND));
-    const canDeposit = await redisClient.incr(`deposit:lock:${user_id}`);
+    const canDeposit = await redisClient.incr(`deposit:lock:${short_code}`);
     if (canDeposit > 1) {
       errorResponse(res, 'Duplicate request', {}, 409);
       return;
@@ -27,19 +34,19 @@ const transactionController = {
       const transactionExist = await prisma.$transaction(async (tx) => {
         const user = await tx.$queryRaw`
     SELECT * FROM "users"
-    WHERE id = ${user_id}
+    WHERE id = ${short_code}
     FOR UPDATE
   `;
         if (!user) throw new Error('User Không tồn tại!');
         await tx.user.update({
-          where: { id: user_id },
+          where: { id: short_code },
           data: {
             points: { increment: amountVNDchange },
           },
         });
         const transaction = await tx.transaction.create({
           data: {
-            user_id,
+            short_code,
             amountVND: amountVNDchange,
             points: amountVNDchange,
             transactionID,
@@ -52,15 +59,15 @@ const transactionController = {
         return transaction;
       });
       await redisClient.set(
-        `user:points:${user_id}`,
+        `user:points:${short_code}`,
         amountVNDchange,
         'EX',
         60,
       );
-      await redisClient.del(`deposit:lock:${user_id}`);
+      await redisClient.del(`deposit:lock:${short_code}`);
       successResponse(res, 'Giao dịch thành công', transactionExist);
     } catch (error: any) {
-      await redisClient.del(`deposit:lock:${user_id}`);
+      await redisClient.del(`deposit:lock:${short_code}`);
       errorResponse(
         res,
         error?.message,
