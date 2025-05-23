@@ -3,7 +3,7 @@ version: '3.8'
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
-    container_name: akat-elasticsearch
+    container_name: rent-fb-elasticsearch
     environment:
       - node.name=shopdev_es
       - cluster.name=docker-cluster
@@ -29,7 +29,7 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.10.0
-    container_name: akat-kibana
+    container_name: rent-fb-kibana
     ports:
       - 5603:5601
     restart: unless-stopped
@@ -37,14 +37,14 @@ services:
       - elasticsearch
   redis:
     image: redis
-    container_name: akat-redis
+    container_name: rent-fb-redis
     restart: unless-stopped
     ports:
       - '6380:6379'
 
   postgres:
     image: postgres:17-alpine
-    container_name: akat-postgres
+    container_name: rent-fb-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -56,7 +56,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: akat-rabbitmq
+    container_name: rent-fb-rabbitmq
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: admin
@@ -69,7 +69,7 @@ services:
     restart: unless-stopped
   jenkins:
     image: jenkins/jenkins:jdk17
-    container_name: akat-jenkins
+    container_name: rent-fb-jenkins
     user: root
     ports:
       - '8082:8080'
@@ -77,18 +77,18 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock # Cho phép Jenkins dùng Docker host
-      - /var/www/akat-BE:/var/www/akat-BE
+      - /var/www/rent-fb-BE:/var/www/rent-fb-BE
     restart: unless-stopped
   app:
     build: .
-    container_name: akat-app
+    container_name: rent-fb-app
     depends_on:
       - redis
       - postgres
     environment:
-      REDIS_HOST: akat-redis
+      REDIS_HOST: rent-fb-redis
       REDIS_PORT: 6379
-      DATABASE_URL: postgresql://postgres:123123@akat-postgres:5432/postgres
+      DATABASE_URL: postgresql://postgres:123123@rent-fb-postgres:5432/postgres
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: admin

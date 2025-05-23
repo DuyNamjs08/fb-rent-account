@@ -43,10 +43,10 @@ const TokenController = {
         return;
       }
       const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: '1m',
+        expiresIn: '1d',
       });
       const refreshToken = jwt.sign(data, process.env.REFRESH_TOKEN_SECRET, {
-        expiresIn: '3m',
+        expiresIn: '7d',
       });
       const tokenExists = await TokenService.findTokenByUserId({
         user_id: user.id,

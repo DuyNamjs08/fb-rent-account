@@ -1,7 +1,6 @@
 import compression from 'compression';
 import express from 'express';
 import { Request, Response, Application } from 'express';
-import FacebookRoutes from './routes/facebook.routes';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger/swaggerConfig';
 import * as dotenv from 'dotenv';
@@ -9,15 +8,6 @@ import cors from 'cors';
 import RolesRoutes from './routes/roles.routes';
 import UserRoutes from './routes/user.routes';
 import TokenRoutes from './routes/token.route';
-import FacebookFanPageRoutes from './routes/facebookFanpage.route';
-import FacebookConnection from './routes/facebookConnection.route';
-import FacebookPageInsight from './routes/facebookPageInsight.route';
-import uploadtestRoutes from './routes/test.routes';
-import resourcesRoutes from './routes/resources.routes';
-import FacebookPostRoutes from './routes/facebookPost.route';
-import FacebookSchedualRoutes from './routes/facebookSchedual.route';
-import OpenaiRoutes from './routes/openAi.routes';
-import NotiRoutes from './routes/noti.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -66,18 +56,8 @@ app.use(
   }
 })();
 
-app.use('/api/v1/', OpenaiRoutes);
-app.use('/api/v1/', NotiRoutes);
-app.use('/api/v1/', FacebookSchedualRoutes);
-app.use('/api/v1/', FacebookPostRoutes);
-app.use('/api/v1/', resourcesRoutes);
-app.use('/api/v1/', uploadtestRoutes);
-app.use('/api/v1/', FacebookConnection);
-app.use('/api/v1/', FacebookPageInsight);
-app.use('/api/v1/', FacebookFanPageRoutes);
 app.use('/api/v1/', UserRoutes);
 app.use('/api/v1/', TokenRoutes);
-app.use('/api/v1/', FacebookRoutes);
 app.use('/api/v1/', RolesRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
