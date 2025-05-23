@@ -37,7 +37,6 @@ export function getIO() {
   }
   return io;
 }
-
 app.use(
   compression({
     threshold: 1024,
@@ -46,7 +45,6 @@ app.use(
     },
   }),
 );
-
 (async () => {
   try {
     await redisClient.set('test_key', 'hello');
@@ -56,7 +54,6 @@ app.use(
     console.error('Redis operation failed:', err);
   }
 })();
-
 app.use('/api/v1/', UserRoutes);
 app.use('/api/v1/', TokenRoutes);
 app.use('/api/v1/', RolesRoutes);
@@ -66,18 +63,7 @@ app.get('/', (req: Request, res: Response): void => {
   res.send(`Worker tkqc ${process.pid} is handling this request`);
 });
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get('/webhook', async (req, res) => {
-  try {
-    console.log('webhook', req);
-
-    res.status(200).send('ok');
-  } catch (err) {
-    console.error('Webhook processing error:', err);
-    res.status(500).send('Internal Server Error');
-  }
-});
 const VALID_TOKEN_WEB2M = process.env['VALID_TOKEN_WEB2M'];
-
 app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
   try {
     const authHeader = req.headers['authorization'];
