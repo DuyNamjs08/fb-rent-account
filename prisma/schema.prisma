@@ -16,6 +16,36 @@ model Role {
   updated_at DateTime @updatedAt
   @@map("roles")
 }
+model EmailLog {
+  id            String    @id @default(uuid())
+  user          User?     @relation(fields: [user_id], references: [id])
+  user_id       String?   
+  to            String   
+  subject       String    
+  body          String   
+  status        String    @default("pending")  // pending | success | failed
+  type          String     // verify | reset_password | ...
+  error_message String?   
+  created_at    DateTime  @default(now()) 
+  updated_at    DateTime  @updatedAt
+
+  @@map("email_logs")
+}
+model Notification {
+  id          String    @id @default(uuid())
+  user        User      @relation(fields: [user_id], references: [id])
+  user_id     String    
+  title       String    
+  content     String   
+  type        String       // info | warning | success | error
+  is_read     Boolean   @default(false) 
+  action_url  String?   
+  created_at  DateTime  @default(now()) 
+  updated_at  DateTime  @updatedAt
+
+  @@map("notifications")
+}
+
 model User {
   id                      String      @id @default(uuid())
   email                   String   @unique
@@ -23,17 +53,24 @@ model User {
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
   phone                   String?
-  role_id                 String?
+  username                   String?
+  role_id                   String?
+  role                    String? @default("user") // user | admin | super_admin
   token                   Token[]
   points     Int           @default(0)
   short_code    String         @unique
-
+  percentage   Int?  @default(0)        // Phần trăm phí của người dùng
+  pointUsages  PointUsage[]
+  emailLogs      EmailLog[]
+  notifications  Notification[]
+  list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
 
   @@map("users")
 }
 model Transaction {
   id          String       @id @default(uuid())
-  short_code      String
+  short_code      String @unique
+  user_id  String
   amountVND   Int       // Số tiền VNĐ nạp vào
   points      Int       // Điểm tương ứng nhận được
   createdAt   DateTime  @default(now())
@@ -42,8 +79,23 @@ model Transaction {
   transactionID        Int
   type        String
   date        String
-
+  status     String @default("pending")
+  error_message  String?
   @@map("transactions")
+}
+model PointUsage {
+  id              String    @id @default(uuid())
+  user            User      @relation(fields: [user_id], references: [id])
+  user_id          String
+  points_used      Int       // Số điểm đã sử dụng
+  service_type     String    @default("ads_account")// Loại dịch vụ, ví dụ: "facebook_ads", "tiktok_ads", "premium_package"
+  target_account   String    // Mã tài khoản quảng cáo hoặc ID mục tiêu
+  description     String?   // Mô tả thêm (nếu cần)
+  status          String    @default("success") // success | failed | pending
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@map("point_usages")
 }
 model Token {
   id          String      @id @default(uuid())
@@ -55,8 +107,100 @@ model Token {
   updated_at  DateTime @updatedAt
 
   @@map("tokens")
-
 }
+model FacebookPartnerBM {
+  id          String      @id @default(uuid())
+  bm_id       String
+  ads_account_id String 
+  user_id       String
+  status        String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("facebook_partner_bm")
+}
+// 1 = ACTIVE
+//  2 = DISABLED
+//  3 = UNSETTLED
+//  7 = PENDING_RISK_REVIEW
+//  8 = PENDING_SETTLEMENT
+//  9 = IN_GRACE_PERIOD
+//  100 = PENDING_CLOSURE
+//  101 = CLOSED
+//  201 = ANY_ACTIVE
+//  202 = ANY_CLOSED"
+model AdsAccount {
+  id                              String    @id @default(uuid()) // Mã định danh có dạng act_{ad_account_id}
+  account_id                      String    // ID số của tài khoản quảng cáo (không có tiền tố act_)
+  account_status                  Int       @default(1)// Trạng thái tài khoản quảng cáo (1=ACTIVE, 2=DISABLED, v.v.)
+  amount_spent                    String    // Tổng chi tiêu hiện tại của tài khoản
+  balance                         String    // Số tiền nợ hoặc dư trong tài khoản
+  business                        Json?     // Thông tin về Business Manager (nếu có)
+  currency                        String     @default("VND")// Loại tiền tệ (VND, USD,...)
+  created_time                    String?  // Thời điểm tài khoản được tạo (ISO 8601)
+  disable_reason                  Int?      // Lý do tài khoản bị vô hiệu hóa
+  name                            String    // Tên của tài khoản quảng cáo
+  spend_cap                       String?   // Ngưỡng chi tiêu tối đa
+  timezone_name                   String    // Tên múi giờ (ví dụ: Asia/Ho_Chi_Minh)
+  timezone_offset_hours_utc       Float?     // Chênh lệch so với UTC
+  owner                           String?    // ID người sở hữu tài khoản
+  is_personal                     Int?       // Tài khoản cá nhân hay không (ảnh hưởng đến VAT)
+  is_prepay_account               Boolean?   // Tài khoản trả trước hay trả sau
+  tax_id                          String?   // Mã số thuế
+  tax_id_status                   Int?      // Trạng thái mã số thuế (0=Unknown, 1=Không cần VAT, v.v.)
+  account_controls                Json?     // Thông tin giới hạn tài khoản (Edge)
+  users                           String[] @default([])  // Danh sách người dùng và quyền
+  ad_account_promotable_objects   Json?     // Danh sách các đối tượng có thể quảng bá
+  age                             Float     // Số ngày tài khoản đã được mở
+  agency_client_declaration       Json?     // Thông tin agency (nếu có)
+  attribution_spec                Json?     // Cấu hình gán chuyển đổi (deprecated)
+  brand_safety_content_filter_levels String[]  @default([]) // Các mức lọc nội dung an toàn thương hiệu
+  business_city                   String?   // Thành phố đăng ký doanh nghiệp
+  business_country_code           String?   // Mã quốc gia (ISO)
+  business_name                   String?   // Tên doanh nghiệp
+  business_state                  String?   // Tỉnh/bang đăng ký
+  business_street                 String?   // Địa chỉ dòng 1
+  business_street2                String?   // Địa chỉ dòng 2
+  business_zip                    String?   // Mã bưu điện
+  can_create_brand_lift_study     Boolean?   // Có thể tạo brand lift study
+  capabilities                    String[] @default([])  // Danh sách khả năng được hỗ trợ
+  custom_audience_info            Json?     // Thông tin nhóm đối tượng tùy chỉnh
+  default_dsa_beneficiary         String?   // Mặc định người thụ hưởng Dynamic Shopping Ads
+  default_dsa_payor               String?   // Mặc định người thanh toán Dynamic Shopping Ads
+  direct_deals_tos_accepted       Boolean?   // Đã chấp nhận điều khoản direct deals
+  end_advertiser                  String?   // ID đối tượng hưởng quảng cáo
+  end_advertiser_name             String?   // Tên đối tượng hưởng quảng cáo
+  existing_customers              String[] @default([])  // Audience ID định nghĩa khách hàng hiện tại
+  expired_funding_source_details  Json?     // Thông tin phương thức thanh toán hết hạn
+  extended_credit_invoice_group   Json?     // Nhóm hóa đơn tín dụng mở rộng
+  failed_delivery_checks          Json?     // Các điều kiện phân phối thất bại
+  fb_entity                       Int?      // ID thực thể Facebook
+  funding_source                  String?   // ID phương thức thanh toán
+  funding_source_details          Json?     // Chi tiết phương thức thanh toán
+  has_migrated_permissions        Boolean?   // Đã chuyển sang permission mới
+  has_page_authorized_adaccount   Boolean?   // Page đã cho phép chạy quảng cáo chính trị
+  io_number                       String?   // Số hợp đồng Insertion Order
+  is_attribution_spec_system_default Boolean? // Có dùng gán chuyển đổi mặc định
+  is_direct_deals_enabled         Boolean?   // Có được phép chạy direct deals
+  is_in_3ds_authorization_enabled_market Boolean? // Quốc gia có bắt buộc 3DS
+  is_notifications_enabled        Boolean?   // Có bật thông báo
+  line_numbers                    Int[] @default([])    // Số dòng trong hợp đồng quảng cáo
+  media_agency                    String?   // ID agency đại diện truyền thông
+  min_campaign_group_spend_cap    String?   // Chi tiêu tối thiểu cho nhóm chiến dịch
+  min_daily_budget                Int?      // Ngân sách tối thiểu mỗi ngày
+  offsite_pixels_tos_accepted     Boolean?   // Đã chấp nhận điều khoản offsite pixel
+  partner                         String?   // Đối tác đại diện
+  rf_spec                         Json?     // Cấu hình Reach & Frequency
+  show_checkout_experience        Boolean?   // Có hiện giao diện thanh toán
+  tax_id_type                     String?   // Loại mã số thuế
+  tos_accepted                    Json?     // Danh sách điều khoản đã chấp nhận
+  user_tasks                      String[] @default([])  // Danh sách nhiệm vụ được giao
+  user_tos_accepted               Json?     // Điều khoản user đã chấp nhận
+  vertical_name                   String?   // Ngành dọc (retail, ecommerce,...)
+
+  @@map("ads_accounts")
+}
+
 
 
 

@@ -4,7 +4,54 @@ import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
 import redisClient from '../config/redis-config';
+import { generateShortCode } from './user.controller';
 const transactionController = {
+  createTransactionV2: async (req: Request, res: Response): Promise<void> => {
+    const { amountVND, user_id } = req.body;
+    if (
+      !amountVND ||
+      isNaN(Number(amountVND)) ||
+      Number(amountVND) <= 0 ||
+      !user_id
+    ) {
+      errorResponse(res, 'Vui lòng nhập đúng thông tin', {}, 404);
+      return;
+    }
+    let shortCode: string = '';
+    let isUnique = false;
+    while (!isUnique) {
+      shortCode = generateShortCode();
+      const existingUser = await prisma.transaction.findUnique({
+        where: { short_code: shortCode },
+      });
+      if (!existingUser) isUnique = true;
+    }
+    const amountVNDchange = Math.floor(Number(amountVND));
+    const transaction = await prisma.transaction.create({
+      data: {
+        short_code: shortCode,
+        amountVND: amountVNDchange,
+        points: amountVNDchange,
+        transactionID: 0,
+        description: '',
+        bank: '',
+        type: '',
+        date: '',
+        status: 'pending',
+        user_id,
+      },
+    });
+    try {
+      successResponse(res, 'Tạo giao dịch thành công', transaction);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
   createTransaction: async (req: Request, res: Response): Promise<void> => {
     const {
       short_code,
@@ -14,6 +61,7 @@ const transactionController = {
       bank,
       type,
       date,
+      user_id,
     } = req.body;
     if (
       !short_code ||
@@ -54,6 +102,7 @@ const transactionController = {
             bank,
             type,
             date,
+            user_id,
           },
         });
         return transaction;

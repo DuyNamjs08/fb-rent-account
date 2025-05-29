@@ -6,13 +6,23 @@ import UserService from '../services/User.service';
 import bcrypt from 'bcrypt';
 import { customAlphabet } from 'nanoid';
 
-const generateShortCode = () => {
-  const nanoid = customAlphabet('0123456789', 4); // chỉ 4 chữ số
+export const generateShortCode = () => {
+  const nanoid = customAlphabet('0123456789', 8); // chỉ 4 chữ số
   return `NAP${nanoid()}`; // Ví dụ: NAP4921
 };
 const userController = {
   createUser: async (req: Request, res: Response): Promise<void> => {
     try {
+      const { role } = req.body;
+      // if (role === 'admin') {
+      //   errorResponse(
+      //     res,
+      //     'Role đã ngừng cung cấp, vui lòng chọn role khác',
+      //     {},
+      //     httpStatusCodes.BAD_REQUEST,
+      //   );
+      //   return;
+      // }
       const userExists = await UserService.getUserByEmail(req.body.email);
       if (userExists) {
         errorResponse(res, 'Email đã tồn tại', {}, httpStatusCodes.CONFLICT);

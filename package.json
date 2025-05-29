@@ -14,7 +14,8 @@
     "lint:fix": "eslint . --ext .js,.ts,.mjs,.cjs --fix",
     "prettier": "prettier --write .",
     "prepare": "husky install",
-    "test:ts": "npx tsc"
+    "test:ts": "npx tsc",
+    "play": "npx ts-node src/auto-use-session.ts"
   },
   "keywords": [],
   "author": "",
@@ -45,6 +46,7 @@
     "nanoid": "^3.3.11",
     "nodemailer": "^7.0.3",
     "openai": "^4.96.0",
+    "playwright": "^1.52.0",
     "qs": "^6.14.0",
     "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
