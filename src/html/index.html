@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Thông báo đăng nhập</title>
+  </head>
+  <body
+    style="
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #edf0f3;
+    "
+  >
+    <div style="width: 100%; background-color: #edf0f3; padding: 30px 0">
+      <div
+        style="
+          max-width: 600px;
+          margin: auto;
+          background: white;
+          border-radius: 8px;
+          overflow: hidden;
+        "
+      >
+        <!-- Header -->
+        <div
+          style="text-align: center; padding: 20px; background-color: #edf0f3"
+        >
+          <img
+            src="https://pub-a8569a3946cf4e1f8eaeb9efdf397392.r2.dev/user-uploads/Screenshot_2025-05-27_at_14.52.27.png-1748332508673"
+            alt="AKAds Logo"
+            style="height: 50px"
+          />
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 30px">
+          <h2 style="margin-top: 0">
+            Xin chào <span style="color: red">{{name}}!</span>
+          </h2>
+          <p style="font-size: 18px; font-weight: bold">
+            Cảm ơn đã sử dụng dịch vụ tại AKAds! 👋
+          </p>
+          <p>
+            AKAds xin thông báo đến quý khách tài khoản của quý khách tại hệ
+            thống API AKAds vừa được đăng nhập vào lúc:
+            <strong>{{loginTime}}</strong><br />
+            <!-- - IP: <strong>42.119.222.232</strong> -->
+          </p>
+          <p style="color: red; font-weight: bold">
+            Lưu ý: Vui lòng đổi mật khẩu ngay nếu đây không phải Quý Khách.
+          </p>
+
+          <p style="margin-top: 40px">
+            Bạn không biết tại sao bạn nhận được email này? Vui lòng
+            <a href="https://akamedia.vn/" style="color: #007bff"
+              >cho chúng tôi biết</a
+            >.
+          </p>
+
+          <p>Thanks,<br />AKAds Team</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

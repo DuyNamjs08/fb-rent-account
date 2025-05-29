@@ -1,5 +1,6 @@
 import Bull from 'bull';
 import prisma from '../config/prisma';
+import { getIO } from '..';
 
 export const fbRealtimeTransaction = new Bull('fbRealtimeTransaction', {
   redis: { port: 6380, host: 'localhost' },
@@ -22,17 +23,20 @@ const updateDb = async (data: any) => {
   const amountVNDchange = Math.floor(Number(amountVND));
   try {
     const transactionExist = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.findUnique({
+      const oldTransaction = await tx.transaction.findUnique({
         where: { short_code },
       });
-      if (!user) throw new Error('User Không tồn tại!');
-      await tx.user.update({
-        where: { short_code: short_code },
+      if (!oldTransaction) throw new Error('Transaction Không tồn tại!');
+      const user = await tx.user.update({
+        where: { id: oldTransaction.user_id },
         data: {
           points: { increment: amountVNDchange },
         },
       });
-      const transaction = await tx.transaction.create({
+      const transaction = await tx.transaction.update({
+        where: {
+          id: oldTransaction.id,
+        },
         data: {
           short_code: short_code,
           amountVND: amountVNDchange,
@@ -42,21 +46,52 @@ const updateDb = async (data: any) => {
           bank,
           type,
           date,
+          status: 'success',
+          user_id: oldTransaction.user_id,
         },
       });
       return transaction;
     });
     return transactionExist;
   } catch (error) {
-    console.error('Transaction error:', error);
-    throw error;
+    try {
+      const fallbackTransaction = await prisma.transaction.update({
+        where: {
+          short_code: short_code,
+        },
+        data: {
+          short_code,
+          amountVND: amountVNDchange,
+          points: 0,
+          transactionID,
+          description,
+          bank,
+          type,
+          date,
+          status: 'error',
+          error_message: (error as Error).message,
+        },
+      });
+      return fallbackTransaction;
+    } catch (fallbackError) {
+      console.error('❌ Lỗi khi ghi transaction lỗi:', fallbackError);
+      // nếu vẫn lỗi, throw lỗi gốc để job biết
+      throw fallbackError;
+    }
   }
 };
 fbRealtimeTransaction.process(15, async (job) => {
   const { data } = job;
   try {
+    const { amountVND } = data;
     console.log('data transaction', data);
     const res = await updateDb(data);
+    if (res.status == 'success') {
+      console.log('socket emit', res);
+      await getIO()
+        .to(`user:${res.user_id}`)
+        .emit('payment_success', { amount: amountVND });
+    }
     console.log(`✅ Cập nhật thành công transaction: ${res?.short_code}`);
     return res;
   } catch (err) {

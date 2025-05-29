@@ -8,11 +8,15 @@ import cors from 'cors';
 import RolesRoutes from './routes/roles.routes';
 import UserRoutes from './routes/user.routes';
 import TokenRoutes from './routes/token.route';
+import adRoutes from './routes/tkqc.routes';
+import transactionRoutes from './routes/transaction.routes';
+import pointusedRoutes from './routes/poitused.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { fbRealtimeTransaction } from './workers/fb-realtime-transaction';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 dotenv.config({ path: `${__dirname}/../.env` });
 const envPath = `${__dirname}/../.env`;
@@ -57,6 +61,9 @@ app.use(
 app.use('/api/v1/', UserRoutes);
 app.use('/api/v1/', TokenRoutes);
 app.use('/api/v1/', RolesRoutes);
+app.use('/api/v1/', adRoutes);
+app.use('/api/v1/', transactionRoutes);
+app.use('/api/v1/', pointusedRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);
@@ -67,9 +74,15 @@ const VALID_TOKEN_WEB2M = process.env['VALID_TOKEN_WEB2M'];
 app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
   try {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res
+        .status(401)
+        .send('Access Token không được cung cấp hoặc không hợp lệ.');
+      return;
+    }
+    const token = authHeader.slice(7);
     if (!token || token !== VALID_TOKEN_WEB2M) {
-      res.status(401).send('Unauthorized');
+      res.status(401).send('Chữ ký không hợp lệ.');
       return;
     }
     console.log('Received webhook data:', req.body);
@@ -79,48 +92,57 @@ app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     function getUserIdFromTransaction(description: string) {
-      const match = description.match(/NAP\d{4}/);
+      const match = description.match(/NAP\d{8}/);
       return match ? match[0] : null;
     }
     for (const item of data) {
       const jobData = {
         short_code: getUserIdFromTransaction(item.description),
         amountVND: item.amount,
-        transactionID: item.transactionID,
+        transactionID: Number(item.transactionID) || 0,
         description: item.description,
         bank: item.bank,
         type: item.type,
         date: item.date,
       };
-      console.log('adđ', getUserIdFromTransaction(item.description));
       await fbRealtimeTransaction.add(jobData, {
         removeOnComplete: true,
         removeOnFail: true,
       });
     }
-    res.status(200).json({ status: true, msg: 'Ok' });
+    res.json({ status: true, msg: 'Ok' });
   } catch (err) {
     console.error('Webhook processing error:', err);
     res.status(500).send('Internal Server Error');
   }
 });
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) return next(new Error('No token provided'));
+  try {
+    const tokenSecret = process.env.ACCESS_TOKEN_SECRET || '';
+    const payload = jwt.verify(token, tokenSecret) as JwtPayload;
+    socket.data.userId = payload?.user_id || ''; // gắn userId vào socket
+    next();
+  } catch (err) {
+    console.log('lỗi socket');
+    next(new Error('Unauthorized'));
+  }
+});
+
 io.on('connection', (socket) => {
   console.log(`Client mới kết nối: ${socket.id}`);
-  // Xử lý ngắt kết nối
+  socket.on('joinRoom', () => {
+    const userId = socket.data.userId;
+    if (userId) {
+      socket.join(`user:${userId}`);
+      console.log(`Socket ${socket.id} joined room user:${userId}`);
+    } else {
+      console.warn(`Socket ${socket.id} missing userId`);
+    }
+  });
   socket.on('disconnect', () => {
     console.log(`Client ngắt kết nối: ${socket.id}`);
-  });
-  socket.on('joinRoom', ({ userId, data }) => {
-    socket.join(userId);
-    console.log({
-      userId,
-      data,
-    });
-    console.log(`Socket ${socket.id} joined room ${userId}`);
-  });
-  socket.on('message', (data) => {
-    console.log('Tin nhắn nhận được:', data);
-    io.emit('message', data);
   });
 });
 server.listen(4001, () =>

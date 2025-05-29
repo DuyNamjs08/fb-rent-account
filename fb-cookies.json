@@ -1,0 +1,92 @@
+[
+  {
+    "name": "datr",
+    "value": "IzQ0aC4NZZoo8XDv7sx5tBro",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1782811683.878514,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "sb",
+    "value": "IzQ0aHHUC_iH00RmoBUDXrLP",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1782811727.211334,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "wd",
+    "value": "1280x800",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1748856539,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "dpr",
+    "value": "1",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1748856539,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "locale",
+    "value": "vi_VN",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1748856517.788936,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "c_user",
+    "value": "100013033892488",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1779787727.21118,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "xs",
+    "value": "39%3AH7dy8R-vZZtaSg%3A2%3A1748251724%3A-1%3A-1",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1779787727.211368,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "fr",
+    "value": "07ArFQi0V8obUAgsN.AWcZ2Cec6O4Ab6jh8q7_TPNIXzrYrOkVnjNzKiead7NB3bZDI2Q.BoNDQj..AAA.0.0.BoNDRZ.AWfywgOlLhstAhCHGWTtHdb5OwI",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": 1756027737.642571,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "presence",
+    "value": "C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1748251739868%2C%22v%22%3A1%7D",
+    "domain": ".facebook.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  }
+]

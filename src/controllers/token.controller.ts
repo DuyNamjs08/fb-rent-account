@@ -5,10 +5,16 @@ import TokenService from '../services/Token.service';
 import UserService from '../services/User.service';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import prisma from '../config/prisma';
+import { sendEmail } from './mails.controller';
+import fs from 'fs';
+import path from 'path';
 
 const TokenController = {
   createAccessToken: async (req: Request, res: Response): Promise<void> => {
     try {
+      const pathhtml = path.resolve(__dirname, '../html/index.html');
+      let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
       const data = req.body;
       const user = await UserService.getUserByEmail(data.email);
       if (!user) {
@@ -42,12 +48,20 @@ const TokenController = {
         );
         return;
       }
-      const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: '1d',
-      });
-      const refreshToken = jwt.sign(data, process.env.REFRESH_TOKEN_SECRET, {
-        expiresIn: '7d',
-      });
+      const accessToken = jwt.sign(
+        { ...data, user_id: user.id },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: '1d',
+        },
+      );
+      const refreshToken = jwt.sign(
+        { ...data, user_id: user.id },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+          expiresIn: '7d',
+        },
+      );
       const tokenExists = await TokenService.findTokenByUserId({
         user_id: user.id,
       });
@@ -56,6 +70,27 @@ const TokenController = {
           user_id: user.id,
           access_token: accessToken,
           refresh_token: refreshToken,
+        });
+        const emailLog = await prisma.emailLog.create({
+          data: {
+            user_id: user.id,
+            to: user.email,
+            subject: 'AKAds thông báo đăng nhập',
+            body: htmlContent
+              .replace('{{name}}', user.username || 'Người dùng')
+              .replace('{{loginTime}}', new Date().toLocaleString()),
+            status: 'success',
+            type: 'login_notification',
+          },
+        });
+        console.log('emailLog', emailLog);
+        console.log('user.email', user.email);
+        await sendEmail({
+          email: user.email,
+          subject: 'AKAds thông báo đăng nhập',
+          message: htmlContent
+            .replace('{{name}}', user.username || 'Người dùng')
+            .replace('{{loginTime}}', new Date().toLocaleString()),
         });
         successResponse(res, 'Success', Token);
         return;
@@ -66,6 +101,28 @@ const TokenController = {
           access_token: accessToken,
           refresh_token: refreshToken,
         },
+      });
+      // gửi mail thông báo đăng nhập thành công
+
+      const emailLog = await prisma.emailLog.create({
+        data: {
+          user_id: user.id,
+          to: user.email,
+          subject: 'AKAds thông báo đăng nhập',
+          body: htmlContent
+            .replace('{{name}}', user.username || 'Người dùng')
+            .replace('{{loginTime}}', new Date().toLocaleString()),
+          status: 'success',
+          type: 'login_notification',
+        },
+      });
+      console.log('emailLog', emailLog);
+      await sendEmail({
+        email: user.email,
+        subject: 'AKAds thông báo đăng nhập',
+        message: htmlContent
+          .replace('{{name}}', user.username || 'Người dùng')
+          .replace('{{loginTime}}', new Date().toLocaleString()),
       });
       successResponse(res, 'Success create', Token);
     } catch (error: any) {
@@ -116,10 +173,10 @@ const TokenController = {
         process.env.REFRESH_TOKEN_SECRET,
         async (err: any, data: any) => {
           if (err) {
-            return res.status(401).json('refresh token không hợp lệ');
+            return res.status(403).json('refresh token không hợp lệ');
           }
           const accessToken = jwt.sign(
-            { mail: data.email, password: data.password },
+            { mail: data.email, password: data.password, user_id: user.id },
             process.env.ACCESS_TOKEN_SECRET as string,
             {
               expiresIn: '1m',
