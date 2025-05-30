@@ -20,10 +20,34 @@ const pointUsedController = {
         return;
       }
       const amountVNDchange = Math.floor(Number(amountPoint));
+      const user = await prisma.user.findUnique({
+        where: { id: user_id },
+        select: { points: true },
+      });
+
+      if (!user) {
+        errorResponse(
+          res,
+          'Không tìm thấy người dùng',
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      if (user.points < amountVNDchange) {
+        errorResponse(
+          res,
+          'Bạn không đủ điểm để thực hiện giao dịch',
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const poitsUsedTransaction = await prisma.$transaction(async (tx) => {
-        const adsAccount = await tx.adsAccount.findUnique({
+        const adsAccount = await tx.adsAccount.findFirst({
           where: {
-            id: ads_account_id,
+            account_id: ads_account_id,
           },
         });
         if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');

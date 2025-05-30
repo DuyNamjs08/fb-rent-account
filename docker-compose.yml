@@ -1,40 +1,40 @@
 version: '3.8'
 
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
-    container_name: rent-fb-elasticsearch
-    environment:
-      - node.name=shopdev_es
-      - cluster.name=docker-cluster
-      - bootstrap.memory_lock=true
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - xpack.security.enabled=false
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    ports:
-      - 9201:9200
-    mem_limit: 1g
-    restart: unless-stopped
-    healthcheck:
-      test: ['CMD-SHELL', 'curl -f http://localhost:9200 || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 5
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
+  #   container_name: rent-fb-elasticsearch
+  #   environment:
+  #     - node.name=shopdev_es
+  #     - cluster.name=docker-cluster
+  #     - bootstrap.memory_lock=true
+  #     - discovery.type=single-node
+  #     - ES_JAVA_OPTS=-Xms512m -Xmx512m
+  #     - xpack.security.enabled=false
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - esdata:/usr/share/elasticsearch/data
+  #   ports:
+  #     - 9201:9200
+  #   mem_limit: 1g
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'curl -f http://localhost:9200 || exit 1']
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.10.0
-    container_name: rent-fb-kibana
-    ports:
-      - 5603:5601
-    restart: unless-stopped
-    depends_on:
-      - elasticsearch
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:7.10.0
+  #   container_name: rent-fb-kibana
+  #   ports:
+  #     - 5603:5601
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - elasticsearch
   redis:
     image: redis
     container_name: rent-fb-redis
@@ -54,31 +54,31 @@ services:
       - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rent-fb-rabbitmq
-    hostname: rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin123
-    ports:
-      - '5673:5672' # AMQP port
-      - '15673:15672' # Management UI port
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    restart: unless-stopped
-  jenkins:
-    image: jenkins/jenkins:jdk17
-    container_name: rent-fb-jenkins
-    user: root
-    ports:
-      - '8082:8080'
-      - '50002:50000'
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock # Cho phép Jenkins dùng Docker host
-      - /var/www/rent-fb-BE:/var/www/rent-fb-BE
-    restart: unless-stopped
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rent-fb-rabbitmq
+  #   hostname: rabbitmq
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: admin
+  #     RABBITMQ_DEFAULT_PASS: admin123
+  #   ports:
+  #     - '5673:5672' # AMQP port
+  #     - '15673:15672' # Management UI port
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   restart: unless-stopped
+  # jenkins:
+  #   image: jenkins/jenkins:jdk17
+  #   container_name: rent-fb-jenkins
+  #   user: root
+  #   ports:
+  #     - '8082:8080'
+  #     - '50002:50000'
+  #   volumes:
+  #     - jenkins_home:/var/jenkins_home
+  #     - /var/run/docker.sock:/var/run/docker.sock # Cho phép Jenkins dùng Docker host
+  #     - /var/www/rent-fb-BE:/var/www/rent-fb-BE
+  #   restart: unless-stopped
   app:
     build: .
     container_name: rent-fb-app
@@ -89,10 +89,10 @@ services:
       REDIS_HOST: rent-fb-redis
       REDIS_PORT: 6379
       DATABASE_URL: postgresql://postgres:123123@rent-fb-postgres:5432/postgres
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: admin
-      RABBITMQ_PASSWORD: admin123
+      # RABBITMQ_HOST: rabbitmq
+      # RABBITMQ_PORT: 5672
+      # RABBITMQ_USER: admin
+      # RABBITMQ_PASSWORD: admin123
     ports:
       - '4002:4000'
     volumes:
@@ -100,11 +100,11 @@ services:
     command: ['node', 'index.js']
 
 volumes:
-  esdata:
-    driver: local
+  # esdata:
+  #   driver: local
   postgres_data:
     driver: local
-  rabbitmq_data:
-    driver: local
-  jenkins_home:
-    driver: local
+  # rabbitmq_data:
+  #   driver: local
+  # jenkins_home:
+  #   driver: local

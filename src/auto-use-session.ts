@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 export const autoChangePartner = async (data: any) => {
-  const { bm_id, ads_account_id } = data;
+  const { bm_id = '', ads_account_id = '725667773735916' } = data;
   const browser = await chromium.launch({
     headless: false,
   });
@@ -55,7 +55,6 @@ export const autoChangePartner = async (data: any) => {
     `https://business.facebook.com/latest/settings/ad_accounts?business_id=1210548737046963&selected_asset_id=${ads_account_id}&selected_asset_type=ad-account`,
   );
 
-  // Kiểm tra xem đã đăng nhập chưa
   try {
     await page.waitForSelector('input[type="email"]', { timeout: 5000 });
     console.log('❌ Chưa đăng nhập - cần đăng nhập thủ công');
@@ -123,7 +122,7 @@ export const autoChangePartner = async (data: any) => {
 
       if (text === 'Chỉ định') {
         exactIndex = i;
-        break; // tìm được rồi thì dừng
+        break;
       }
     }
 
@@ -139,6 +138,7 @@ export const autoChangePartner = async (data: any) => {
   } catch (error: any) {
     console.log('❌ Lỗi khi click vào div "Chỉ định":', error.message);
   }
+  await new Promise(() => {});
   await page.waitForTimeout(10000);
   await browser.close();
   return result;
