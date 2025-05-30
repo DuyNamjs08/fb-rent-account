@@ -92,6 +92,15 @@ const userController = {
         );
         return;
       }
+
+      const { password } = req.body;
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        req.body.password = hashedPassword;
+      } else {
+        delete req.body.password;
+      }
+
       const UserNew = await UserService.updateUser(req.params.id, req.body);
       successResponse(res, 'Cập nhật người dùng thành công !', UserNew);
     } catch (error: any) {
