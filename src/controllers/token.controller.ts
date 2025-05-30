@@ -13,7 +13,9 @@ import path from 'path';
 const TokenController = {
   createAccessToken: async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log('__dirname', __dirname);
       const pathhtml = path.resolve(__dirname, '../html/index.html');
+      console.log('pathhtml', pathhtml);
       let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
       const data = req.body;
       const user = await UserService.getUserByEmail(data.email);
