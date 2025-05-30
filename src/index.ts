@@ -58,10 +58,10 @@ app.use(
     console.error('Redis operation failed:', err);
   }
 })();
+app.use('/api/v1/', adRoutes);
 app.use('/api/v1/', UserRoutes);
 app.use('/api/v1/', TokenRoutes);
 app.use('/api/v1/', RolesRoutes);
-app.use('/api/v1/', adRoutes);
 app.use('/api/v1/', transactionRoutes);
 app.use('/api/v1/', pointusedRoutes);
 
