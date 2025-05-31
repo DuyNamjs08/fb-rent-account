@@ -3,7 +3,11 @@ import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
 
 export const fbParnert = new Bull('fbParnert', {
-  redis: { port: 6380, host: 'localhost' },
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6380', 10),
+    password: process.env.REDIS_PASSWORD,
+  },
   limiter: {
     max: 50, // tối đa 50 job
     duration: 1000, // mỗi 1000ms
