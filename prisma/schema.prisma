@@ -197,7 +197,11 @@ model AdsAccount {
   user_tasks                      String[] @default([])  // Danh sách nhiệm vụ được giao
   user_tos_accepted               Json?     // Điều khoản user đã chấp nhận
   vertical_name                   String?   // Ngành dọc (retail, ecommerce,...)
-
+// phần thêm 
+  status_rented String? 
+  spend_limit Int?
+  note_aka    String?
+  
   @@map("ads_accounts")
 }
 
