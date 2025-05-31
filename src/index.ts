@@ -71,8 +71,11 @@ app.get('/', (req: Request, res: Response): void => {
 });
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const VALID_TOKEN_WEB2M = process.env['VALID_TOKEN_WEB2M'];
+console.log('VALID_TOKEN_WEB2M', VALID_TOKEN_WEB2M);
 app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
+  console.log('11111111');
   try {
+    console.log('222222');
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res
@@ -86,30 +89,30 @@ app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
       return;
     }
     console.log('Received webhook data:', req.body);
-    const data = req.body.data;
-    if (!Array.isArray(data)) {
-      res.status(400).json({ status: false, msg: 'Invalid payload format' });
-      return;
-    }
-    function getUserIdFromTransaction(description: string) {
-      const match = description.match(/NAP\d{8}/);
-      return match ? match[0] : null;
-    }
-    for (const item of data) {
-      const jobData = {
-        short_code: getUserIdFromTransaction(item.description),
-        amountVND: item.amount,
-        transactionID: Number(item.transactionID) || 0,
-        description: item.description,
-        bank: item.bank,
-        type: item.type,
-        date: item.date,
-      };
-      await fbRealtimeTransaction.add(jobData, {
-        removeOnComplete: true,
-        removeOnFail: true,
-      });
-    }
+    // const data = req.body.data;
+    // if (!Array.isArray(data)) {
+    //   res.status(400).json({ status: false, msg: 'Invalid payload format' });
+    //   return;
+    // }
+    // function getUserIdFromTransaction(description: string) {
+    //   const match = description.match(/NAP\d{8}/);
+    //   return match ? match[0] : null;
+    // }
+    // for (const item of data) {
+    //   const jobData = {
+    //     short_code: getUserIdFromTransaction(item.description),
+    //     amountVND: item.amount,
+    //     transactionID: Number(item.transactionID) || 0,
+    //     description: item.description,
+    //     bank: item.bank,
+    //     type: item.type,
+    //     date: item.date,
+    //   };
+    //   await fbRealtimeTransaction.add(jobData, {
+    //     removeOnComplete: true,
+    //     removeOnFail: true,
+    //   });
+    // }
     res.json({ status: true, msg: 'Ok' });
   } catch (err) {
     console.error('Webhook processing error:', err);
