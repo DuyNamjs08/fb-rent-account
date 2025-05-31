@@ -126,10 +126,35 @@ const transactionController = {
     }
   },
 
-  getAlltransactions: async (req: Request, res: Response): Promise<void> => {
+  getAlltransactionsByUserId: async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
     try {
-      const transactions = await prisma.transaction.findMany({});
-      successResponse(res, 'Danh sách quyền', transactions);
+      const { user_id, pageSize = 10, page = 1 } = req.query;
+      if (!user_id) {
+        errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
+        return;
+      }
+      const checkUser = await prisma.user.findUnique({
+        where: {
+          id: user_id as string,
+        },
+      });
+      if (!checkUser) {
+        errorResponse(res, 'User not found !', {}, 404);
+        return;
+      }
+      const skip = (Number(page) - 1) * Number(pageSize);
+      const pageSizeNum = Number(pageSize) || 10;
+      const transactions = await prisma.transaction.findMany({
+        where: {
+          user_id: user_id as string,
+        },
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, 'Danh sách transaction by user', transactions);
     } catch (error: any) {
       errorResponse(
         res,

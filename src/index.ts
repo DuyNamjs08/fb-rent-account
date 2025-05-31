@@ -73,7 +73,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const VALID_TOKEN_WEB2M = process.env['VALID_TOKEN_WEB2M'];
 app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('namz');
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res
