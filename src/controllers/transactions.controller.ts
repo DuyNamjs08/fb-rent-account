@@ -154,7 +154,17 @@ const transactionController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(res, 'Danh sách transaction by user', transactions);
+      const count = await prisma.transaction.count({
+        where: {
+          user_id: user_id as string,
+        },
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, 'Danh sách transaction by user', {
+        data: transactions,
+        count,
+      });
     } catch (error: any) {
       errorResponse(
         res,

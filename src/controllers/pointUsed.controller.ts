@@ -118,11 +118,17 @@ const pointUsedController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(
-        res,
-        'Danh sách transaction points by user',
-        transactionPoints,
-      );
+      const count = await prisma.pointUsage.count({
+        where: {
+          user_id: user_id as string,
+        },
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, 'Danh sách transaction points by user', {
+        data: transactionPoints,
+        count,
+      });
     } catch (error: any) {
       errorResponse(
         res,
