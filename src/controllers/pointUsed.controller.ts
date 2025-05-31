@@ -93,7 +93,35 @@ const pointUsedController = {
     }
   },
 
-  getAllRolesByUserId: async (req: Request, res: Response): Promise<void> => {
+  getAllpoints: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { pageSize = 10, page = 1 } = req.query;
+      const skip = (Number(page) - 1) * Number(pageSize);
+      const pageSizeNum = Number(pageSize) || 10;
+      const transactionPoints = await prisma.pointUsage.findMany({
+        where: {},
+        skip,
+        take: pageSizeNum,
+      });
+      const count = await prisma.pointUsage.count({
+        where: {},
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, 'Danh sách transaction points by user', {
+        data: transactionPoints,
+        count,
+      });
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  getAllPointsByUserId: async (req: Request, res: Response): Promise<void> => {
     try {
       const { user_id, pageSize = 10, page = 1 } = req.query;
       if (!user_id) {

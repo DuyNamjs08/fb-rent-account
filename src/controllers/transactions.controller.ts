@@ -126,6 +126,34 @@ const transactionController = {
     }
   },
 
+  getAlltransactions: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { pageSize = 10, page = 1 } = req.query;
+      const skip = (Number(page) - 1) * Number(pageSize);
+      const pageSizeNum = Number(pageSize) || 10;
+      const transactions = await prisma.transaction.findMany({
+        where: {},
+        skip,
+        take: pageSizeNum,
+      });
+      const count = await prisma.transaction.count({
+        where: {},
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, 'Danh sách transaction by user', {
+        data: transactions,
+        count,
+      });
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
   getAlltransactionsByUserId: async (
     req: Request,
     res: Response,

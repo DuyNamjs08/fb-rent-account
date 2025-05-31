@@ -7,6 +7,7 @@ class UserService {
     short_code,
     username,
     phone = '',
+    role,
   }: {
     email: string;
     password: string;
@@ -14,12 +15,14 @@ class UserService {
     short_code: string;
     username: string;
     phone: string;
+    role: string;
   }) {
     const User = await prisma.user.create({
       data: {
         email,
         password,
         role_id,
+        role,
         short_code,
         username,
         phone,

@@ -107,6 +107,7 @@ const TKQCController = {
   asyncTKQC: async (req: Request, res: Response): Promise<void> => {
     try {
       const { bm_id = '1210548737046963' } = req.body;
+      console.log('bm_id', bm_id);
       if (!bm_id) {
         errorResponse(
           res,
