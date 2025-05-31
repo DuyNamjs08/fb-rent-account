@@ -93,10 +93,36 @@ const pointUsedController = {
     }
   },
 
-  getAllRoles: async (req: Request, res: Response): Promise<void> => {
+  getAllRolesByUserId: async (req: Request, res: Response): Promise<void> => {
     try {
-      const roles = await roleService.getAllRoles();
-      successResponse(res, 'Danh sách quyền', roles);
+      const { user_id, pageSize = 10, page = 1 } = req.query;
+      if (!user_id) {
+        errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
+        return;
+      }
+      const checkUser = await prisma.user.findUnique({
+        where: {
+          id: user_id as string,
+        },
+      });
+      if (!checkUser) {
+        errorResponse(res, 'User not found !!', {}, 404);
+        return;
+      }
+      const skip = (Number(page) - 1) * Number(pageSize);
+      const pageSizeNum = Number(pageSize) || 10;
+      const transactionPoints = await prisma.pointUsage.findMany({
+        where: {
+          user_id: user_id as string,
+        },
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(
+        res,
+        'Danh sách transaction points by user',
+        transactionPoints,
+      );
     } catch (error: any) {
       errorResponse(
         res,
