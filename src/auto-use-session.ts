@@ -3,9 +3,20 @@ import fs from 'fs';
 import path from 'path';
 
 export const autoChangePartner = async (data: any) => {
-  const { bm_id = '', ads_account_id = '725667773735916' } = data;
+  const {
+    bm_id = '',
+    ads_account_id = '',
+    bm_origin = '',
+    ads_name = '',
+  } = data;
   const browser = await chromium.launch({
     headless: false,
+    // proxy: {
+    //   server: 'http://proxy.example.com:8000',
+    //   username: 'proxy_user',
+    //   password: 'proxy_pass',
+    // },
+    slowMo: 100, // Tự động chậm lại giữa mỗi thao tác
   });
   let result = 0;
   // Đường dẫn cookie cũ và mới
@@ -33,6 +44,8 @@ export const autoChangePartner = async (data: any) => {
         storageState: storageStatePath,
         viewport: { width: 1280, height: 800 },
         locale: 'vi-VN',
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/118.0.5993.90 Safari/537.36',
       });
       console.log('🔄 Đã load session thành công');
     } catch (error: any) {
@@ -52,8 +65,9 @@ export const autoChangePartner = async (data: any) => {
   }
   const page = await context.newPage();
   await page.goto(
-    `https://business.facebook.com/latest/settings/ad_accounts?business_id=1210548737046963&selected_asset_id=${ads_account_id}&selected_asset_type=ad-account`,
+    `https://business.facebook.com/latest/settings/ad_accounts?business_id=${bm_origin}&selected_asset_id=${ads_account_id}&selected_asset_type=ad-account`,
   );
+  await page.waitForLoadState('networkidle');
 
   try {
     await page.waitForSelector('input[type="email"]', { timeout: 5000 });
@@ -63,6 +77,26 @@ export const autoChangePartner = async (data: any) => {
     console.log('💾 Đã lưu session mới vào:', storageStatePath);
   } catch {
     console.log('✅ Đã đăng nhập thành công!');
+  }
+
+  await page.waitForTimeout(1500);
+  await page.mouse.move(200, 300);
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(1000);
+
+  try {
+    const bmLocator = page.locator(
+      `div[role="heading"][aria-level="4"].x1xqt7ti.xsuwoey.x63nzvj.xbsr9hj.xuxw1ft.x6ikm8r.x10wlt62.xlyipyv.x1h4wwuj.x1fcty0u.xeuugli:has-text("${ads_name}")`,
+    );
+
+    await bmLocator.waitFor({ state: 'visible', timeout: 10000 });
+    await bmLocator.click({ delay: 200 });
+    console.log(`✅ Đã click vào BM "${ads_name}"`);
+  } catch (error: any) {
+    console.log(
+      `❌ Không tìm thấy hoặc không click được ${ads_name}:`,
+      error.message,
+    );
   }
   try {
     const exactSelector =
@@ -79,7 +113,8 @@ export const autoChangePartner = async (data: any) => {
 
     if (count > 0) {
       await nameLocator.first().scrollIntoViewIfNeeded();
-      await nameLocator.first().click();
+      await page.waitForTimeout(1200);
+      await nameLocator.first().click({ delay: 200 });
       console.log('✅ Đã click vào phần tử chính xác');
     } else {
       console.log('⚠️ Không tìm thấy phần tử cần click');
@@ -87,23 +122,32 @@ export const autoChangePartner = async (data: any) => {
   } catch (err: any) {
     console.log('❌ Lỗi khi click:', err.message);
   }
+
+  await page.waitForTimeout(1500);
+
   try {
-    await page
-      .locator('input[placeholder="ID đối tác kinh doanh"]')
-      .fill(bm_id);
+    const input = await page.locator(
+      'input[placeholder="ID đối tác kinh doanh"]',
+    );
+    await input.click();
+    await page.keyboard.type(bm_id, { delay: 100 });
     console.log('✅ Đã nhập ID đối tác kinh doanh');
   } catch (error: any) {
     console.log('❌ Lỗi khi nhập ID đối tác kinh doanh:', error.message);
   }
+
+  await page.waitForTimeout(1200);
+
   try {
     const switchLocator = page.locator(
       'input[aria-label="Quản lý chiến dịch (quảng cáo)"][role="switch"][type="checkbox"]',
     );
 
     await switchLocator.waitFor({ state: 'visible', timeout: 10000 });
-    await switchLocator.click();
+    await switchLocator.click({ delay: 200 });
+    console.log('✅ Đã bật quyền quản lý chiến dịch');
   } catch (error: any) {
-    console.log('❌ Lỗi khi click vào switch:', error.message);
+    console.log('❌ Không bật được quyền:', error.message);
   }
   try {
     const divSelector =
@@ -118,7 +162,7 @@ export const autoChangePartner = async (data: any) => {
 
     for (let i = 0; i < count; i++) {
       const text = (await divLocator.nth(i).textContent())?.trim() ?? '';
-      console.log(`🔎 Text phần tử ${i}:`, JSON.stringify(text));
+      // console.log(`🔎 Text phần tử ${i}:`, JSON.stringify(text));
 
       if (text === 'Chỉ định') {
         exactIndex = i;
@@ -129,17 +173,34 @@ export const autoChangePartner = async (data: any) => {
     if (exactIndex >= 0) {
       const exactLocator = divLocator.nth(exactIndex);
       await exactLocator.scrollIntoViewIfNeeded();
-      await exactLocator.click({ force: true });
-      console.log('✅ Đã click vào div có text chính xác "Chỉ định"');
-      result = 1;
+      await page.waitForTimeout(1000);
+      await exactLocator.click({ delay: 300 });
+      console.log('✅ Đã click nút "Chỉ định"');
     } else {
-      console.log('⚠️ Không tìm thấy div có text chính xác "Chỉ định"');
+      console.log('⚠️ Không tìm thấy nút "Chỉ định"');
     }
   } catch (error: any) {
-    console.log('❌ Lỗi khi click vào div "Chỉ định":', error.message);
+    console.log('❌ Lỗi khi click nút "Chỉ định":', error.message);
   }
-  await new Promise(() => {});
+
+  try {
+    await page.waitForSelector(
+      'div[role="heading"][aria-level="3"]:has-text("Đã thêm đối tác")',
+      { timeout: 30000 },
+    );
+    console.log('✅ Đã thêm đối tác thành công!');
+    result = 1;
+  } catch {
+    console.log('⚠️ Không thấy thông báo "Đã thêm đối tác" sau 30 giây.');
+  }
+
+  // await new Promise(() => {});
   await page.waitForTimeout(10000);
   await browser.close();
   return result;
 };
+
+// autoChangePartner({
+//   bm_id: '1183899226256278',
+//   ads_account_id: '120227186136080332',
+// });

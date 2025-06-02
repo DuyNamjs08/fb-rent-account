@@ -2,9 +2,16 @@ import { chromium, BrowserContext } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 
-export const autoChangePartner = async () => {
+export const autoDisChardLimitSpend = async (data: any) => {
+  const { bm_id = '', ads_account_id = '' } = data;
   const browser = await chromium.launch({
-    headless: false,
+    headless: true,
+    // proxy: {
+    //   server: 'http://proxy.example.com:8000',
+    //   username: 'proxy_user',
+    //   password: 'proxy_pass',
+    // },
+    slowMo: 120, // Tự động chậm lại giữa mỗi thao tác
   });
   let result = 0;
   // Đường dẫn cookie cũ và mới
@@ -32,6 +39,8 @@ export const autoChangePartner = async () => {
         storageState: storageStatePath,
         viewport: { width: 1280, height: 800 },
         locale: 'vi-VN',
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/118.0.5993.90 Safari/537.36',
       });
       console.log('🔄 Đã load session thành công');
     } catch (error: any) {
@@ -51,85 +60,84 @@ export const autoChangePartner = async () => {
   }
   const page = await context.newPage();
   await page.goto(
-    `https://business.facebook.com/billing_hub/accounts/details?asset_id=511278344380577&business_id=1210548737046963&placement=standalone`,
+    `https://business.facebook.com/billing_hub/accounts/details?asset_id=${ads_account_id}&business_id=${bm_id}&placement=standalone`,
   );
-  let List: any = {};
-  List = await new Promise((resolve) => {
-    let handled = false;
+  await page.waitForLoadState('networkidle');
 
-    page.on('request', async (request) => {
-      if (handled) return;
-      if (
-        request.method() === 'POST' &&
-        request.url().includes('https://business.facebook.com/api/graphql') // thay bằng endpoint của bạn
-      ) {
-        handled = true;
-        const postData = request.postData();
-        const cookies = await page.context().cookies();
-        const c_user = cookies.find((item) => item.name === 'c_user')?.value;
-        const cookieHeader = cookies
-          .map((cookie) => `${cookie.name}=${cookie.value}`)
-          .join('; ');
-        if (postData) {
-          const params = new URLSearchParams(postData);
-          const data = Object.fromEntries(params.entries());
-          resolve({
-            payload: data,
-            cookies: cookieHeader,
-            c_user,
-          });
-        } else {
-          resolve({}); // Nếu không có postData
-        }
-      }
-    });
-  });
-  console.log('payload', List);
-  const { payload, cookies, c_user } = List;
-  if (payload?.lsd && payload?.fb_dtsg) {
-    const response = await page.evaluate(
-      async ({ payload, cookies, c_user }) => {
-        const headers = {
-          cookie: cookies,
-          'content-type': 'application/x-www-form-urlencoded',
-          'x-fb-friendly-name': 'useBillingRemoveASLMutation',
-          'x-fb-lsd': payload?.lsd || 'YRXcmFXLQMOmkLEEwD4FDd',
-        };
-        console.log('headers', headers);
-        const res = await fetch('https://business.facebook.com/api/graphql/', {
-          method: 'POST',
-          headers: headers,
-          body: new URLSearchParams({
-            fb_dtsg: payload?.fb_dtsg,
-            lsd: payload?.lsd,
-            doc_id: '9689753567808836',
-            variables: JSON.stringify({
-              input: {
-                billable_account_payment_legacy_account_id: '511278344380577',
-                upl_logging_data: {
-                  context: 'billingspendlimits',
-                  entry_point: 'BILLING_HUB',
-                },
-                actor_id: c_user || payload.__user,
-                client_mutation_id: '3',
-              },
-            }),
-          }),
-          credentials: 'include',
-        });
-
-        const result = await res.json();
-        return result;
-      },
-      { payload, cookies, c_user },
-    ); // <-- Truyền payload vào đây
-    console.log('📦 Kết quả từ API:', response);
-  } else {
-    console.log('lỗi khi call api');
+  try {
+    await page.waitForSelector('input[type="email"]', { timeout: 5000 });
+    console.log('❌ Chưa đăng nhập - cần đăng nhập thủ công');
+    await page.waitForTimeout(20000);
+    await context.storageState({ path: storageStatePath });
+    console.log('💾 Đã lưu session mới vào:', storageStatePath);
+  } catch {
+    console.log('✅ Đã đăng nhập thành công!');
   }
-  await new Promise(() => {});
-  await page.waitForTimeout(30000);
+
+  await page.waitForTimeout(1500);
+  const heading = page.locator('div[role="heading"][aria-level="3"]', {
+    hasText: 'Giới hạn chi tiêu cho tài khoản',
+  });
+  await heading.scrollIntoViewIfNeeded({ timeout: 400 });
+  await page.waitForTimeout(1000);
+
+  try {
+    const allSpans = page.locator(
+      'span.x8t9es0.x1fvot60.xxio538.x1heor9g.xq9mrsl.x1h4wwuj.x1pd3egz.xeuugli.xh8yej3',
+    );
+    const count = await allSpans.count();
+    console.log(`🔎 Tìm thấy ${count} phần tử.`);
+    if (count === 16) {
+      // Click vào tất cả hoặc chỉ phần tử đầu
+      await allSpans.nth(14).scrollIntoViewIfNeeded();
+      await allSpans.nth(14).click({ delay: 200 });
+      console.log(
+        '✅ Đã click vào phần tử đầu tiên trong danh sách 14 phần tử.',
+      );
+    } else {
+      console.log('⚠️ Số lượng phần tử KHÔNG PHẢI là 14, không click.');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click vào phần tử:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  try {
+    const button = page.locator('span', { hasText: /^Gỡ$/ });
+    await button.waitFor({ state: 'visible', timeout: 5000 });
+    await button.scrollIntoViewIfNeeded();
+    await button.click({ delay: 200 });
+    console.log('✅ Đã click vào nút "Gỡ"');
+  } catch (err: any) {
+    console.error('❌ Không thể click vào nút "Gỡ":', err.message);
+  }
+  await page.waitForTimeout(1200);
+  try {
+    const removeButton = await page.locator(
+      'span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6.xlyipyv.xuxw1ft:text("Xóa")',
+    );
+    await removeButton.click({ delay: 200 });
+    console.log('✅ Đã click vào xóa');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi click vào xóa:', error.message);
+  }
+  await page.waitForTimeout(15000);
+  const successText = page.locator(
+    'span.x193iq5w.xeuugli.x13faqbe.x1vvkbs.x1xmvt09.x1lliihq.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.xudqn12.x676frb.x1lkfr7t.x1lbecb7.x1s688f.xzsf02u.x2b8uid:text("Thành công")',
+  );
+
+  if (await successText.isVisible({})) {
+    console.log('✅ Có Thành công gỡ giới hạn');
+    result = 1;
+  } else {
+    console.log('❌ Không có Thành công gỡ giới hạn');
+  }
+  // await new Promise(() => {});
+  await page.waitForTimeout(10000);
   await browser.close();
   return result;
 };
-autoChangePartner();
+
+// autoDisChardLimitSpend({
+//   bm_id: '1183899226256278',
+//   ads_account_id: '120227186136080332',
+// });

@@ -1,6 +1,7 @@
 import Bull from 'bull';
 import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
+import { autoChangeLimitSpend } from '../auto-use-sessionV2';
 
 export const fbParnert = new Bull('fbParnert', {
   redis: {
@@ -20,9 +21,23 @@ export const fbParnert = new Bull('fbParnert', {
 });
 const updateDb = async (data: any) => {
   try {
-    const { bm_id, ads_account_id } = data;
-    const result = await autoChangePartner({ bm_id, ads_account_id });
-    return result;
+    const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name } = data;
+    const result = await autoChangePartner({
+      bm_id,
+      ads_account_id,
+      bm_origin,
+      ads_name,
+    });
+    const resultChangeLimit = await autoChangeLimitSpend({
+      bm_id: bm_origin,
+      ads_account_id,
+      amountPoint,
+    });
+    console.log('playwright res', {
+      status_limit_spend: result,
+      status_partner: resultChangeLimit,
+    });
+    return { status_limit_spend: result, status_partner: resultChangeLimit };
   } catch (fallbackError) {
     console.error('❌ Lỗi khi đổi điểm mã lỗi:', fallbackError);
     throw fallbackError;
@@ -34,12 +49,15 @@ fbParnert.process(15, async (job) => {
   try {
     console.log('data used point', data);
     const res = await updateDb(data);
+    const { status_partner, status_limit_spend } = res;
     await prisma.facebookPartnerBM.create({
       data: {
         bm_id,
         ads_account_id,
         user_id,
-        status: res ? 'success' : 'faild',
+        status: status_partner ? 'success' : 'faild',
+        status_partner: status_partner,
+        status_limit_spend: status_limit_spend,
       },
     });
     console.log(`✅ Cập nhật thành công đối tác vào BM với trạng thái`, res);

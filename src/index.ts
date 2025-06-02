@@ -11,6 +11,7 @@ import TokenRoutes from './routes/token.route';
 import adRoutes from './routes/tkqc.routes';
 import transactionRoutes from './routes/transaction.routes';
 import pointusedRoutes from './routes/poitused.routes';
+import facebookBmRoutes from './routes/facebookBm.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -64,6 +65,7 @@ app.use('/api/v1/', TokenRoutes);
 app.use('/api/v1/', RolesRoutes);
 app.use('/api/v1/', transactionRoutes);
 app.use('/api/v1/', pointusedRoutes);
+app.use('/api/v1/', facebookBmRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);

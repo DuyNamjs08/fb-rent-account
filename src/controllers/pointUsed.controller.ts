@@ -9,8 +9,22 @@ import { fbParnert } from '../workers/fb-partner';
 const pointUsedController = {
   createPointUsed: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { bm_id, ads_account_id, user_id, amountPoint } = req.body;
-      if (!bm_id || !ads_account_id || !user_id || !amountPoint) {
+      const {
+        bm_id,
+        ads_account_id,
+        user_id,
+        amountPoint,
+        bm_origin,
+        ads_name,
+      } = req.body;
+      if (
+        !bm_id ||
+        !ads_account_id ||
+        !user_id ||
+        !amountPoint ||
+        !bm_origin ||
+        !ads_name
+      ) {
         errorResponse(
           res,
           'Vui lòng nhập đúng thông tin',
@@ -68,7 +82,7 @@ const pointUsedController = {
         });
         return pointsUsed;
       });
-      if (!pointUsedController) {
+      if (!poitsUsedTransaction) {
         errorResponse(
           res,
           'Lỗi đổi điểm vui lòng thử lại sau',
@@ -81,8 +95,11 @@ const pointUsedController = {
         bm_id,
         ads_account_id,
         user_id,
+        amountPoint,
+        bm_origin,
+        ads_name,
       });
-      successResponse(res, 'Đổi điểm thành công', poitsUsedTransaction);
+      successResponse(res, 'Đổi điểm thành công', 'poitsUsedTransaction');
     } catch (error: any) {
       errorResponse(
         res,
