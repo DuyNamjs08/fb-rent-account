@@ -57,7 +57,7 @@ model User {
   role_id                   String?
   role                    String? @default("user") // user | admin | super_admin
   token                   Token[]
-  points     BigInt           @default(0)
+  points     Int           @default(0)
   short_code    String         @unique
   percentage   Float?  @default(0.1)        // Phần trăm phí của người dùng
   pointUsages  PointUsage[]
@@ -71,8 +71,8 @@ model Transaction {
   id          String       @id @default(uuid())
   short_code      String @unique
   user_id  String
-  amountVND   BigInt       // Số tiền VNĐ nạp vào
-  points      BigInt       // Điểm tương ứng nhận được
+  amountVND   Int       // Số tiền VNĐ nạp vào
+  points      Int       // Điểm tương ứng nhận được
   createdAt   DateTime  @default(now())
   bank        String 
   description        String 
@@ -87,7 +87,7 @@ model PointUsage {
   id              String    @id @default(uuid())
   user            User      @relation(fields: [user_id], references: [id])
   user_id          String
-  points_used      BigInt       // Số điểm đã sử dụng
+  points_used      Int       // Số điểm đã sử dụng
   service_type     String    @default("ads_account")// Loại dịch vụ, ví dụ: "facebook_ads", "tiktok_ads", "premium_package"
   target_account   String    // Mã tài khoản quảng cáo hoặc ID mục tiêu
   description     String?   // Mô tả thêm (nếu cần)

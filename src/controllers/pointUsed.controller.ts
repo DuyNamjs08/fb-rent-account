@@ -183,6 +183,60 @@ const pointUsedController = {
       );
     }
   },
+  deleteUserUsedPoint: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { bm_origin, bm_id, ads_account_id, user_id, ads_name } =
+        req.params;
+      if (!bm_id || !ads_account_id || !user_id || !bm_origin || !ads_name) {
+        errorResponse(
+          res,
+          'Vui lòng nhập đúng thông tin',
+          {},
+          httpStatusCodes.INTERNAL_SERVER_ERROR,
+        );
+        return;
+      }
+      const user = await prisma.user.findUnique({
+        where: {
+          id: user_id,
+        },
+      });
+      if (!user) {
+        errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
+        return;
+      }
+      const filterUser = user.list_ads_account.filter(
+        (item) => item !== ads_account_id,
+      );
+      const updateUser = await prisma.user.update({
+        where: {
+          id: user_id,
+        },
+        data: {
+          list_ads_account: filterUser,
+        },
+      });
+      await prisma.facebookPartnerBM.update({
+        where: {
+          bm_id,
+        },
+        data: {
+          status: 'dischard',
+          status_partner: 0,
+          status_limit_spend: null,
+          status_dischard_limit_spend: null,
+        },
+      });
+      successResponse(res, 'Gỡ khỏi tài khoản quảng cáo thành công !', '');
+    } catch (error: any) {
+      const statusCode = error.message.includes('not found') ? 404 : 400;
+      if (statusCode === 404) {
+        errorResponse(res, httpReasonCodes.NOT_FOUND, error, statusCode);
+      } else {
+        errorResponse(res, error?.message, error, statusCode);
+      }
+    }
+  },
 
   getRoleById: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -212,27 +266,6 @@ const pointUsedController = {
       }
       const roleNew = await roleService.updateRole(req.params.id, req.body);
       successResponse(res, 'Cập nhật quyền thành công !', roleNew);
-    } catch (error: any) {
-      const statusCode = error.message.includes('not found') ? 404 : 400;
-      if (statusCode === 404) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, error, statusCode);
-      } else {
-        errorResponse(res, error?.message, error, statusCode);
-      }
-    }
-  },
-
-  deleteRole: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const role = await roleService.getRoleById(req.params.id);
-      if (!role) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, {}, 404);
-        return;
-      }
-      const users = await UserService.getUserByRoleId(req.params.id);
-      await Promise.all(users.map((item) => UserService.deleteUser(item.id)));
-      await roleService.deleteRole(req.params.id);
-      successResponse(res, 'Xóa quyền thành công !', role);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {

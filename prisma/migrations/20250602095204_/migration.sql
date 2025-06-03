@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "users" ALTER COLUMN "percentage" SET DEFAULT 0.1,
-ALTER COLUMN "percentage" SET DATA TYPE DOUBLE PRECISION;

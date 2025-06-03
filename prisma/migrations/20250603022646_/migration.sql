@@ -47,10 +47,13 @@ CREATE TABLE "users" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "phone" TEXT,
+    "username" TEXT,
     "role_id" TEXT,
+    "role" TEXT DEFAULT 'user',
     "points" INTEGER NOT NULL DEFAULT 0,
     "short_code" TEXT NOT NULL,
-    "percentage" INTEGER DEFAULT 0,
+    "percentage" DOUBLE PRECISION DEFAULT 0.1,
+    "list_ads_account" TEXT[] DEFAULT ARRAY[]::TEXT[],
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -59,6 +62,7 @@ CREATE TABLE "users" (
 CREATE TABLE "transactions" (
     "id" TEXT NOT NULL,
     "short_code" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
     "amountVND" INTEGER NOT NULL,
     "points" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -98,6 +102,37 @@ CREATE TABLE "tokens" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "tokens_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "facebook_partner_bm" (
+    "id" TEXT NOT NULL,
+    "bm_id" TEXT NOT NULL,
+    "ads_account_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "status_partner" INTEGER,
+    "status_limit_spend" INTEGER,
+    "status_dischard_limit_spend" INTEGER,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "facebook_partner_bm_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "facebook_bm" (
+    "id" TEXT NOT NULL,
+    "bm_name" TEXT NOT NULL,
+    "bm_id" TEXT NOT NULL,
+    "list_ads_account" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "system_user_token" TEXT NOT NULL,
+    "status" TEXT DEFAULT 'success',
+    "status_id" INTEGER DEFAULT 1,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "facebook_bm_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -169,6 +204,9 @@ CREATE TABLE "ads_accounts" (
     "user_tasks" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "user_tos_accepted" JSONB,
     "vertical_name" TEXT,
+    "status_rented" TEXT,
+    "spend_limit" INTEGER,
+    "note_aka" TEXT,
 
     CONSTRAINT "ads_accounts_pkey" PRIMARY KEY ("id")
 );
@@ -183,7 +221,16 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "users_short_code_key" ON "users"("short_code");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "transactions_short_code_key" ON "transactions"("short_code");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "tokens_user_id_key" ON "tokens"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "facebook_partner_bm_bm_id_key" ON "facebook_partner_bm"("bm_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "facebook_bm_bm_id_key" ON "facebook_bm"("bm_id");
 
 -- AddForeignKey
 ALTER TABLE "email_logs" ADD CONSTRAINT "email_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
