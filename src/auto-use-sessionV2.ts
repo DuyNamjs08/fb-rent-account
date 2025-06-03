@@ -156,9 +156,9 @@ export const autoChangeLimitSpend = async (data: any) => {
     console.log('❌ Lỗi khi click vào lưu:', error.message);
   }
   await page.waitForTimeout(15000);
-  const successText = page.locator(
-    'span.x193iq5w.xeuugli.x13faqbe.x1vvkbs.x1xmvt09.x1lliihq.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.xudqn12.x676frb.x1lkfr7t.x1lbecb7.x1s688f.xzsf02u.x2b8uid:text("Thành công")',
-  );
+  const successText = page.locator('span', {
+    hasText: /^Đã cập nhật giới hạn chi tiêu cho tài khoản$/,
+  });
 
   if (await successText.isVisible({})) {
     console.log('✅ Có Thành công thêm giới hạn chi tiêu');

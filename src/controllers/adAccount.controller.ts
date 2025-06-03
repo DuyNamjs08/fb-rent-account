@@ -6,6 +6,7 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import UserService from '../services/User.service';
 import prisma from '../config/prisma';
 import axios from 'axios';
+import { decryptToken } from './facebookBm.controller';
 function mapItemToAdsAccount(item: any) {
   return {
     id: item.id,
@@ -106,12 +107,38 @@ const TKQCController = {
 
   asyncTKQC: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { bm_id = '1210548737046963' } = req.body;
+      const { bm_id = '' } = req.body;
       console.log('bm_id', bm_id);
       if (!bm_id) {
         errorResponse(
           res,
           'Dữ liệu không hợp lệ hoặc rỗng',
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const systemUserToken = await prisma.facebookBM.findUnique({
+        where: {
+          bm_id,
+        },
+      });
+      if (!systemUserToken) {
+        errorResponse(
+          res,
+          'Không tìm thấy bm hợp lệ',
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const systemUserDecode = await decryptToken(
+        systemUserToken.system_user_token,
+      );
+      if (!systemUserDecode) {
+        errorResponse(
+          res,
+          'Có lỗi xảy ra decode',
           {},
           httpStatusCodes.BAD_REQUEST,
         );
@@ -183,7 +210,7 @@ const TKQCController = {
       let hasNextPage = true;
 
       while (hasNextPage) {
-        let url = `${baseUrl}?fields=${fields}&limit=20&access_token=${process.env.USER_SYSTEM_TOKEN}`;
+        let url = `${baseUrl}?fields=${fields}&limit=20&access_token=${systemUserDecode}`;
         if (afterCursor) {
           url += `&after=${afterCursor}`;
         }

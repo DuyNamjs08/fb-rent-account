@@ -45,21 +45,60 @@ const updateDb = async (data: any) => {
 };
 fbParnert.process(15, async (job) => {
   const { data } = job;
-  const { bm_id, ads_account_id, user_id } = data;
+  const { bm_id, ads_account_id, user_id, amountPoint } = data;
   try {
     console.log('data used point', data);
     const res = await updateDb(data);
     const { status_partner, status_limit_spend } = res;
-    await prisma.facebookPartnerBM.create({
-      data: {
-        bm_id,
+    await prisma.facebookPartnerBM.upsert({
+      where: {
+        bm_id: bm_id,
+      },
+      create: {
+        bm_id: bm_id as string,
         ads_account_id,
         user_id,
         status: status_partner ? 'success' : 'faild',
-        status_partner: status_partner,
-        status_limit_spend: status_limit_spend,
+        status_partner,
+        status_limit_spend,
+      },
+      update: {
+        ads_account_id,
+        user_id,
+        status: status_partner ? 'success' : 'faild',
+        status_partner,
+        status_limit_spend,
       },
     });
+    if (status_partner && status_limit_spend) {
+      await prisma.adsAccount.update({
+        where: {
+          id: 'act_' + ads_account_id,
+        },
+        data: {
+          status_rented: 'available',
+          spend_limit: amountPoint,
+          note_aka: '',
+        },
+      });
+      const user = await prisma.user.findUnique({
+        where: { id: user_id },
+        select: { list_ads_account: true },
+      });
+      if (!user) throw new Error('User not found');
+      const currentList = user.list_ads_account || [];
+      const updatedList = currentList.includes(ads_account_id)
+        ? currentList
+        : [...currentList, ads_account_id];
+      await prisma.user.update({
+        where: {
+          id: user_id,
+        },
+        data: {
+          list_ads_account: updatedList,
+        },
+      });
+    }
     console.log(`✅ Cập nhật thành công đối tác vào BM với trạng thái`, res);
     return res;
   } catch (err) {

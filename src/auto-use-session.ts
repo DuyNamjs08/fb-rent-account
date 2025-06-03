@@ -99,13 +99,9 @@ export const autoChangePartner = async (data: any) => {
     );
   }
   try {
-    const exactSelector =
-      'div.x1xqt7ti.x1fvot60.xk50ysn.xxio538.x1heor9g.xuxw1ft.x6ikm8r.x10wlt62.xlyipyv.x1h4wwuj.xeuugli';
-
-    const nameLocator = page.locator(exactSelector, {
-      hasText: 'Chỉ định đối tác',
+    const nameLocator = page.locator('div', {
+      hasText: /^Chỉ định đối tác$/,
     });
-
     const count = await nameLocator.count();
     console.log(
       `🔍 Tìm thấy ${count} phần tử chính xác có text 'Chỉ định đối tác'`,
@@ -202,5 +198,7 @@ export const autoChangePartner = async (data: any) => {
 
 // autoChangePartner({
 //   bm_id: '1183899226256278',
-//   ads_account_id: '120227186136080332',
+//   ads_account_id: '494763566960289',
+//   ads_name: 'Adstot',
+//   bm_origin: '1183899226256278',
 // });
