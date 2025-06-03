@@ -81,20 +81,42 @@ function mapItemToAdsAccount(item: any) {
   };
 }
 const TKQCController = {
-  createRole: async (req: Request, res: Response): Promise<void> => {
+  getAdsRented: async (req: Request, res: Response): Promise<void> => {
     try {
-      const roleNameExist = await roleService.getRoleByName(req.body.name);
-      if (roleNameExist) {
-        errorResponse(
-          res,
-          'Quyền đã tồn tại!',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
-        );
+      const { user_id } = req.query;
+      const user = await prisma.user.findUnique({
+        where: {
+          id: user_id as string,
+        },
+      });
+      if (!user) {
+        errorResponse(res, 'Không tìm thấy user', {}, 404);
         return;
       }
-      const role = await roleService.createRole(req.body.name);
-      successResponse(res, 'Tạo quyền thành công', role);
+      const listIdAds = Array.isArray(user.list_ads_account)
+        ? user.list_ads_account.map((item) => 'act_' + item)
+        : [];
+      const businessManagers = await prisma.facebookPartnerBM.findMany({
+        where: {
+          user_id: user_id as string,
+        },
+      });
+      const adsAccount = await prisma.adsAccount.findMany({
+        where: {
+          id: {
+            in: listIdAds,
+          },
+        },
+      });
+      const result = businessManagers.map((item) => {
+        return {
+          ...item,
+          accounts:
+            adsAccount?.find((adsItem) => adsItem.account_id === item.bm_id) ||
+            null,
+        };
+      });
+      successResponse(res, 'Lấy danh sách Ads đã thuê thành công', result);
     } catch (error: any) {
       errorResponse(
         res,

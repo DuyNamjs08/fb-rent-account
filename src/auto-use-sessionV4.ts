@@ -2,8 +2,8 @@ import { chromium, BrowserContext } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 
-export const autoDisChardLimitSpend = async (data: any) => {
-  const { bm_id = '', ads_account_id = '' } = data;
+export const autoRemovePartner = async (data: any) => {
+  const { ads_account_id = '', bm_origin = '', ads_name = '' } = data;
   const browser = await chromium.launch({
     headless: false,
     // proxy: {
@@ -11,7 +11,7 @@ export const autoDisChardLimitSpend = async (data: any) => {
     //   username: 'proxy_user',
     //   password: 'proxy_pass',
     // },
-    slowMo: 120, // Tự động chậm lại giữa mỗi thao tác
+    slowMo: 100, // Tự động chậm lại giữa mỗi thao tác
   });
   let result = 0;
   // Đường dẫn cookie cũ và mới
@@ -60,7 +60,7 @@ export const autoDisChardLimitSpend = async (data: any) => {
   }
   const page = await context.newPage();
   await page.goto(
-    `https://business.facebook.com/billing_hub/accounts/details?asset_id=${ads_account_id}&business_id=${bm_id}&placement=standalone`,
+    `https://business.facebook.com/latest/settings/ad_accounts?business_id=${bm_origin}&selected_asset_id=${ads_account_id}&selected_asset_type=ad-account`,
   );
   await page.waitForLoadState('networkidle');
 
@@ -75,68 +75,89 @@ export const autoDisChardLimitSpend = async (data: any) => {
   }
 
   await page.waitForTimeout(1500);
-  const heading = page.locator('div[role="heading"][aria-level="3"]', {
-    hasText: 'Giới hạn chi tiêu cho tài khoản',
-  });
-  await heading.scrollIntoViewIfNeeded({ timeout: 400 });
+  await page.mouse.move(200, 300);
+  await page.mouse.wheel(0, 400);
   await page.waitForTimeout(1000);
 
   try {
-    const allSpans = page.locator(
-      'span.x8t9es0.x1fvot60.xxio538.x1heor9g.xq9mrsl.x1h4wwuj.x1pd3egz.xeuugli.xh8yej3',
+    const bmLocator = page.locator(
+      `div[role="heading"][aria-level="4"].x1xqt7ti.xsuwoey.x63nzvj.xbsr9hj.xuxw1ft.x6ikm8r.x10wlt62.xlyipyv.x1h4wwuj.x1fcty0u.xeuugli:has-text("${ads_name}")`,
     );
-    const count = await allSpans.count();
-    console.log(`🔎 Tìm thấy ${count} phần tử.`);
-    if (count === 16) {
-      // Click vào tất cả hoặc chỉ phần tử đầu
-      await allSpans.nth(14).scrollIntoViewIfNeeded();
-      await allSpans.nth(14).click({ delay: 200 });
-      console.log(
-        '✅ Đã click vào phần tử đầu tiên trong danh sách 14 phần tử.',
-      );
-    } else {
-      console.log('⚠️ Số lượng phần tử KHÔNG PHẢI là 14, không click.');
-    }
-  } catch (err: any) {
-    console.log('❌ Lỗi khi click vào phần tử:', err.message);
-  }
-  await page.waitForTimeout(1500);
-  try {
-    const button = page.locator('span', { hasText: /^Gỡ$/ });
-    await button.waitFor({ state: 'visible', timeout: 5000 });
-    await button.scrollIntoViewIfNeeded();
-    await button.click({ delay: 200 });
-    console.log('✅ Đã click vào nút "Gỡ"');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào nút "Gỡ":', err.message);
+
+    await bmLocator.waitFor({ state: 'visible', timeout: 10000 });
+    await bmLocator.click({ delay: 200 });
+    console.log(`✅ Đã click vào BM "${ads_name}"`);
+  } catch (error: any) {
+    console.log(
+      `❌ Không tìm thấy hoặc không click được ${ads_name}:`,
+      error.message,
+    );
   }
   await page.waitForTimeout(1200);
   try {
-    const removeButton = await page.locator(
-      'span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6.xlyipyv.xuxw1ft:text("Xóa")',
+    const nameLocator = page.locator('span', {
+      hasText: /^Đối tác$/,
+    });
+    const count = await nameLocator.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'đối tác'`);
+
+    if (count >= 4) {
+      await page.waitForTimeout(1200);
+      await nameLocator.nth(1).click({ delay: 200 });
+      console.log('✅ Đã click vào phần tử đối tác');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử đối tác');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  try {
+    const nameLocator = page.locator('div', {
+      hasText: /^Quản lý$/,
+    });
+    const count = await nameLocator.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Quản lý'`);
+
+    if (count >= 4) {
+      await page.waitForTimeout(1200);
+      await nameLocator.nth(1).click({ delay: 200 });
+      console.log('✅ Đã click vào phần tử Quản lý');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Quản lý');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  try {
+    const nameLocator = page.locator('div', {
+      hasText: /^Gỡ quyền truy cập$/,
+    });
+    const count = await nameLocator.count();
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Gỡ quyền truy cập'`,
     );
-    await removeButton.click({ delay: 200 });
-    console.log('✅ Đã click vào xóa');
-  } catch (error: any) {
-    console.log('❌ Lỗi khi click vào xóa:', error.message);
+
+    if (count >= 0) {
+      await page.waitForTimeout(1200);
+      await nameLocator.nth(2).click({ delay: 200 });
+      console.log('✅ Đã click vào phần tử Gỡ quyền truy cập');
+      result = 1;
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Gỡ quyền truy cập');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
   }
-  await page.waitForTimeout(15000);
-  const successText = page.locator('span', {
-    hasText: /^Đã gỡ giới hạn chi tiêu cho tài khoản$/,
-  });
-  if (await successText.isVisible({})) {
-    console.log('✅ Có Thành công gỡ giới hạn');
-    result = 1;
-  } else {
-    console.log('❌ Không có Thành công gỡ giới hạn');
-  }
-  // await new Promise(() => {});
+
   await page.waitForTimeout(10000);
   await browser.close();
   return result;
 };
 
-// autoDisChardLimitSpend({
-//   bm_id: '1043878897701771',
+// autoRemovePartner({
 //   ads_account_id: '1360591371901484',
+//   ads_name: 'BM-LN2',
+//   bm_origin: '1043878897701771',
 // });

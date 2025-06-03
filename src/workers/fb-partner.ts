@@ -45,29 +45,20 @@ const updateDb = async (data: any) => {
 };
 fbParnert.process(15, async (job) => {
   const { data } = job;
-  const { bm_id, ads_account_id, user_id, amountPoint } = data;
+  const { bm_id, ads_account_id, user_id, amountPoint, bm_origin } = data;
   try {
     console.log('data used point', data);
     const res = await updateDb(data);
     const { status_partner, status_limit_spend } = res;
-    await prisma.facebookPartnerBM.upsert({
-      where: {
-        bm_id: bm_id,
-      },
-      create: {
+    await prisma.facebookPartnerBM.create({
+      data: {
         bm_id: bm_id as string,
         ads_account_id,
         user_id,
         status: status_partner ? 'success' : 'faild',
         status_partner,
         status_limit_spend,
-      },
-      update: {
-        ads_account_id,
-        user_id,
-        status: status_partner ? 'success' : 'faild',
-        status_partner,
-        status_limit_spend,
+        bm_origin,
       },
     });
     if (status_partner && status_limit_spend) {

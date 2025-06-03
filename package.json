@@ -18,6 +18,7 @@
     "play": "npx ts-node src/auto-use-session.ts",
     "play2": "npx ts-node src/auto-use-sessionV2.ts",
     "play3": "npx ts-node src/auto-use-sessionV3.ts",
+    "play4": "npx ts-node src/auto-use-sessionV4.ts",
     "login": "npx ts-node src/login.ts"
   },
   "keywords": [],

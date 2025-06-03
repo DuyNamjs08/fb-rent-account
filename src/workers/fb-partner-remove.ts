@@ -1,6 +1,6 @@
 import Bull from 'bull';
-import prisma from '../config/prisma';
 import { autoDisChardLimitSpend } from '../auto-use-sessionV3';
+import { autoRemovePartner } from '../auto-use-sessionV4';
 
 export const fbRemoveParnert = new Bull('fbRemoveParnert', {
   redis: {
@@ -21,15 +21,19 @@ export const fbRemoveParnert = new Bull('fbRemoveParnert', {
 const updateDb = async (data: any) => {
   try {
     const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name } = data;
-    const resultChangeLimit = await autoDisChardLimitSpend({
+    const resultRemoveLimit = await autoDisChardLimitSpend({
       bm_id: bm_origin,
       ads_account_id,
-      amountPoint,
     });
-    console.log('playwright res', {
-      status_partner: resultChangeLimit,
+    const resultRemoveParnert = await autoRemovePartner({
+      bm_origin,
+      ads_account_id,
+      ads_name,
     });
-    return { status_remove_s: resultChangeLimit };
+    return {
+      status_remove_spend_limit: resultRemoveLimit,
+      status_remove_partner: resultRemoveParnert,
+    };
   } catch (fallbackError) {
     console.error('❌ Lỗi khi đổi điểm mã lỗi:', fallbackError);
     throw fallbackError;
@@ -39,13 +43,13 @@ fbRemoveParnert.process(15, async (job) => {
   const { data } = job;
   const { bm_id, ads_account_id, user_id, amountPoint } = data;
   try {
-    console.log('data used point', data);
+    console.log('data remove point', data);
     const res = await updateDb(data);
-
+    // const { status_remove_spend_limit, status_remove_partner } = res;
     console.log(`✅ Xóa thành công đối tác vào BM với trạng thái`, res);
     return res;
   } catch (err) {
-    console.error(`❌ Lỗi khi cập nhật đối tác vào BM`, err);
+    console.error(`❌ Lỗi khi xóa đối tác vào BM`, err);
     throw err;
   }
 });

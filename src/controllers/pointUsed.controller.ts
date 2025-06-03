@@ -6,6 +6,7 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import UserService from '../services/User.service';
 import prisma from '../config/prisma';
 import { fbParnert } from '../workers/fb-partner';
+import { fbRemoveParnert } from '../workers/fb-partner-remove';
 const pointUsedController = {
   createPointUsed: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -185,9 +186,16 @@ const pointUsedController = {
   },
   deleteUserUsedPoint: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { bm_origin, bm_id, ads_account_id, user_id, ads_name } =
-        req.params;
-      if (!bm_id || !ads_account_id || !user_id || !bm_origin || !ads_name) {
+      const { bm_origin, bm_id, ads_account_id, user_id, ads_name, id } =
+        req.query;
+      if (
+        !bm_id ||
+        !ads_account_id ||
+        !user_id ||
+        !bm_origin ||
+        !ads_name ||
+        !id
+      ) {
         errorResponse(
           res,
           'Vui lòng nhập đúng thông tin',
@@ -198,7 +206,7 @@ const pointUsedController = {
       }
       const user = await prisma.user.findUnique({
         where: {
-          id: user_id,
+          id: user_id as string,
         },
       });
       if (!user) {
@@ -208,9 +216,9 @@ const pointUsedController = {
       const filterUser = user.list_ads_account.filter(
         (item) => item !== ads_account_id,
       );
-      const updateUser = await prisma.user.update({
+      await prisma.user.update({
         where: {
-          id: user_id,
+          id: user_id as string,
         },
         data: {
           list_ads_account: filterUser,
@@ -218,14 +226,22 @@ const pointUsedController = {
       });
       await prisma.facebookPartnerBM.update({
         where: {
-          bm_id,
+          id: id as string,
         },
         data: {
           status: 'dischard',
           status_partner: 0,
           status_limit_spend: null,
-          status_dischard_limit_spend: null,
+          status_dischard_limit_spend: 1,
+          status_dischard_partner: 1,
         },
+      });
+      await fbRemoveParnert.add({
+        bm_id,
+        ads_account_id,
+        user_id,
+        bm_origin,
+        ads_name,
       });
       successResponse(res, 'Gỡ khỏi tài khoản quảng cáo thành công !', '');
     } catch (error: any) {
