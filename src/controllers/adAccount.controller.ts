@@ -81,7 +81,7 @@ function mapItemToAdsAccount(item: any) {
   };
 }
 const TKQCController = {
-  getAdsRented: async (req: Request, res: Response): Promise<void> => {
+  getAdsRentedByUser: async (req: Request, res: Response): Promise<void> => {
     try {
       const { user_id } = req.query;
       const user = await prisma.user.findUnique({
@@ -107,6 +107,32 @@ const TKQCController = {
             in: listIdAds,
           },
         },
+      });
+      const result = businessManagers.map((item) => {
+        return {
+          ...item,
+          accounts:
+            adsAccount?.find((adsItem) => adsItem.account_id === item.bm_id) ||
+            null,
+        };
+      });
+      successResponse(res, 'Lấy danh sách Ads đã thuê thành công', result);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  getAdsRented: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const businessManagers = await prisma.facebookPartnerBM.findMany({
+        where: {},
+      });
+      const adsAccount = await prisma.adsAccount.findMany({
+        where: {},
       });
       const result = businessManagers.map((item) => {
         return {

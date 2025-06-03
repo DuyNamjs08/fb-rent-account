@@ -3,7 +3,8 @@ module.exports = {
     {
       name: 'fb-rent-account',
       script: '/var/www/fb-rent-account/dist/index.js',
-      interpreter: '/root/.nvm/versions/node/v20.16.0/bin/node', // Đảm bảo sử dụng đúng Node.js từ NVM
+      interpreter: 'xvfb-run', // dùng xvfb-run để giả lập GUI
+      interpreter_args: '/root/.nvm/versions/node/v20.16.0/bin/node', // chỉ định Node đúng version
       instances: 1,
       autorestart: true,
       watch: false,
