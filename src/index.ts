@@ -18,6 +18,7 @@ import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { fbRealtimeTransaction } from './workers/fb-realtime-transaction';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import prisma from './config/prisma';
 
 dotenv.config({ path: `${__dirname}/../.env` });
 const envPath = `${__dirname}/../.env`;
@@ -95,7 +96,7 @@ app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
     }
     function getUserIdFromTransaction(description: string) {
       const match = description.match(/NAP\d{8}/);
-      return match ? match[0] : null;
+      return match ? match[0] : undefined;
     }
     for (const item of data) {
       const jobData = {
@@ -111,7 +112,19 @@ app.post('/webhook', async (req: Request, res: Response): Promise<void> => {
         removeOnComplete: true,
         removeOnFail: true,
       });
+      const transaction = await prisma.transaction.findUnique({
+        where: {
+          short_code: getUserIdFromTransaction(item.description)
+            ? getUserIdFromTransaction(item.description)
+            : '',
+        },
+      });
+      await getIO().to(`user:${transaction?.user_id}`).emit('payment_success', {
+        amount: item.amount,
+        message: 'Nạp tiền thành công chờ trong giây lát để cộng điểm!!',
+      });
     }
+
     res.json({ status: true, msg: 'Ok' });
   } catch (err) {
     console.error('Webhook processing error:', err);

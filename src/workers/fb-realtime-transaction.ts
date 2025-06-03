@@ -90,12 +90,12 @@ fbRealtimeTransaction.process(15, async (job) => {
     const { amountVND } = data;
     console.log('data transaction', data);
     const res = await updateDb(data);
-    if (res.status == 'success') {
-      console.log('socket emit', res);
-      await getIO()
-        .to(`user:${res.user_id}`)
-        .emit('payment_success', { amount: amountVND });
-    }
+    // if (res.status == 'success') {
+    //   console.log('socket emit', res);
+    //   await getIO()
+    //     .to(`user:${res.user_id}`)
+    //     .emit('payment_success', { amount: amountVND });
+    // }
     console.log(`✅ Cập nhật thành công transaction: ${res?.short_code}`);
     return res;
   } catch (err) {

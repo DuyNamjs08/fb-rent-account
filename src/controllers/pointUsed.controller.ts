@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { successResponse, errorResponse } from '../helpers/response';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
-import UserService from '../services/User.service';
 import prisma from '../config/prisma';
 import { fbParnert } from '../workers/fb-partner';
 import { fbRemoveParnert } from '../workers/fb-partner-remove';
