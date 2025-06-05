@@ -209,5 +209,138 @@ const TokenController = {
       );
     }
   },
+  forgotPassword: async (req: Request, res: Response) => {
+    try {
+      const BaseUrl = process.env.VITE_URL;
+      const { email } = req.body;
+      const user = await UserService.getUserByEmail(email);
+      if (!user) {
+        errorResponse(
+          res,
+          'Tài khoản không tồn tại',
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      if (!process.env.ACCESS_TOKEN_SECRET) {
+        errorResponse(
+          res,
+          'Reset token secret not defined',
+          {},
+          httpStatusCodes.INTERNAL_SERVER_ERROR,
+        );
+        return;
+      }
+
+      // Tạo token đặt lại mật khẩu
+      const resetToken = jwt.sign(
+        { user_id: user.id, email },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: '15m' },
+      );
+      // Tạo liên kết đặt lại mật khẩu
+      const resetLink = `${BaseUrl}/reset-password?token=${resetToken}`;
+      // Đọc template HTML
+      const pathhtml = path.resolve(__dirname, '../html/reset-password.html');
+      if (!fs.existsSync(pathhtml)) {
+        throw new Error('File HTML không tồn tại');
+      }
+      let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
+      htmlContent = htmlContent
+        .replace('{{NAME}}', user.username || 'Người dùng')
+        .replace('{{RESET_URL}}', resetLink)
+        .replace('{{USER_EMAIL}}', user.email)
+        .replace('{{COMPANY_NAME}}', 'AKA Media')
+        .replace('{{SUPPORT_EMAIL}}', 'support@akads.vn');
+
+      // Lưu log email
+      await prisma.emailLog.create({
+        data: {
+          user_id: user.id,
+          to: user.email,
+          subject: 'AKAds Đặt lại mật khẩu',
+          body: htmlContent,
+          status: 'success',
+          type: 'reset_password',
+        },
+      });
+
+      // Gửi email
+      await sendEmail({
+        email: user.email,
+        subject: 'AKAds Đặt lại mật khẩu',
+        message: htmlContent,
+      });
+
+      successResponse(res, 'Email đặt lại mật khẩu đã được gửi', {});
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  resetPassword: async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+        errorResponse(
+          res,
+          'Token và mật khẩu mới là bắt buộc',
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+
+      if (!process.env.ACCESS_TOKEN_SECRET) {
+        errorResponse(
+          res,
+          'Reset token secret not defined',
+          {},
+          httpStatusCodes.INTERNAL_SERVER_ERROR,
+        );
+        return;
+      }
+
+      jwt.verify(
+        token,
+        process.env.ACCESS_TOKEN_SECRET,
+        async (err: any, data: any) => {
+          if (err) {
+            return errorResponse(
+              res,
+              'Token không hợp lệ hoặc đã hết hạn',
+              {},
+              httpStatusCodes.FORBIDDEN,
+            );
+          }
+          const user = await UserService.getUserById(data.user_id);
+          if (!user) {
+            return errorResponse(
+              res,
+              'Tài khoản không tồn tại',
+              {},
+              httpStatusCodes.NOT_FOUND,
+            );
+          }
+          const hashedPassword = await bcrypt.hash(newPassword, 10);
+          await UserService.updateUser(user.id, { password: hashedPassword });
+          successResponse(res, 'Đặt lại mật khẩu thành công', {});
+        },
+      );
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
 };
 export default TokenController;
