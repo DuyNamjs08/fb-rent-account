@@ -1,6 +1,10 @@
 import { chromium, BrowserContext } from 'playwright';
 import fs from 'fs';
 import path from 'path';
+import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
+export function randomDelay(min = 100, max = 500) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 export const autoChangePartner = async (data: any) => {
   const {
@@ -68,6 +72,103 @@ export const autoChangePartner = async (data: any) => {
     `https://business.facebook.com/latest/settings/ad_accounts?business_id=${bm_origin}&selected_asset_id=${ads_account_id}&selected_asset_type=ad-account`,
   );
   await page.waitForLoadState('networkidle');
+  let isVerify = 0;
+  try {
+    const verify = page.locator('div', {
+      hasText: /^Xác minh tài khoản$/,
+    });
+    const count = await verify.count();
+
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Xác minh tài khoản'`,
+    );
+    if (count > 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(2);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) }).then(() => {
+        isVerify = 1;
+      });
+      console.log('✅ Đã click vào phần tử Xác minh tài khoản');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Xác minh tài khoản');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  if (isVerify) {
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi email$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi email'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi email');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi email');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click:', err.message);
+    }
+    await page.waitForTimeout(30000);
+    const verifyCode = await getFacebookSecurityCodesFromEmail({ email: '' });
+    console.log('verifyCode', verifyCode);
+    const codeToEnter = verifyCode.at(-1) ?? '';
+    try {
+      const input = await page.locator('input[placeholder="123456"]');
+      await input.click();
+      for (const char of codeToEnter) {
+        await page.keyboard.type(char, { delay: randomDelay(80, 150) });
+      }
+      console.log('✅ Đã nhập mã verifyCode.at(-1)', verifyCode.at(-1));
+    } catch (error: any) {
+      console.log('❌ Lỗi khi nhập verifyCode.at(-1):', error.message);
+    }
+
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Gửi:', err.message);
+    }
+    await page.waitForTimeout(6000);
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Xong$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Xong');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Xong');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Xong:', err.message);
+    }
+  }
 
   try {
     await page.waitForSelector('input[type="email"]', { timeout: 5000 });
@@ -190,7 +291,6 @@ export const autoChangePartner = async (data: any) => {
     console.log('⚠️ Không thấy thông báo "Đã thêm đối tác" sau 30 giây.');
   }
 
-  // await new Promise(() => {});
   await page.waitForTimeout(10000);
   await browser.close();
   return result;

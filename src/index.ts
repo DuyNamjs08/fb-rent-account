@@ -12,6 +12,7 @@ import adRoutes from './routes/tkqc.routes';
 import transactionRoutes from './routes/transaction.routes';
 import pointusedRoutes from './routes/poitused.routes';
 import facebookBmRoutes from './routes/facebookBm.routes';
+import cookieBmRoutes from './routes/cookie.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -67,6 +68,7 @@ app.use('/api/v1/', RolesRoutes);
 app.use('/api/v1/', transactionRoutes);
 app.use('/api/v1/', pointusedRoutes);
 app.use('/api/v1/', facebookBmRoutes);
+app.use('/api/v1/', cookieBmRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);
@@ -160,6 +162,6 @@ io.on('connection', (socket) => {
     console.log(`Client ngắt kết nối: ${socket.id}`);
   });
 });
-server.listen(4001, () =>
-  console.log(`Worker ${process.pid} started on port ${4001}`),
+server.listen(4000, () =>
+  console.log(`Worker ${process.pid} started on port ${4000}`),
 );

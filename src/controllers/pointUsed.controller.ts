@@ -99,7 +99,11 @@ const pointUsedController = {
         bm_origin,
         ads_name,
       });
-      successResponse(res, 'Đổi điểm thành công', 'poitsUsedTransaction');
+      successResponse(
+        res,
+        'Thuê tài khoản thành công!!',
+        'poitsUsedTransaction',
+      );
     } catch (error: any) {
       errorResponse(
         res,

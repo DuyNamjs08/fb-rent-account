@@ -37,7 +37,7 @@ const updateDb = async (data: any) => {
       status_limit_spend: result,
       status_partner: resultChangeLimit,
     });
-    return { status_limit_spend: result, status_partner: resultChangeLimit };
+    return { status_limit_spend: resultChangeLimit, status_partner: result };
   } catch (fallbackError) {
     console.error('❌ Lỗi khi đổi điểm mã lỗi:', fallbackError);
     throw fallbackError;

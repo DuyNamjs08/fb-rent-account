@@ -3,7 +3,7 @@ import { successResponse, errorResponse } from '../helpers/response';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import UserService from '../services/User.service';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { customAlphabet } from 'nanoid';
 
 export const generateShortCode = () => {

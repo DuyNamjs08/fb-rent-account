@@ -102,18 +102,15 @@ const TKQCController = {
         },
       });
       const adsAccount = await prisma.adsAccount.findMany({
-        where: {
-          id: {
-            in: listIdAds,
-          },
-        },
+        where: {},
       });
       const result = businessManagers.map((item) => {
         return {
           ...item,
           accounts:
-            adsAccount?.find((adsItem) => adsItem.account_id === item.bm_id) ||
-            null,
+            adsAccount?.find(
+              (adsItem) => adsItem.account_id === item.ads_account_id,
+            ) || null,
         };
       });
       successResponse(res, 'Lấy danh sách Ads đã thuê thành công', result);
@@ -138,8 +135,9 @@ const TKQCController = {
         return {
           ...item,
           accounts:
-            adsAccount?.find((adsItem) => adsItem.account_id === item.bm_id) ||
-            null,
+            adsAccount?.find(
+              (adsItem) => adsItem.account_id === item.ads_account_id,
+            ) || null,
         };
       });
       successResponse(res, 'Lấy danh sách Ads đã thuê thành công', result);

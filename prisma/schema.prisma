@@ -2,6 +2,8 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+
   // output   = "../src/generated/prisma"
 }
 
@@ -136,6 +138,16 @@ model FacebookBM {
   updated_at  DateTime @updatedAt
 
   @@map("facebook_bm")
+}
+model Cookies {
+  id          String      @id @default(uuid())
+  email       String   @unique
+  storage_state  Json
+  in_use      Boolean? @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("cookies")
 }
 // 1 = ACTIVE
 //  2 = DISABLED

@@ -3,7 +3,7 @@ import { successResponse, errorResponse } from '../helpers/response';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import TokenService from '../services/Token.service';
 import UserService from '../services/User.service';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/prisma';
 import { sendEmail } from './mails.controller';

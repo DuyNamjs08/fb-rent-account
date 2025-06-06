@@ -1,6 +1,8 @@
 import { chromium, BrowserContext } from 'playwright';
 import fs from 'fs';
 import path from 'path';
+import { randomDelay } from './auto-use-session';
+import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
 
 export const autoChangeLimitSpend = async (data: any) => {
   const { bm_id = '', ads_account_id = '', amountPoint = 0 } = data;
@@ -63,7 +65,105 @@ export const autoChangeLimitSpend = async (data: any) => {
     `https://business.facebook.com/billing_hub/accounts/details?asset_id=${ads_account_id}&business_id=${bm_id}&placement=standalone`,
   );
   await page.waitForLoadState('networkidle');
+  // phần xác minh tài khoản
+  let isVerify = 0;
+  try {
+    const verify = page.locator('div', {
+      hasText: /^Xác minh tài khoản$/,
+    });
+    const count = await verify.count();
 
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Xác minh tài khoản'`,
+    );
+    if (count > 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(2);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) }).then(() => {
+        isVerify = 1;
+      });
+      console.log('✅ Đã click vào phần tử Xác minh tài khoản');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Xác minh tài khoản');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  if (isVerify) {
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi email$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi email'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi email');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi email');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click:', err.message);
+    }
+    await page.waitForTimeout(30000);
+    const verifyCode = await getFacebookSecurityCodesFromEmail({ email: '' });
+    console.log('verifyCode', verifyCode);
+    const codeToEnter = verifyCode.at(-1) ?? '';
+    try {
+      const input = await page.locator('input[placeholder="123456"]');
+      await input.click();
+      for (const char of codeToEnter) {
+        await page.keyboard.type(char, { delay: randomDelay(80, 150) });
+      }
+      console.log('✅ Đã nhập mã verifyCode.at(-1)', verifyCode.at(-1));
+    } catch (error: any) {
+      console.log('❌ Lỗi khi nhập verifyCode.at(-1):', error.message);
+    }
+
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Gửi:', err.message);
+    }
+    await page.waitForTimeout(6000);
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Xong$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Xong');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Xong');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Xong:', err.message);
+    }
+  }
+  // phần xác minh tài khoản
   try {
     await page.waitForSelector('input[type="email"]', { timeout: 5000 });
     console.log('❌ Chưa đăng nhập - cần đăng nhập thủ công');
@@ -147,11 +247,20 @@ export const autoChangeLimitSpend = async (data: any) => {
   }
   await page.waitForTimeout(1400);
   try {
-    const saveButton = page.locator(
-      'span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6.xlyipyv.xuxw1ft:text("Lưu")',
-    );
-    await saveButton.click({ delay: 200 });
-    console.log('✅ Đã click vào lưu');
+    const verify = page.locator('span', {
+      hasText: /^Lưu$/,
+    });
+    const count = await verify.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Lưu'`);
+    if (count >= 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(1);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) });
+      console.log('✅ Đã click vào phần tử Lưu');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Lưu');
+    }
   } catch (error: any) {
     console.log('❌ Lỗi khi click vào lưu:', error.message);
   }

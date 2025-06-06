@@ -45,7 +45,7 @@ services:
   app:
     build:
       context: .
-      target: production # Multi-stage build
+      target: production
     container_name: rent-fb-app
     restart: unless-stopped
     depends_on:
