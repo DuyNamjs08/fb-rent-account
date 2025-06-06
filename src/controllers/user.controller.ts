@@ -5,6 +5,8 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import UserService from '../services/User.service';
 import bcrypt from 'bcryptjs';
 import { customAlphabet } from 'nanoid';
+import prisma from '../config/prisma';
+import { Prisma } from '@prisma/client';
 
 export const generateShortCode = () => {
   const nanoid = customAlphabet('0123456789', 8); // chỉ 4 chữ số
@@ -54,8 +56,56 @@ const userController = {
   },
   getAllUsers: async (req: Request, res: Response): Promise<void> => {
     try {
-      const Users = await UserService.getAllUsers();
-      successResponse(res, 'Danh sách người dùng', Users);
+      const userId =
+        typeof req.query.id === 'string' && req.query.id.trim()
+          ? req.query.id.trim()
+          : undefined;
+      const query =
+        typeof req.query.query === 'string' && req.query.query.trim()
+          ? req.query.query.trim()
+          : undefined;
+      const pageNum = Math.max(1, Number(req.query.page) || 1);
+      const pageSizeNum = Math.min(
+        100,
+        Math.max(1, Number(req.query.pageSize) || 10),
+      ); // Giới hạn pageSize: 1-100
+      const skip = (pageNum - 1) * pageSizeNum;
+
+      const andConditions: Prisma.UserWhereInput[] = [];
+      if (userId) {
+        andConditions.push({ id: userId });
+      }
+      if (query) {
+        andConditions.push({
+          OR: [
+            { username: { contains: query, mode: 'insensitive' } },
+            { email: { contains: query, mode: 'insensitive' } },
+          ],
+        });
+      }
+
+      const whereClause: Prisma.UserWhereInput =
+        andConditions.length > 0 ? { AND: andConditions } : {};
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where: whereClause,
+          orderBy: { created_at: 'desc' },
+          skip,
+          take: pageSizeNum,
+        }),
+        prisma.user.count({ where: whereClause }),
+      ]);
+
+      successResponse(res, 'Danh sách người dùng', {
+        data: users,
+        pagination: {
+          total,
+          page: pageNum,
+          pageSize: pageSizeNum,
+          totalPages: Math.ceil(total / pageSizeNum),
+        },
+      });
     } catch (error: any) {
       errorResponse(
         res,
