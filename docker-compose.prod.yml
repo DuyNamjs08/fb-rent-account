@@ -81,11 +81,13 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@rent-fb-postgres:5432/${POSTGRES_DB}
+      DISPLAY: ':99'
+      PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright'
     ports:
       - '4002:4000' # Chỉ expose port cần thiết
     # Không mount source code
-    user: '1001:1001' # Non-root user
-    read_only: true # Read-only filesystem
+    user: root # Playwright cần root để chạy trình duyệt trơn tru hơn (hoặc set thêm permission tệp)
+    # read_only: true
     tmpfs:
       - /tmp
       - /var/run
@@ -110,12 +112,15 @@ services:
     cap_drop:
       - ALL
     cap_add:
+      - SYS_ADMIN # Cần nếu Chromium chạy sandbox
       - NET_BIND_SERVICE
     logging:
       driver: 'json-file'
       options:
         max-size: '10m'
         max-file: '3'
+    shm_size: 1gb # tránh lỗi Playwright khi chạy browser headless
+
   postgres-backup:
     image: postgres:17-alpine
     container_name: rent-fb-backup
