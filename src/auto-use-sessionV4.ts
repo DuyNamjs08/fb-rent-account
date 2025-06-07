@@ -5,7 +5,12 @@ import { randomDelay } from './auto-use-session';
 import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
 
 export const autoRemovePartner = async (data: any) => {
-  const { ads_account_id = '', bm_origin = '', ads_name = '' } = data;
+  const {
+    ads_account_id = '',
+    bm_origin = '',
+    ads_name = '',
+    cookie_origin,
+  } = data;
   const browser = await chromium.launch({
     headless: false,
     // proxy: {
@@ -16,29 +21,27 @@ export const autoRemovePartner = async (data: any) => {
     slowMo: 100, // Tự động chậm lại giữa mỗi thao tác
   });
   let result = 0;
-  // Đường dẫn cookie cũ và mới
-  const oldCookiesPath = path.resolve(__dirname, '../fb-cookies.json'); // cookies dạng Playwright  // cookies dạng array
-  const storageStatePath = path.resolve(
-    __dirname,
-    '../fb-cookies-browser.json',
-  );
-  // Nếu file cookies cũ tồn tại nhưng chưa đúng định dạng storageState, thì chuyển đổi
-  if (fs.existsSync(oldCookiesPath) && !fs.existsSync(storageStatePath)) {
-    console.log('⚙️ Đang chuyển đổi cookie cũ sang định dạng Playwright...');
-    const rawCookies = JSON.parse(fs.readFileSync(oldCookiesPath, 'utf-8'));
-    const storageState = {
-      cookies: rawCookies,
-      origins: [],
-    };
-    fs.writeFileSync(storageStatePath, JSON.stringify(storageState, null, 2));
-    console.log('✅ Đã tạo file storageState:', storageStatePath);
-  }
+  // const oldCookiesPath = path.resolve(__dirname, '../fb-cookies.json');
+  // const storageStatePath = path.resolve(
+  //   __dirname,
+  //   '../fb-cookies-browser.json',
+  // );
+  // if (fs.existsSync(oldCookiesPath) && !fs.existsSync(storageStatePath)) {
+  //   console.log('⚙️ Đang chuyển đổi cookie cũ sang định dạng Playwright...');
+  //   const rawCookies = JSON.parse(fs.readFileSync(oldCookiesPath, 'utf-8'));
+  //   const storageState = {
+  //     cookies: rawCookies,
+  //     origins: [],
+  //   };
+  //   fs.writeFileSync(storageStatePath, JSON.stringify(storageState, null, 2));
+  //   console.log('✅ Đã tạo file storageState:', storageStatePath);
+  // }
   let context: BrowserContext;
-  if (fs.existsSync(storageStatePath)) {
+  if (cookie_origin) {
     console.log('✅ Tìm thấy file cookies, đang load...');
     try {
       context = await browser.newContext({
-        storageState: storageStatePath,
+        storageState: cookie_origin,
         viewport: { width: 1280, height: 800 },
         locale: 'vi-VN',
         userAgent:
@@ -152,7 +155,7 @@ export const autoRemovePartner = async (data: any) => {
       console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
-        const element = verify.nth(1);
+        const element = verify.nth(2);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
         console.log('✅ Đã click vào phần tử Xong');
@@ -164,15 +167,6 @@ export const autoRemovePartner = async (data: any) => {
     }
   }
   // phần xác minh tài khoản
-  try {
-    await page.waitForSelector('input[type="email"]', { timeout: 5000 });
-    console.log('❌ Chưa đăng nhập - cần đăng nhập thủ công');
-    await page.waitForTimeout(20000);
-    await context.storageState({ path: storageStatePath });
-    console.log('💾 Đã lưu session mới vào:', storageStatePath);
-  } catch {
-    console.log('✅ Đã đăng nhập thành công!');
-  }
 
   await page.waitForTimeout(1500);
   await page.mouse.move(200, 300);
@@ -180,18 +174,23 @@ export const autoRemovePartner = async (data: any) => {
   await page.waitForTimeout(1000);
 
   try {
-    const bmLocator = page.locator(
-      `div[role="heading"][aria-level="4"].x1xqt7ti.xsuwoey.x63nzvj.xbsr9hj.xuxw1ft.x6ikm8r.x10wlt62.xlyipyv.x1h4wwuj.x1fcty0u.xeuugli:has-text("${ads_name}")`,
-    );
-
-    await bmLocator.waitFor({ state: 'visible', timeout: 10000 });
-    await bmLocator.click({ delay: 200 });
-    console.log(`✅ Đã click vào BM "${ads_name}"`);
+    // const verify = page.locator('div[role="heading"][aria-level="4"]', {
+    //   hasText: ads_name,
+    // });
+    const verify = page.locator(`div[role="heading"]:has-text("${ads_name}")`);
+    const count = await verify.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text ${ads_name}`);
+    if (count >= 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.first();
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) });
+      console.log(`✅ Đã click vào phần tử ${ads_name}`);
+    } else {
+      console.log(`⚠️ Không tìm thấy phần tử ${ads_name}`);
+    }
   } catch (error: any) {
-    console.log(
-      `❌ Không tìm thấy hoặc không click được ${ads_name}:`,
-      error.message,
-    );
+    console.log('❌ Lỗi khi click vào ${ads_name}:', error.message);
   }
   await page.waitForTimeout(1200);
   try {
