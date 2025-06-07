@@ -113,7 +113,8 @@ model Token {
 model FacebookPartnerBM {
   id          String      @id @default(uuid())
   bm_id       String  
-  bm_origin String? 
+  bm_origin String?
+  bot_id           String?
   ads_account_id String 
   user_id       String
   status        String

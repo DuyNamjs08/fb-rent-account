@@ -5,7 +5,7 @@ import { randomDelay } from './auto-use-session';
 import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
 
 export const autoDisChardLimitSpend = async (data: any) => {
-  const { bm_id = '', ads_account_id = '' } = data;
+  const { bm_id = '', ads_account_id = '', cookie_origin } = data;
   const browser = await chromium.launch({
     headless: false,
     // proxy: {
@@ -16,30 +16,28 @@ export const autoDisChardLimitSpend = async (data: any) => {
     slowMo: 120, // Tự động chậm lại giữa mỗi thao tác
   });
   let result = 0;
-  // Đường dẫn cookie cũ và mới
-  const oldCookiesPath = path.resolve(__dirname, '../fb-cookies.json'); // cookies dạng Playwright  // cookies dạng array
-  const storageStatePath = path.resolve(
-    __dirname,
-    '../fb-cookies-browser.json',
-  );
-  // Nếu file cookies cũ tồn tại nhưng chưa đúng định dạng storageState, thì chuyển đổi
-  if (fs.existsSync(oldCookiesPath) && !fs.existsSync(storageStatePath)) {
-    console.log('⚙️ Đang chuyển đổi cookie cũ sang định dạng Playwright...');
-    const rawCookies = JSON.parse(fs.readFileSync(oldCookiesPath, 'utf-8'));
-    const storageState = {
-      cookies: rawCookies,
-      origins: [],
-    };
-    fs.writeFileSync(storageStatePath, JSON.stringify(storageState, null, 2));
-    console.log('✅ Đã tạo file storageState:', storageStatePath);
-  }
+  // const oldCookiesPath = path.resolve(__dirname, '../fb-cookies.json');
+  // const storageStatePath = path.resolve(
+  //   __dirname,
+  //   '../fb-cookies-browser.json',
+  // );
+  // if (fs.existsSync(oldCookiesPath) && !fs.existsSync(storageStatePath)) {
+  //   console.log('⚙️ Đang chuyển đổi cookie cũ sang định dạng Playwright...');
+  //   const rawCookies = JSON.parse(fs.readFileSync(oldCookiesPath, 'utf-8'));
+  //   const storageState = {
+  //     cookies: rawCookies,
+  //     origins: [],
+  //   };
+  //   fs.writeFileSync(storageStatePath, JSON.stringify(storageState, null, 2));
+  //   console.log('✅ Đã tạo file storageState:', storageStatePath);
+  // }
   let context: BrowserContext;
-  if (fs.existsSync(storageStatePath)) {
+  if (cookie_origin) {
     console.log('✅ Tìm thấy file cookies, đang load...');
     try {
       context = await browser.newContext({
-        storageState: storageStatePath,
-        viewport: { width: 1280, height: 800 },
+        storageState: cookie_origin,
+        viewport: { width: 1500, height: 800 },
         locale: 'vi-VN',
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/118.0.5993.90 Safari/537.36',
@@ -153,7 +151,7 @@ export const autoDisChardLimitSpend = async (data: any) => {
       console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
-        const element = verify.nth(1);
+        const element = verify.nth(2);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
         console.log('✅ Đã click vào phần tử Xong');
@@ -165,19 +163,10 @@ export const autoDisChardLimitSpend = async (data: any) => {
     }
   }
   // phần xác minh tài khoản
-  try {
-    await page.waitForSelector('input[type="email"]', { timeout: 5000 });
-    console.log('❌ Chưa đăng nhập - cần đăng nhập thủ công');
-    await page.waitForTimeout(20000);
-    await context.storageState({ path: storageStatePath });
-    console.log('💾 Đã lưu session mới vào:', storageStatePath);
-  } catch {
-    console.log('✅ Đã đăng nhập thành công!');
-  }
 
   await page.waitForTimeout(1500);
   const heading = page.locator('div[role="heading"][aria-level="3"]', {
-    hasText: 'Giới hạn chi tiêu cho tài khoản',
+    hasText: 'Hoạt động thanh toán',
   });
   await heading.scrollIntoViewIfNeeded({ timeout: 400 });
   await page.waitForTimeout(1000);
@@ -188,15 +177,13 @@ export const autoDisChardLimitSpend = async (data: any) => {
     );
     const count = await allSpans.count();
     console.log(`🔎 Tìm thấy ${count} phần tử.`);
-    if (count === 16) {
+    if (count > 0) {
       // Click vào tất cả hoặc chỉ phần tử đầu
-      await allSpans.nth(14).scrollIntoViewIfNeeded();
-      await allSpans.nth(14).click({ delay: 200 });
-      console.log(
-        '✅ Đã click vào phần tử đầu tiên trong danh sách 14 phần tử.',
-      );
+      await allSpans.nth(17).scrollIntoViewIfNeeded();
+      await allSpans.nth(17).click({ delay: 200, force: true });
+      console.log('✅ Đã click vào phần tử trong danh sách 17 phần tử.');
     } else {
-      console.log('⚠️ Số lượng phần tử KHÔNG PHẢI là 14, không click.');
+      console.log('⚠️ Số lượng phần tử KHÔNG PHẢI là 17, không click.');
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click vào phần tử:', err.message);

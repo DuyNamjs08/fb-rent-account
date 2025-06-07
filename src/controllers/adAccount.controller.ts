@@ -127,6 +127,9 @@ const TKQCController = {
     try {
       const businessManagers = await prisma.facebookPartnerBM.findMany({
         where: {},
+        orderBy: {
+          created_at: 'desc',
+        },
       });
       const adsAccount = await prisma.adsAccount.findMany({
         where: {},

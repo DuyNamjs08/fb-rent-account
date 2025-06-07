@@ -16,6 +16,7 @@ const pointUsedController = {
         amountPoint,
         bm_origin,
         ads_name,
+        bot_id,
       } = req.body;
       if (
         !bm_id ||
@@ -23,11 +24,12 @@ const pointUsedController = {
         !user_id ||
         !amountPoint ||
         !bm_origin ||
-        !ads_name
+        !ads_name ||
+        !bot_id
       ) {
         errorResponse(
           res,
-          'Vui lòng nhập đúng thông tin',
+          'Vui lòng nhập đủ thông tin',
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -98,6 +100,7 @@ const pointUsedController = {
         amountPoint,
         bm_origin,
         ads_name,
+        bot_id,
       });
       successResponse(
         res,
@@ -189,15 +192,23 @@ const pointUsedController = {
   },
   deleteUserUsedPoint: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { bm_origin, bm_id, ads_account_id, user_id, ads_name, id } =
-        req.query;
+      const {
+        bm_origin,
+        bm_id,
+        ads_account_id,
+        user_id,
+        ads_name,
+        id,
+        bot_id,
+      } = req.query;
       if (
         !bm_id ||
         !ads_account_id ||
         !user_id ||
         !bm_origin ||
         !ads_name ||
-        !id
+        !id ||
+        !bot_id
       ) {
         errorResponse(
           res,
@@ -245,6 +256,7 @@ const pointUsedController = {
         user_id,
         bm_origin,
         ads_name,
+        bot_id,
       });
       successResponse(res, 'Gỡ khỏi tài khoản quảng cáo thành công !', '');
     } catch (error: any) {

@@ -1,6 +1,7 @@
 import Bull from 'bull';
 import { autoDisChardLimitSpend } from '../auto-use-sessionV3';
 import { autoRemovePartner } from '../auto-use-sessionV4';
+import prisma from '../config/prisma';
 
 export const fbRemoveParnert = new Bull('fbRemoveParnert', {
   redis: {
@@ -20,15 +21,26 @@ export const fbRemoveParnert = new Bull('fbRemoveParnert', {
 });
 const updateDb = async (data: any) => {
   try {
-    const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name } = data;
+    const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name, bot_id } =
+      data;
+    const cookie = await prisma.cookies.findUnique({
+      where: {
+        id: bot_id,
+      },
+    });
+    if (!cookie) {
+      throw new Error('Không tìm thấy cookie');
+    }
     const resultRemoveLimit = await autoDisChardLimitSpend({
       bm_id: bm_origin,
       ads_account_id,
+      cookie_origin: cookie.storage_state,
     });
     const resultRemoveParnert = await autoRemovePartner({
       bm_origin,
       ads_account_id,
       ads_name,
+      cookie_origin: cookie.storage_state,
     });
     return {
       status_remove_spend_limit: resultRemoveLimit,

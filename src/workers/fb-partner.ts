@@ -21,17 +21,28 @@ export const fbParnert = new Bull('fbParnert', {
 });
 const updateDb = async (data: any) => {
   try {
-    const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name } = data;
+    const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name, bot_id } =
+      data;
+    const cookie = await prisma.cookies.findUnique({
+      where: {
+        id: bot_id,
+      },
+    });
+    if (!cookie) {
+      throw new Error('Không tìm thấy cookie');
+    }
     const result = await autoChangePartner({
       bm_id,
       ads_account_id,
       bm_origin,
       ads_name,
+      cookie_origin: cookie.storage_state,
     });
     const resultChangeLimit = await autoChangeLimitSpend({
       bm_id: bm_origin,
       ads_account_id,
       amountPoint,
+      cookie_origin: cookie.storage_state,
     });
     console.log('playwright res', {
       status_limit_spend: result,
