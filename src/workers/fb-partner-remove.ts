@@ -21,8 +21,7 @@ export const fbRemoveParnert = new Bull('fbRemoveParnert', {
 });
 const updateDb = async (data: any) => {
   try {
-    const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name, bot_id } =
-      data;
+    const { ads_account_id, bm_origin, ads_name, bot_id } = data;
     const cookie = await prisma.cookies.findUnique({
       where: {
         id: bot_id,
@@ -53,11 +52,40 @@ const updateDb = async (data: any) => {
 };
 fbRemoveParnert.process(15, async (job) => {
   const { data } = job;
-  const { bm_id, ads_account_id, user_id, amountPoint } = data;
+  const { bm_id, ads_account_id, user_id, amountPoint, id } = data;
   try {
     console.log('data remove point', data);
     const res = await updateDb(data);
-    // const { status_remove_spend_limit, status_remove_partner } = res;
+    const user = await prisma.user.findUnique({
+      where: {
+        id: user_id as string,
+      },
+    });
+    const filterUser = user?.list_ads_account.filter(
+      (item) => item !== ads_account_id,
+    );
+    if (res.status_remove_partner && res.status_remove_spend_limit) {
+      await prisma.user.update({
+        where: {
+          id: user_id as string,
+        },
+        data: {
+          list_ads_account: filterUser,
+        },
+      });
+      await prisma.facebookPartnerBM.update({
+        where: {
+          id: id as string,
+        },
+        data: {
+          status: 'complete_remove',
+          status_partner: 0,
+          status_limit_spend: null,
+          status_dischard_limit_spend: 1,
+          status_dischard_partner: 1,
+        },
+      });
+    }
     console.log(`✅ Xóa thành công đối tác vào BM với trạng thái`, res);
     return res;
   } catch (err) {
