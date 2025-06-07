@@ -93,6 +93,18 @@ const pointUsedController = {
         );
         return;
       }
+      const newBmPartnert = await prisma.facebookPartnerBM.create({
+        data: {
+          bm_id: bm_id as string,
+          ads_account_id,
+          user_id,
+          status: 'process',
+          status_partner: 0,
+          status_limit_spend: 0,
+          bm_origin,
+          bot_id,
+        },
+      });
       await fbParnert.add({
         bm_id,
         ads_account_id,
@@ -101,10 +113,11 @@ const pointUsedController = {
         bm_origin,
         ads_name,
         bot_id,
+        id_partner: newBmPartnert.id,
       });
       successResponse(
         res,
-        'Thuê tài khoản thành công!!',
+        'Quá trình thuê tài khoản đang điễn ra vui lòng đợi giây lát !!',
         'poitsUsedTransaction',
       );
     } catch (error: any) {
@@ -227,23 +240,12 @@ const pointUsedController = {
         errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
         return;
       }
-      const filterUser = user.list_ads_account.filter(
-        (item) => item !== ads_account_id,
-      );
-      await prisma.user.update({
-        where: {
-          id: user_id as string,
-        },
-        data: {
-          list_ads_account: filterUser,
-        },
-      });
       await prisma.facebookPartnerBM.update({
         where: {
           id: id as string,
         },
         data: {
-          status: 'dischard',
+          status: 'process_remove',
           status_partner: 0,
           status_limit_spend: null,
           status_dischard_limit_spend: 1,
@@ -257,8 +259,9 @@ const pointUsedController = {
         bm_origin,
         ads_name,
         bot_id,
+        id,
       });
-      successResponse(res, 'Gỡ khỏi tài khoản quảng cáo thành công !', '');
+      successResponse(res, 'Quá trình gỡ tài khoản đang được xử lý!', '');
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
