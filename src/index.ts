@@ -13,6 +13,7 @@ import transactionRoutes from './routes/transaction.routes';
 import pointusedRoutes from './routes/poitused.routes';
 import facebookBmRoutes from './routes/facebookBm.routes';
 import cookieBmRoutes from './routes/cookie.routes';
+import statisticsBmRoutes from './routes/statistics.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -69,6 +70,7 @@ app.use('/api/v1/', transactionRoutes);
 app.use('/api/v1/', pointusedRoutes);
 app.use('/api/v1/', facebookBmRoutes);
 app.use('/api/v1/', cookieBmRoutes);
+app.use('/api/v1/', statisticsBmRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);

@@ -75,7 +75,6 @@ model Transaction {
   user_id  String
   amountVND   Int       // Số tiền VNĐ nạp vào
   points      Int       // Điểm tương ứng nhận được
-  createdAt   DateTime  @default(now())
   bank        String 
   description        String 
   transactionID        Int
@@ -83,6 +82,9 @@ model Transaction {
   date        String
   status     String @default("pending")
   error_message  String?
+   
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
   @@map("transactions")
 }
 model PointUsage {
@@ -232,6 +234,9 @@ model AdsAccount {
   status_rented String? 
   spend_limit Int?
   note_aka    String?
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
   
   @@map("ads_accounts")
 }
