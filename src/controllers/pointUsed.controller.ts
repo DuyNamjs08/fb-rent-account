@@ -7,6 +7,19 @@ import prisma from '../config/prisma';
 import { fbParnert } from '../workers/fb-partner';
 import { fbRemoveParnert } from '../workers/fb-partner-remove';
 const pointUsedController = {
+  checkSpending: async (req: Request, res: Response): Promise<void> => {
+    try {
+      // const
+      successResponse(res, 'Checking spend', '');
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
   createPointUsed: async (req: Request, res: Response): Promise<void> => {
     try {
       const {
@@ -93,6 +106,7 @@ const pointUsedController = {
         );
         return;
       }
+
       const newBmPartnert = await prisma.facebookPartnerBM.create({
         data: {
           bm_id: bm_id as string,
@@ -105,7 +119,16 @@ const pointUsedController = {
           bot_id,
         },
       });
-      await fbParnert.add({
+      if (!newBmPartnert) {
+        errorResponse(
+          res,
+          'Lỗi đổi điểm vui lòng thử lại sau',
+          {},
+          httpStatusCodes.INTERNAL_SERVER_ERROR,
+        );
+        return;
+      }
+      const job = await fbParnert.add({
         bm_id,
         ads_account_id,
         user_id,
@@ -115,6 +138,8 @@ const pointUsedController = {
         bot_id,
         id_partner: newBmPartnert.id,
       });
+      console.log('✅ Job added to fbParnert queue:', job.id);
+
       successResponse(
         res,
         'Quá trình thuê tài khoản đang điễn ra vui lòng đợi giây lát !!',

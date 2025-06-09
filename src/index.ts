@@ -21,6 +21,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { fbRealtimeTransaction } from './workers/fb-realtime-transaction';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import prisma from './config/prisma';
+import './workers/fb-partner';
+import './workers/fb-partner-remove';
 
 dotenv.config({ path: `${__dirname}/../.env` });
 const envPath = `${__dirname}/../.env`;

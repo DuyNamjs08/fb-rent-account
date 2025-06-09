@@ -3,7 +3,7 @@ import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
 import { autoChangeLimitSpend } from '../auto-use-sessionV2';
 
-export const fbParnert = new Bull('fbParnert', {
+export const fbParnert = new Bull('fb-add-parnert-ads', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6380', 10),
@@ -101,9 +101,12 @@ fbParnert.process(15, async (job) => {
       });
     }
     console.log(`✅ Cập nhật thành công đối tác vào BM với trạng thái`, res);
-    return res;
+    return true;
   } catch (err) {
     console.error(`❌ Lỗi khi cập nhật đối tác vào BM`, err);
     throw err;
   }
+});
+fbParnert.on('failed', (job, err) => {
+  console.error('Job failed', job.id, err);
 });

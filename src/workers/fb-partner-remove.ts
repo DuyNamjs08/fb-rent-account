@@ -3,7 +3,7 @@ import { autoDisChardLimitSpend } from '../auto-use-sessionV3';
 import { autoRemovePartner } from '../auto-use-sessionV4';
 import prisma from '../config/prisma';
 
-export const fbRemoveParnert = new Bull('fbRemoveParnert', {
+export const fbRemoveParnert = new Bull('fb-remove-parnert', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6380', 10),
