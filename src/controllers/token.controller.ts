@@ -13,7 +13,6 @@ import path from 'path';
 const TokenController = {
   createAccessToken: async (req: Request, res: Response): Promise<void> => {
     try {
-      console.log('__dirname', __dirname);
       const pathhtml = path.resolve(__dirname, '../html/index.html');
       console.log('pathhtml', pathhtml);
       let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
@@ -85,15 +84,13 @@ const TokenController = {
             type: 'login_notification',
           },
         });
-        console.log('emailLog', emailLog);
-        console.log('user.email', user.email);
-        await sendEmail({
-          email: user.email,
-          subject: 'AKAds thông báo đăng nhập',
-          message: htmlContent
-            .replace('{{name}}', user.username || 'Người dùng')
-            .replace('{{loginTime}}', new Date().toLocaleString()),
-        });
+        // await sendEmail({
+        //   email: user.email,
+        //   subject: 'AKAds thông báo đăng nhập',
+        //   message: htmlContent
+        //     .replace('{{name}}', user.username || 'Người dùng')
+        //     .replace('{{loginTime}}', new Date().toLocaleString()),
+        // });
         successResponse(res, 'Success', Token);
         return;
       }
@@ -118,14 +115,13 @@ const TokenController = {
           type: 'login_notification',
         },
       });
-      console.log('emailLog', emailLog);
-      await sendEmail({
-        email: user.email,
-        subject: 'AKAds thông báo đăng nhập',
-        message: htmlContent
-          .replace('{{name}}', user.username || 'Người dùng')
-          .replace('{{loginTime}}', new Date().toLocaleString()),
-      });
+      // await sendEmail({
+      //   email: user.email,
+      //   subject: 'AKAds thông báo đăng nhập',
+      //   message: htmlContent
+      //     .replace('{{name}}', user.username || 'Người dùng')
+      //     .replace('{{loginTime}}', new Date().toLocaleString()),
+      // });
       successResponse(res, 'Success create', Token);
     } catch (error: any) {
       errorResponse(

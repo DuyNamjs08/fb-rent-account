@@ -1,3 +1,4 @@
+import path from 'path';
 import winston, { format, transports } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
@@ -22,7 +23,8 @@ const logger = winston.createLogger({
     new transports.Console({
       format: format.combine(format.colorize(), format.simple()),
     }),
-    new transports.File({ filename: 'logs/app.log' }),
+    // new transports.File({ filename: 'logs/app.log' }),
+    new transports.File({ filename: path.join(__dirname, '../logs/app.log') }),
     dailyRotateTransport,
   ],
 });
