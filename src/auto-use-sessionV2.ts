@@ -42,7 +42,7 @@ export const autoChangeLimitSpend = async (data: any) => {
     try {
       context = await browser.newContext({
         storageState: cookie_origin,
-        viewport: { width: 1500, height: 800 },
+        viewport: { width: 1900, height: 800 },
         locale: 'vi-VN',
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/118.0.5993.90 Safari/537.36',
