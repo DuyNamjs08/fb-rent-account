@@ -152,6 +152,16 @@ model Cookies {
 
   @@map("cookies")
 }
+model Policies {
+  id          String      @id @default(uuid())
+  title       String   
+  message     String
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("policies")
+}
 // 1 = ACTIVE
 //  2 = DISABLED
 //  3 = UNSETTLED
