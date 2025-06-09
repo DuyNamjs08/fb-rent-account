@@ -177,13 +177,21 @@ export const autoDisChardLimitSpend = async (data: any) => {
     );
     const count = await allSpans.count();
     console.log(`🔎 Tìm thấy ${count} phần tử.`);
-    if (count > 0) {
+    if (count == 19) {
       // Click vào tất cả hoặc chỉ phần tử đầu
       await allSpans.nth(17).scrollIntoViewIfNeeded();
       await allSpans.nth(17).click({ delay: 200, force: true });
-      console.log('✅ Đã click vào phần tử trong danh sách 17 phần tử.');
+      console.log(
+        '✅ Đã click vào phần tử đầu tiên trong danh sách 17 phần tử.',
+      );
+    } else if (count == 16) {
+      await allSpans.nth(14).scrollIntoViewIfNeeded();
+      await allSpans.nth(14).click({ delay: 200, force: true });
+      console.log(
+        '✅ Đã click vào phần tử đầu tiên trong danh sách 14 phần tử.',
+      );
     } else {
-      console.log('⚠️ Số lượng phần tử KHÔNG PHẢI là 17, không click.');
+      console.log(`⚠️ Số lượng phần tử KHÔNG PHẢI là ${count} , không click.`);
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click vào phần tử:', err.message);
