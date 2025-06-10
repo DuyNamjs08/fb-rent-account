@@ -124,6 +124,7 @@ model FacebookPartnerBM {
   status_limit_spend        Int?
   status_dischard_limit_spend        Int?
   status_dischard_partner      Int?
+  message      String?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 

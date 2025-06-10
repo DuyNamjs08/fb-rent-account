@@ -24,6 +24,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import prisma from './config/prisma';
 import './workers/fb-partner';
 import './workers/fb-partner-remove';
+import './workers/fb-check-account';
 
 dotenv.config({ path: `${__dirname}/../.env` });
 const envPath = `${__dirname}/../.env`;

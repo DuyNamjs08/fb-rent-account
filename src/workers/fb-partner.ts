@@ -2,6 +2,7 @@ import Bull from 'bull';
 import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
 import { autoChangeLimitSpend } from '../auto-use-sessionV2';
+import { createRepeatJob } from './fb-check-account';
 
 export const fbParnert = new Bull('fb-add-parnert-ads', {
   redis: {
@@ -72,6 +73,7 @@ fbParnert.process(15, async (job) => {
       },
     });
     if (status_partner && status_limit_spend) {
+      await createRepeatJob({ ...data });
       await prisma.adsAccount.update({
         where: {
           id: 'act_' + ads_account_id,
