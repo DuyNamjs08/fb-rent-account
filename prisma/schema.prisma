@@ -56,6 +56,7 @@ model User {
   updated_at              DateTime @updatedAt
   phone                   String?
   username                   String?
+  images                   String?
   role_id                   String?
   role                    String? @default("user") // user | admin | super_admin
   token                   Token[]

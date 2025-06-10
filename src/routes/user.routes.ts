@@ -1,5 +1,6 @@
 import express from 'express';
 import userController from '../controllers/user.controller';
+import { uploadMiddleware } from '../middlewares/upload.middleware';
 
 const router = express.Router();
 
@@ -535,7 +536,11 @@ router.get('/user/:id', userController.getUserById);
  *                                      type: string
  *                                      example: 8b5237e2-8b75-4882-908a-86353fc555bd
  */
-router.put('/user/:id', userController.updateUser);
+router.put(
+  '/user/:id',
+  uploadMiddleware.array('images', 1),
+  userController.updateUser,
+);
 
 /**
  * @swagger
