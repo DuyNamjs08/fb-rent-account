@@ -2,6 +2,7 @@ import Bull from 'bull';
 import { autoDisChardLimitSpend } from '../auto-use-sessionV3';
 import { autoRemovePartner } from '../auto-use-sessionV4';
 import prisma from '../config/prisma';
+import { createRepeatJob } from './fb-check-account';
 
 export const fbRemoveParnert = new Bull('fb-remove-parnert', {
   redis: {
@@ -65,6 +66,7 @@ fbRemoveParnert.process(15, async (job) => {
       (item) => item !== ads_account_id,
     );
     if (res.status_remove_partner && res.status_remove_spend_limit) {
+      await createRepeatJob({ bm_id, ads_account_id });
       await prisma.user.update({
         where: {
           id: user_id as string,
