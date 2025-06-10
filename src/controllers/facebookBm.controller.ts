@@ -117,10 +117,19 @@ const facebookBmController = {
   },
   deleteFacebookBm: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const { id } = req.query;
+      if (!id) {
+        errorResponse(
+          res,
+          'Thiếu trường',
+          {},
+          httpStatusCodes.INTERNAL_SERVER_ERROR,
+        );
+        return;
+      }
       const facebookBm = await prisma.facebookBM.findUnique({
         where: {
-          id: id,
+          id: id as string,
         },
       });
       if (!facebookBm) {
@@ -134,7 +143,7 @@ const facebookBmController = {
       }
       await prisma.facebookBM.delete({
         where: {
-          id: id,
+          id: id as string,
         },
       });
       successResponse(res, 'Xóa bm thành công !', true);

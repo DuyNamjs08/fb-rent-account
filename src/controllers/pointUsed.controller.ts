@@ -6,10 +6,28 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
 import { fbParnert } from '../workers/fb-partner';
 import { fbRemoveParnert } from '../workers/fb-partner-remove';
+import { createRepeatJob, fbCheckAccount } from '../workers/fb-check-account';
 const pointUsedController = {
   checkSpending: async (req: Request, res: Response): Promise<void> => {
     try {
-      // const
+      const {
+        bm_id,
+        ads_account_id,
+        amountPoint,
+        bm_origin,
+        ads_name,
+        bot_id,
+        user_id,
+      } = req.body;
+      createRepeatJob({
+        bm_id,
+        ads_account_id,
+        amountPoint,
+        bm_origin,
+        ads_name,
+        bot_id,
+        user_id,
+      });
       successResponse(res, 'Checking spend', '');
     } catch (error: any) {
       errorResponse(
