@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import { customAlphabet } from 'nanoid';
 import prisma from '../config/prisma';
 import { Prisma } from '@prisma/client';
+import { uploadToR2 } from '../middlewares/upload.middleware';
 
 export const generateShortCode = () => {
   const nanoid = customAlphabet('0123456789', 8); // chỉ 4 chữ số
@@ -132,7 +133,9 @@ const userController = {
 
   updateUser: async (req: Request, res: Response): Promise<void> => {
     try {
-      const User = await UserService.getUserById(req.params.id);
+      const { email, phone, username } = req.body;
+      const id = req.params.id;
+      const User = await UserService.getUserById(id);
       if (!User) {
         errorResponse(
           res,
@@ -150,9 +153,72 @@ const userController = {
       } else {
         delete req.body.password;
       }
+      const findmail = await prisma.user.findUnique({
+        where: {
+          email,
+        },
+      });
+      if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
+        const payload = {
+          email,
+          phone,
+          username,
+        };
 
-      const UserNew = await UserService.updateUser(req.params.id, req.body);
-      successResponse(res, 'Cập nhật người dùng thành công !', UserNew);
+        if (User.email == email && findmail) {
+          delete payload.email;
+        } else if (findmail) {
+          errorResponse(
+            res,
+            'Email đã tồn tại vui lòng chọn mail khác',
+            {},
+            httpStatusCodes.CONFLICT,
+          );
+          return;
+        }
+        const UserNew = await UserService.updateUser(id, payload);
+        successResponse(res, 'Cập nhật người dùng thành công !', UserNew);
+        return;
+      }
+      const allFiles = req.files as Express.Multer.File[];
+      const images = allFiles.filter((file) =>
+        file.mimetype.startsWith('image/'),
+      );
+      const uploadFiles = async (
+        files: Express.Multer.File[],
+        type: 'image' | 'video',
+      ) => {
+        return Promise.all(
+          files.map(async (file) => {
+            const timestamp = Date.now();
+            const originalFilename = file.originalname.replace(/\s/g, '_');
+            const newFilename = `${originalFilename}-${timestamp}`;
+            const result = await uploadToR2(
+              file.path,
+              `user-uploads/${newFilename}`,
+            );
+            return {
+              url: `${process.env.R2_PUBLIC_URL}/${result.Key}`,
+              type, // 'image' hoặc 'video'
+            };
+          }),
+        );
+      };
+      const [imageUploads] = await Promise.all([uploadFiles(images, 'image')]);
+      const payload = { email, phone, username, images: imageUploads?.[0].url };
+      if (User.email == email && findmail) {
+        delete payload.email;
+      } else if (findmail) {
+        errorResponse(
+          res,
+          'Email đã tồn tại vui lòng chọn mail khác',
+          {},
+          httpStatusCodes.CONFLICT,
+        );
+        return;
+      }
+      const newUserImage = await UserService.updateUser(id, payload);
+      successResponse(res, 'Cập nhật người dùng thành công !', newUserImage);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
