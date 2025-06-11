@@ -66,6 +66,15 @@ const pointUsedController = {
         );
         return;
       }
+      if (amountPoint < 0) {
+        errorResponse(
+          res,
+          'Vui lòng nhập số tiền lớn hơn 0',
+          {},
+          httpStatusCodes.INTERNAL_SERVER_ERROR,
+        );
+        return;
+      }
       const amountVNDchange = Math.floor(Number(amountPoint));
       const user = await prisma.user.findUnique({
         where: { id: user_id },

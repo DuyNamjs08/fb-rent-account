@@ -64,9 +64,16 @@ export const autoRemovePartner = async (data: any) => {
     });
   }
   const page = await context.newPage();
-  await page.goto(
-    `https://business.facebook.com/latest/settings/ad_accounts?business_id=${bm_origin}&selected_asset_id=${ads_account_id}&selected_asset_type=ad-account`,
-  );
+
+  try {
+    await page.goto(
+      `https://business.facebook.com/latest/settings/ad_accounts?business_id=${bm_origin}&selected_asset_id=${ads_account_id}&selected_asset_type=ad-account`,
+    );
+  } catch (e) {
+    console.error('❌ page.goto crashed:', e);
+    await browser.close();
+  }
+
   await page.waitForLoadState('networkidle');
   // phần xác minh tài khoản
   let isVerify = 0;

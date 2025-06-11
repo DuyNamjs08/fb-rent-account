@@ -64,9 +64,15 @@ export const autoChangeLimitSpend = async (data: any) => {
     });
   }
   const page = await context.newPage();
-  await page.goto(
-    `https://business.facebook.com/billing_hub/accounts/details?asset_id=${ads_account_id}&business_id=${bm_id}&placement=standalone`,
-  );
+  try {
+    await page.goto(
+      `https://business.facebook.com/billing_hub/accounts/details?asset_id=${ads_account_id}&business_id=${bm_id}&placement=standalone`,
+    );
+  } catch (e) {
+    console.error('❌ page.goto crashed:', e);
+    await browser.close();
+  }
+
   await page.waitForLoadState('networkidle');
   // phần xác minh tài khoản
   let isVerify = 0;
