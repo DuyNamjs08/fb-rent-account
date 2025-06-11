@@ -39,17 +39,17 @@ export const fbCheckAccount = new Bull('fb-check-account', {
 });
 
 const updateDb = async (data: any) => {
+  const {
+    bm_id,
+    ads_account_id,
+    amountPoint,
+    bm_origin,
+    ads_name,
+    bot_id,
+    user_id,
+    job,
+  } = data;
   try {
-    const {
-      bm_id,
-      ads_account_id,
-      amountPoint,
-      bm_origin,
-      ads_name,
-      bot_id,
-      user_id,
-      job,
-    } = data;
     const systemUserToken = await prisma.facebookBM.findUnique({
       where: { bm_id: bm_origin },
     });
@@ -145,6 +145,7 @@ const updateDb = async (data: any) => {
       return;
     }
   } catch (fallbackError) {
+    await removeRepeatJob(job);
     console.error('❌ Lỗi updateDb:', fallbackError);
     throw fallbackError;
   }
@@ -155,7 +156,7 @@ fbCheckAccount.process(15, async (job) => {
   console.log('🔄 Processing repeat job:', job.id, data);
 
   try {
-    await updateDb({ ...data, job });
+    await updateDb({ job, ...data });
     console.log(`✅ Repeat job ${job.id} completed`);
     return { success: true };
   } catch (err) {
