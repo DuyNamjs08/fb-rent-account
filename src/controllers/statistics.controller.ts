@@ -130,7 +130,6 @@ const statisticsController = {
   getStatisticsMonthly: async (req: Request, res: Response): Promise<void> => {
     try {
       const { targetDayFrom, targetDayTo } = req.query;
-      // Kiểm tra định dạng YYYY/MM/DD
       const dateFormat = 'yyyy/MM/dd';
       if (
         !isMatch(targetDayFrom as string, dateFormat) ||
@@ -147,32 +146,34 @@ const statisticsController = {
         parse(targetDayFrom as string, dateFormat, new Date()),
       );
       const toDate = startOfMonth(
-        addMonths(parse(targetDayTo as string, dateFormat, new Date()), 1),
+        parse(targetDayTo as string, dateFormat, new Date()),
       );
-      const daysDiff = differenceInMonths(toDate, fromDate);
-      if (daysDiff > 6) {
+      const monthsDiff = differenceInMonths(addMonths(toDate, 1), fromDate);
+      if (monthsDiff > 6) {
         errorResponse(
           res,
           'Khoảng thời gian tối đa là 6 tháng',
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
-      // Tạo danh sách các tháng
+      // Tạo danh sách tháng giữa fromDate và toDate (bao gồm toDate)
       const months: { label: string; start: Date; end: Date }[] = [];
       let current = new Date(fromDate);
-      while (current < toDate) {
+      while (current <= toDate) {
         const start = startOfMonth(current);
         const end = startOfMonth(addMonths(start, 1));
         months.push({ label: format(start, 'yyyy-MM'), start, end });
         current = end;
       }
-      // Lấy dữ liệu
+      // Truy vấn tất cả dữ liệu trong khoảng
+      const queryStart = fromDate;
+      const queryEnd = startOfMonth(addMonths(toDate, 1));
       const [transactions, users, adsAccounts] = await Promise.all([
         prisma.transaction.findMany({
           where: {
             status: 'success',
-            created_at: { gte: fromDate, lt: toDate },
+            created_at: { gte: queryStart, lt: queryEnd },
           },
           select: {
             amountVND: true,
@@ -181,10 +182,7 @@ const statisticsController = {
         }),
         prisma.user.findMany({
           where: {
-            created_at: {
-              gte: fromDate,
-              lt: toDate,
-            },
+            created_at: { gte: queryStart, lt: queryEnd },
           },
           include: {
             transactions: true,
@@ -192,7 +190,7 @@ const statisticsController = {
         }),
         prisma.adsAccount.findMany({
           where: {
-            created_at: { gte: fromDate, lt: toDate },
+            created_at: { gte: queryStart, lt: queryEnd },
           },
           select: {
             created_at: true,
@@ -223,7 +221,45 @@ const statisticsController = {
           };
         },
       );
-      // Tổng
+      const formatMonth = (date: Date) => format(date, 'yyyy-MM');
+      const fromMonthLabel = formatMonth(fromDate);
+      const toMonthLabel = formatMonth(toDate);
+      const fromMonthStats = monthlyStats.find(
+        (m) => m.month === fromMonthLabel,
+      );
+      const toMonthStats = monthlyStats.find((m) => m.month === toMonthLabel);
+      const calcGrowth = (current: number, previous: number) => {
+        if (previous === 0) return current === 0 ? 0 : 100;
+        return +(((current - previous) / previous) * 100).toFixed(2);
+      };
+      const growth = {
+        growRevenue: calcGrowth(
+          toMonthStats?.revenue ?? 0,
+          fromMonthStats?.revenue ?? 0,
+        ),
+        growUser: calcGrowth(
+          toMonthStats?.newUsers ?? 0,
+          fromMonthStats?.newUsers ?? 0,
+        ),
+        growTransaction: calcGrowth(
+          toMonthStats?.countTransactions ?? 0,
+          fromMonthStats?.countTransactions ?? 0,
+        ),
+        growAdsAccount: calcGrowth(
+          toMonthStats?.newAdsAccounts ?? 0,
+          fromMonthStats?.newAdsAccounts ?? 0,
+        ),
+      };
+      const sortedUsers = users
+        .map((user) => ({
+          username: user.username,
+          totalAmount: user.transactions.reduce(
+            (sum, tx) => sum + tx.amountVND,
+            0,
+          ),
+        }))
+        .sort((a, b) => b.totalAmount - a.totalAmount);
+      // Tổng toàn bộ trong khoảng (có thể giữ lại nếu vẫn cần)
       const totalRevenue = monthlyStats.reduce((sum, m) => sum + m.revenue, 0);
       const totalUsers = monthlyStats.reduce((sum, m) => sum + m.newUsers, 0);
       const totalTransaction = monthlyStats.reduce(
@@ -234,15 +270,6 @@ const statisticsController = {
         (sum, m) => sum + m.newAdsAccounts,
         0,
       );
-      const sortedUsers = users
-        .map((user) => ({
-          username: user.username,
-          totalAmount: user.transactions.reduce(
-            (sum, tx) => sum + tx.amountVND,
-            0,
-          ),
-        }))
-        .sort((a, b) => b.totalAmount - a.totalAmount);
       res.json({
         monthlyStats,
         userList: sortedUsers,
@@ -251,6 +278,7 @@ const statisticsController = {
           totalUsers,
           totalTransaction,
           totalAdsAccounts,
+          ...growth,
         },
       });
     } catch (error: any) {
