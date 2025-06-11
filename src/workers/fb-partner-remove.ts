@@ -3,7 +3,10 @@ import { autoDisChardLimitSpend } from '../auto-use-sessionV3';
 import { autoRemovePartner } from '../auto-use-sessionV4';
 import prisma from '../config/prisma';
 import { createRepeatJob } from './fb-check-account';
-
+import { sendEmail } from '../controllers/mails.controller';
+import fs from 'fs';
+import path from 'path';
+import { format } from 'date-fns';
 export const fbRemoveParnert = new Bull('fb-remove-parnert', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
@@ -53,9 +56,12 @@ const updateDb = async (data: any) => {
 };
 fbRemoveParnert.process(15, async (job) => {
   const { data } = job;
-  const { bm_id, ads_account_id, user_id, amountPoint, id } = data;
+  const { bm_id, ads_account_id, user_id, amountPoint, id, ads_name } = data;
   try {
     console.log('data remove point', data);
+    const pathhtml = path.resolve(__dirname, '../html/rent-success.html');
+    console.log('pathhtml', pathhtml);
+    let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
     const res = await updateDb(data);
     const user = await prisma.user.findUnique({
       where: {
@@ -67,13 +73,46 @@ fbRemoveParnert.process(15, async (job) => {
     );
     if (res.status_remove_partner && res.status_remove_spend_limit) {
       await createRepeatJob({ bm_id, ads_account_id });
-      await prisma.user.update({
+      const user = await prisma.user.update({
         where: {
           id: user_id as string,
         },
         data: {
           list_ads_account: filterUser,
         },
+      });
+      await prisma.emailLog.create({
+        data: {
+          user_id: user.id,
+          to: user.email,
+          subject: 'AKAds thông báo đăng nhập',
+          body: htmlContent
+            .replace('{{accountName}}', user.username || 'Người dùng')
+            .replace(
+              '{{rentDuration}}',
+              format(new Date(), 'dd/MM/yyyy HH:mm:ss') ||
+                new Date().toLocaleString(),
+            )
+            .replace('{{ads_name}}', ads_name || '')
+            .replace('{{amountPoint}}', amountPoint || '')
+            .replace('{{bm_id}}', bm_id || ''),
+          status: 'success',
+          type: 'rent_ads_cancel',
+        },
+      });
+      await sendEmail({
+        email: user.email,
+        subject: 'AKAds thông báo hủy đối tác vào BM',
+        message: htmlContent
+          .replace('{{accountName}}', user.username || 'Người dùng')
+          .replace(
+            '{{rentDuration}}',
+            format(new Date(), 'dd/MM/yyyy HH:mm:ss') ||
+              new Date().toLocaleString(),
+          )
+          .replace('{{amountPoint}}', amountPoint || '')
+          .replace('{{ads_name}}', ads_name || '')
+          .replace('{{bm_id}}', bm_id || ''),
       });
       await prisma.facebookPartnerBM.update({
         where: {

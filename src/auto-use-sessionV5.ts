@@ -201,13 +201,13 @@ export const autoChangeLimitSpend = async (data: any) => {
   }
   await page.waitForTimeout(1500);
   try {
-    const button = page.locator('span', { hasText: /^Đặt giới hạn$/ });
+    const button = page.locator('span', { hasText: /^Thay đổi$/ });
     await button.waitFor({ state: 'visible', timeout: 5000 });
     await button.scrollIntoViewIfNeeded();
     await button.click({ delay: 200 });
-    console.log('✅ Đã click vào nút "Đặt giới hạn"');
+    console.log('✅ Đã click vào nút "Thay đổi"');
   } catch (err: any) {
-    console.error('❌ Không thể click vào nút "Đặt giới hạn":', err.message);
+    console.error('❌ Không thể click vào nút "Thay đổi":', err.message);
   }
   await page.waitForTimeout(1200);
   try {
