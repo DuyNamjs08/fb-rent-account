@@ -3,19 +3,29 @@ version: '3.8'
 services:
   loki:
     image: grafana/loki:2.9.0
+    container_name: rent-fb-loki
+    restart: unless-stopped
     ports:
       - '3100:3100'
     command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - app-network
 
   promtail:
     image: grafana/promtail:2.9.0
+    container_name: rent-fb-promtail
+    restart: unless-stopped
     volumes:
       - ./promtail.yaml:/etc/promtail/promtail.yaml
-      - /var/logs:/var/log # mount thư mục log
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     command: -config.file=/etc/promtail/promtail.yaml
+    networks:
+      - app-network
 
   grafana:
     image: grafana/grafana:10.4.1
+    container_name: rent-fb-grafana
+    restart: unless-stopped
     ports:
       - '3000:3000'
     environment:
@@ -23,6 +33,8 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-storage:/var/lib/grafana
+    networks:
+      - app-network
   redis:
     image: redis:7-alpine
     container_name: rent-fb-redis
@@ -104,6 +116,7 @@ services:
 
 volumes:
   grafana-storage:
+    driver: local
   postgres_data:
     driver: local
   redis_data:

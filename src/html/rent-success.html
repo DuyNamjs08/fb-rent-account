@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Thuê tài khoản thành công</title>
+  </head>
+  <body
+    style="
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #edf0f3;
+    "
+  >
+    <div style="width: 100%; background-color: #edf0f3; padding: 30px 0">
+      <div
+        style="
+          max-width: 600px;
+          margin: auto;
+          background: white;
+          border-radius: 8px;
+          overflow: hidden;
+        "
+      >
+        <!-- Header -->
+        <div
+          style="text-align: center; padding: 20px; background-color: #edf0f3"
+        >
+          <img
+            src="https://pub-a8569a3946cf4e1f8eaeb9efdf397392.r2.dev/user-uploads/Screenshot_2025-05-27_at_14.52.27.png-1748332508673"
+            alt="AKAds Logo"
+            style="height: 50px"
+          />
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 30px">
+          <h2 style="margin-top: 0">
+            Xin chào <span style="color: red">{{accountName}}!</span>
+          </h2>
+          <p style="font-size: 18px; font-weight: bold">
+            Bạn đã thuê tài khoản BM thành công tại AKAds! 🎉
+          </p>
+          <p>Thông tin chi tiết về tài khoản bạn vừa thuê:</p>
+          <ul style="line-height: 1.8">
+            <li><strong>Tên tài khoản:</strong> {{accountName}}</li>
+            <li><strong>Thời gian thuê:</strong> {{rentDuration}}</li>
+            <li><strong>Thời gian bắt đầu:</strong> {{rentDuration}}</li>
+            <li><strong>Tên tài khoản quảng cáo:</strong> {{ads_name}}</li>
+            <li><strong>Id BM:</strong> {{bm_id}}</li>
+            <li><strong>Hạn mức:</strong> {{amountPoint}}</li>
+            <!-- <li><strong>Hạn sử dụng:</strong> {{rentEndTime}}</li> -->
+          </ul>
+
+          <p style="margin-top: 20px">
+            Nếu bạn không thực hiện được thao tác này, vui lòng liên hệ với
+            chúng tôi ngay để được hỗ trợ.
+          </p>
+
+          <p style="margin-top: 40px">
+            Có thắc mắc hoặc cần hỗ trợ? Hãy truy cập
+            <a href="https://akamedia.vn/" style="color: #007bff"
+              >trang hỗ trợ của chúng tôi</a
+            >.
+          </p>
+
+          <p>Trân trọng,<br />Đội ngũ AKAds</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

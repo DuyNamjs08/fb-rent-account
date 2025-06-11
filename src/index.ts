@@ -25,6 +25,7 @@ import prisma from './config/prisma';
 import './workers/fb-partner';
 import './workers/fb-partner-remove';
 import './workers/fb-check-account';
+import morgan from 'morgan';
 
 dotenv.config({ path: `${__dirname}/../.env` });
 const envPath = `${__dirname}/../.env`;
@@ -35,6 +36,7 @@ app.use(
     origin: '*',
   }),
 );
+app.use(morgan('combined'));
 app.use(express.json());
 const io = new Server(server, {
   cors: {

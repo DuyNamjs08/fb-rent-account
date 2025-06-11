@@ -3,6 +3,10 @@ import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
 import { autoChangeLimitSpend } from '../auto-use-sessionV2';
 import { createRepeatJob } from './fb-check-account';
+import fs from 'fs';
+import path from 'path';
+import { sendEmail } from '../controllers/mails.controller';
+import { format } from 'date-fns';
 
 export const fbParnert = new Bull('fb-add-parnert-ads', {
   redis: {
@@ -57,12 +61,16 @@ const updateDb = async (data: any) => {
 };
 fbParnert.process(15, async (job) => {
   const { data } = job;
-  const { ads_account_id, user_id, amountPoint, id_partner } = data;
+  const { ads_account_id, user_id, amountPoint, id_partner, ads_name, bm_id } =
+    data;
   try {
     console.log('data used point', data);
+    const pathhtml = path.resolve(__dirname, '../html/rent-success.html');
+    console.log('pathhtml', pathhtml);
+    let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
     const res = await updateDb(data);
     const { status_partner, status_limit_spend } = res;
-    await prisma.facebookPartnerBM.update({
+    const userRentAds = await prisma.facebookPartnerBM.update({
       where: {
         id: id_partner,
       },
@@ -86,9 +94,43 @@ fbParnert.process(15, async (job) => {
       });
       const user = await prisma.user.findUnique({
         where: { id: user_id },
-        select: { list_ads_account: true },
+        // select: { list_ads_account: true, email: true },
       });
+
       if (!user) throw new Error('User not found');
+      await prisma.emailLog.create({
+        data: {
+          user_id: user.id,
+          to: user.email,
+          subject: 'AKAds thông báo đăng nhập',
+          body: htmlContent
+            .replace('{{accountName}}', user.username || 'Người dùng')
+            .replace(
+              '{{rentDuration}}',
+              format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
+                new Date().toLocaleString(),
+            )
+            .replace('{{ads_name}}', ads_name || '')
+            .replace('{{amountPoint}}', amountPoint || '')
+            .replace('{{bm_id}}', bm_id || ''),
+          status: 'success',
+          type: 'rent_ads',
+        },
+      });
+      await sendEmail({
+        email: user.email,
+        subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM',
+        message: htmlContent
+          .replace('{{accountName}}', user.username || 'Người dùng')
+          .replace(
+            '{{rentDuration}}',
+            format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
+              new Date().toLocaleString(),
+          )
+          .replace('{{ads_name}}', ads_name || '')
+          .replace('{{amountPoint}}', amountPoint || '')
+          .replace('{{bm_id}}', bm_id || ''),
+      });
       const currentList = user.list_ads_account || [];
       const updatedList = currentList.includes(ads_account_id)
         ? currentList
