@@ -17,6 +17,7 @@ interface MonthlyStat {
   revenue: number;
   newUsers: number;
   newAdsAccounts: number;
+  countTransactions: number;
 }
 
 const now = new Date();
@@ -180,10 +181,13 @@ const statisticsController = {
         }),
         prisma.user.findMany({
           where: {
-            created_at: { gte: fromDate, lt: toDate },
+            created_at: {
+              gte: fromDate,
+              lt: toDate,
+            },
           },
-          select: {
-            created_at: true,
+          include: {
+            transactions: true,
           },
         }),
         prisma.adsAccount.findMany({
@@ -201,27 +205,51 @@ const statisticsController = {
           const revenue = transactions
             .filter((tx) => tx.created_at >= start && tx.created_at < end)
             .reduce((sum, tx) => sum + tx.amountVND, 0);
+          const countTransactions = transactions.filter(
+            (tx) => tx.created_at >= start && tx.created_at < end,
+          ).length;
           const newUsers = users.filter(
             (u) => u.created_at >= start && u.created_at < end,
           ).length;
           const newAdsAccounts = adsAccounts.filter(
             (a) => a.created_at >= start && a.created_at < end,
           ).length;
-          return { month: label, revenue, newUsers, newAdsAccounts };
+          return {
+            month: label,
+            revenue,
+            newUsers,
+            newAdsAccounts,
+            countTransactions,
+          };
         },
       );
       // Tổng
       const totalRevenue = monthlyStats.reduce((sum, m) => sum + m.revenue, 0);
       const totalUsers = monthlyStats.reduce((sum, m) => sum + m.newUsers, 0);
+      const totalTransaction = monthlyStats.reduce(
+        (sum, m) => sum + m.countTransactions,
+        0,
+      );
       const totalAdsAccounts = monthlyStats.reduce(
         (sum, m) => sum + m.newAdsAccounts,
         0,
       );
+      const sortedUsers = users
+        .map((user) => ({
+          username: user.username,
+          totalAmount: user.transactions.reduce(
+            (sum, tx) => sum + tx.amountVND,
+            0,
+          ),
+        }))
+        .sort((a, b) => b.totalAmount - a.totalAmount);
       res.json({
         monthlyStats,
+        userList: sortedUsers,
         totals: {
           totalRevenue,
           totalUsers,
+          totalTransaction,
           totalAdsAccounts,
         },
       });

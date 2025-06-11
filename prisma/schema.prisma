@@ -67,13 +67,14 @@ model User {
   emailLogs      EmailLog[]
   notifications  Notification[]
   list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
-
+  transactions   Transaction[]  @relation("UserTransactions")
   @@map("users")
 }
 model Transaction {
   id          String       @id @default(uuid())
   short_code      String @unique
   user_id  String
+  user           User @relation("UserTransactions", fields: [user_id], references: [id])
   amountVND   Int       // Số tiền VNĐ nạp vào
   points      Int       // Điểm tương ứng nhận được
   bank        String 
