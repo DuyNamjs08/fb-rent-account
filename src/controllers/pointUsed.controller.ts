@@ -184,19 +184,43 @@ const pointUsedController = {
 
   getAllpoints: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { pageSize = 10, page = 1 } = req.query;
+      const { pageSize = 10, page = 1, query = '' } = req.query;
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const transactionPoints = await prisma.pointUsage.findMany({
-        where: {},
-        skip,
-        take: pageSizeNum,
-      });
-      const count = await prisma.pointUsage.count({
-        where: {},
-        skip,
-        take: pageSizeNum,
-      });
+      //
+      const searchQuery = String(query || '');
+      const stringFields = [
+        'user_id',
+        'service_type',
+        'target_account',
+        'description',
+        'status',
+      ];
+      const numberFields = ['points_used'];
+      const numericValue = Number(searchQuery);
+      const isValidNumber = !Number.isNaN(numericValue);
+      const whereCondition = {
+        OR: [
+          ...stringFields.map((field) => ({
+            [field]: { contains: searchQuery, mode: 'insensitive' as const },
+          })),
+          ...(isValidNumber
+            ? numberFields.map((field) => ({
+                [field]: { equals: numericValue },
+              }))
+            : []),
+        ],
+      };
+      const [transactionPoints, count] = await Promise.all([
+        prisma.pointUsage.findMany({
+          where: whereCondition,
+          skip,
+          take: pageSizeNum,
+          orderBy: { created_at: 'desc' },
+        }),
+        prisma.pointUsage.count({ where: whereCondition }),
+      ]);
+
       successResponse(res, 'Danh sách transaction points by user', {
         data: transactionPoints,
         count,
@@ -212,7 +236,7 @@ const pointUsedController = {
   },
   getAllPointsByUserId: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { user_id, pageSize = 10, page = 1 } = req.query;
+      const { user_id, pageSize = 10, page = 1, query = '' } = req.query;
       if (!user_id) {
         errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
         return;
@@ -228,20 +252,38 @@ const pointUsedController = {
       }
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const transactionPoints = await prisma.pointUsage.findMany({
-        where: {
-          user_id: user_id as string,
-        },
-        skip,
-        take: pageSizeNum,
-      });
-      const count = await prisma.pointUsage.count({
-        where: {
-          user_id: user_id as string,
-        },
-        skip,
-        take: pageSizeNum,
-      });
+      const searchQuery = String(query || '');
+      const stringFields = [
+        'user_id',
+        'service_type',
+        'target_account',
+        'description',
+        'status',
+      ];
+      const numberFields = ['points_used'];
+      const numericValue = Number(searchQuery);
+      const isValidNumber = !Number.isNaN(numericValue);
+      const whereCondition = {
+        OR: [
+          ...stringFields.map((field) => ({
+            [field]: { contains: searchQuery, mode: 'insensitive' as const },
+          })),
+          ...(isValidNumber
+            ? numberFields.map((field) => ({
+                [field]: { equals: numericValue },
+              }))
+            : []),
+        ],
+      };
+      const [transactionPoints, count] = await Promise.all([
+        prisma.pointUsage.findMany({
+          where: whereCondition,
+          skip,
+          take: pageSizeNum,
+          orderBy: { created_at: 'desc' },
+        }),
+        prisma.pointUsage.count({ where: whereCondition }),
+      ]);
       successResponse(res, 'Danh sách transaction points by user', {
         data: transactionPoints,
         count,

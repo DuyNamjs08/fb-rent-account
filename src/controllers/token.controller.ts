@@ -72,18 +72,18 @@ const TokenController = {
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        const emailLog = await prisma.emailLog.create({
-          data: {
-            user_id: user.id,
-            to: user.email,
-            subject: 'AKAds thông báo đăng nhập',
-            body: htmlContent
-              .replace('{{name}}', user.username || 'Người dùng')
-              .replace('{{loginTime}}', new Date().toLocaleString()),
-            status: 'success',
-            type: 'login_notification',
-          },
-        });
+        // const emailLog = await prisma.emailLog.create({
+        //   data: {
+        //     user_id: user.id,
+        //     to: user.email,
+        //     subject: 'AKAds thông báo đăng nhập',
+        //     body: htmlContent
+        //       .replace('{{name}}', user.username || 'Người dùng')
+        //       .replace('{{loginTime}}', new Date().toLocaleString()),
+        //     status: 'success',
+        //     type: 'login_notification',
+        //   },
+        // });
         // await sendEmail({
         //   email: user.email,
         //   subject: 'AKAds thông báo đăng nhập',
@@ -103,18 +103,18 @@ const TokenController = {
       });
       // gửi mail thông báo đăng nhập thành công
 
-      const emailLog = await prisma.emailLog.create({
-        data: {
-          user_id: user.id,
-          to: user.email,
-          subject: 'AKAds thông báo đăng nhập',
-          body: htmlContent
-            .replace('{{name}}', user.username || 'Người dùng')
-            .replace('{{loginTime}}', new Date().toLocaleString()),
-          status: 'success',
-          type: 'login_notification',
-        },
-      });
+      // const emailLog = await prisma.emailLog.create({
+      //   data: {
+      //     user_id: user.id,
+      //     to: user.email,
+      //     subject: 'AKAds thông báo đăng nhập',
+      //     body: htmlContent
+      //       .replace('{{name}}', user.username || 'Người dùng')
+      //       .replace('{{loginTime}}', new Date().toLocaleString()),
+      //     status: 'success',
+      //     type: 'login_notification',
+      //   },
+      // });
       // await sendEmail({
       //   email: user.email,
       //   subject: 'AKAds thông báo đăng nhập',
