@@ -27,6 +27,7 @@ import prisma from './config/prisma';
 import './workers/fb-partner';
 import './workers/fb-partner-remove';
 import './workers/fb-check-account';
+import supportRoutes from './routes/support.routes';
 import morgan from 'morgan';
 
 dotenv.config({ path: `${__dirname}/../.env` });
@@ -40,6 +41,7 @@ app.use(
 );
 app.use(morgan('combined'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -78,6 +80,7 @@ app.use('/api/v1/', transactionRoutes);
 app.use('/api/v1/', pointusedRoutes);
 app.use('/api/v1/', facebookBmRoutes);
 app.use('/api/v1/', cookieBmRoutes);
+app.use('/api/v1/', supportRoutes);
 app.use('/api/v1/', statisticsBmRoutes);
 app.use('/api/v1/', policiesRoutes);
 app.use('/api/v1/', budgetRoutes);
