@@ -68,6 +68,7 @@ model User {
   notifications  Notification[]
   list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
   transactions   Transaction[]  @relation("UserTransactions")
+  budget_id String? // ID ngân sách liên kết với người dùng
   @@map("users")
 }
 model Transaction {
@@ -254,6 +255,21 @@ model AdsAccount {
   @@map("ads_accounts")
 }
 
+model Budget {
+  id          String    @id @default(uuid())
+  name        String    // Tên ngân sách (ví dụ: Ngân sách Marketing)
+  description String[] @default([])   // Mô tả 
+  amount      Float     // Số tiền ngân sách
+  currency    String    // Đơn vị tiền tệ (VD: VND, USD)
+  start_date   DateTime  // Ngày bắt đầu áp dụng ngân sách
+  end_date     DateTime  // Ngày kết thúc ngân sách
+  percentage   Float  @default(0.1)
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@map("budgets")
+}
 
 
 
