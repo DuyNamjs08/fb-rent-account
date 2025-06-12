@@ -67,6 +67,8 @@ model User {
   emailLogs      EmailLog[]
   notifications  Notification[]
   list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
+  supportRequests   SupportRequests[]
+
   transactions   Transaction[]  @relation("UserTransactions")
   budget_id String? // ID ngân sách liên kết với người dùng
   @@map("users")
@@ -258,7 +260,7 @@ model AdsAccount {
 model Budget {
   id          String    @id @default(uuid())
   name        String    // Tên ngân sách (ví dụ: Ngân sách Marketing)
-  description String[] @default([])   // Mô tả 
+  description String[] @default([])   // Mô tả
   amount      Float     // Số tiền ngân sách
   currency    String    // Đơn vị tiền tệ (VD: VND, USD)
   start_date   DateTime  // Ngày bắt đầu áp dụng ngân sách
@@ -267,8 +269,28 @@ model Budget {
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-  
+
   @@map("budgets")
+}
+
+model SupportRequests {
+  id          String   @id @default(uuid())
+  user_id     String?  @db.Text
+  fullName    String
+  email       String
+  phone       String
+  title       String
+  department  String
+  content     String
+  attachments String[] @default([])
+  status      String   @default("pending")
+  priority    String   @default("medium")
+  category    String   @default("other")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  user        User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("support_requests")
 }
 
 
