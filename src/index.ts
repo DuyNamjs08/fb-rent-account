@@ -16,6 +16,7 @@ import cookieBmRoutes from './routes/cookie.routes';
 import statisticsBmRoutes from './routes/statistics.routes';
 import policiesRoutes from './routes/policies.routes';
 import budgetRoutes from './routes/budget.routes';
+import notificationRoutes from './routes/notification.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -80,6 +81,7 @@ app.use('/api/v1/', cookieBmRoutes);
 app.use('/api/v1/', statisticsBmRoutes);
 app.use('/api/v1/', policiesRoutes);
 app.use('/api/v1/', budgetRoutes);
+app.use('/api/v1/', notificationRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);
