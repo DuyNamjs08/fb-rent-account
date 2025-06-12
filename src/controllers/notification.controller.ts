@@ -56,28 +56,68 @@ const notificationController = {
     req: Request,
     res: Response,
   ): Promise<void> => {
-    const { id } = req.params;
-    const updated = await prisma.notification.update({
-      where: { id },
-      data: { is_read: true },
-    });
-    res.json(updated);
+    try {
+      const { id } = req.params;
+      const noti = await prisma.notification.findUnique({ where: { id } });
+      if (!noti) {
+        res.status(404).json({ message: 'Thông báo không tồn tại.' });
+        return;
+      }
+      await prisma.notification.update({
+        where: { id },
+        data: { is_read: true },
+      });
+      const updatedNotifications = await prisma.notification.findMany({
+        where: { user_id: noti.user_id },
+        orderBy: { created_at: 'desc' },
+      });
+      // Định dạng thời gian
+      const formatted = updatedNotifications.map((n) => ({
+        ...n,
+        time: formatDistanceToNow(new Date(n.created_at), {
+          addSuffix: true,
+          locale: vi,
+        }),
+      }));
+      res.status(200).json(formatted);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
   },
   markAllAsRead: async (req: Request, res: Response): Promise<void> => {
-    const { user_id } = req.params;
+    const { user_id } = req.query;
     try {
-      const result = await prisma.notification.updateMany({
+      // Cập nhật tất cả thông báo chưa đọc thành đã đọc
+      await prisma.notification.updateMany({
         where: {
-          user_id: user_id,
+          user_id: user_id as string,
           is_read: false,
         },
         data: {
           is_read: true,
         },
       });
-      res.status(200).json({
-        message: `${result.count} thông báo đã được đánh dấu là đã đọc.`,
+      // Lấy lại toàn bộ danh sách đã cập nhật
+      const updatedNotifications = await prisma.notification.findMany({
+        where: {
+          user_id: user_id as string,
+        },
+        orderBy: { created_at: 'desc' },
       });
+      // Format thời gian
+      const formatted = updatedNotifications.map((n) => ({
+        ...n,
+        time: formatDistanceToNow(new Date(n.created_at), {
+          addSuffix: true,
+          locale: vi,
+        }),
+      }));
+      res.status(200).json(formatted);
     } catch (error: any) {
       console.error(error);
       errorResponse(
