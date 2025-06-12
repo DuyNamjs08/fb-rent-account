@@ -128,22 +128,54 @@ const transactionController = {
 
   getAlltransactions: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { pageSize = 10, page = 1 } = req.query;
+      const { pageSize = 10, page = 1, query = '' } = req.query;
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const transactions = await prisma.transaction.findMany({
-        where: {},
-        skip,
-        take: pageSizeNum,
-      });
-      const count = await prisma.transaction.count({
-        where: {},
-        skip,
-        take: pageSizeNum,
-      });
+      const searchQuery = String(query || '');
+
+      const stringFields = [
+        'short_code',
+        'user_id',
+        'bank',
+        'description',
+        'type',
+        'date',
+        'status',
+        'error_message',
+      ];
+      const numberFields = ['transactionID', 'points', 'amountVND'];
+      const numericValue = Number(searchQuery);
+      const isValidNumber = !Number.isNaN(numericValue);
+
+      const whereCondition = {
+        OR: [
+          ...stringFields.map((field) => ({
+            [field]: { contains: searchQuery, mode: 'insensitive' as const },
+          })),
+          ...(isValidNumber
+            ? numberFields.map((field) => ({
+                [field]: { equals: numericValue },
+              }))
+            : []),
+        ],
+      };
+
+      const [transactions, count] = await Promise.all([
+        prisma.transaction.findMany({
+          where: whereCondition,
+          skip,
+          take: pageSizeNum,
+          orderBy: { created_at: 'desc' },
+        }),
+        prisma.transaction.count({ where: whereCondition }),
+      ]);
+
       successResponse(res, 'Danh sách transaction by user', {
         data: transactions,
         count,
+        totalPages: Math.ceil(count / pageSizeNum),
+        currentPage: Number(page),
+        pageSize: pageSizeNum,
       });
     } catch (error: any) {
       errorResponse(
@@ -159,7 +191,7 @@ const transactionController = {
     res: Response,
   ): Promise<void> => {
     try {
-      const { user_id, pageSize = 10, page = 1 } = req.query;
+      const { user_id, pageSize = 10, page = 1, query = '' } = req.query;
       if (!user_id) {
         errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
         return;
@@ -175,20 +207,42 @@ const transactionController = {
       }
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const transactions = await prisma.transaction.findMany({
-        where: {
-          user_id: user_id as string,
-        },
-        skip,
-        take: pageSizeNum,
-      });
-      const count = await prisma.transaction.count({
-        where: {
-          user_id: user_id as string,
-        },
-        skip,
-        take: pageSizeNum,
-      });
+
+      const searchQuery = String(query || '');
+      const stringFields = [
+        'short_code',
+        'user_id',
+        'bank',
+        'description',
+        'type',
+        'date',
+        'status',
+        'error_message',
+      ];
+      const numberFields = ['transactionID', 'points', 'amountVND'];
+      const numericValue = Number(searchQuery);
+      const isValidNumber = !Number.isNaN(numericValue);
+      const whereCondition = {
+        OR: [
+          ...stringFields.map((field) => ({
+            [field]: { contains: searchQuery, mode: 'insensitive' as const },
+          })),
+          ...(isValidNumber
+            ? numberFields.map((field) => ({
+                [field]: { equals: numericValue },
+              }))
+            : []),
+        ],
+      };
+      const [transactions, count] = await Promise.all([
+        prisma.transaction.findMany({
+          where: whereCondition,
+          skip,
+          take: pageSizeNum,
+          orderBy: { created_at: 'desc' },
+        }),
+        prisma.transaction.count({ where: whereCondition }),
+      ]);
       successResponse(res, 'Danh sách transaction by user', {
         data: transactions,
         count,
