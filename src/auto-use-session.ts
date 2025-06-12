@@ -1,4 +1,4 @@
-import { chromium, BrowserContext } from 'playwright';
+import { chromium, BrowserContext, Page } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
@@ -76,7 +76,255 @@ export const autoChangePartner = async (data: any) => {
     console.error('❌ page.goto crashed:', e);
     await browser.close();
   }
+  const lang = await page.getAttribute('html', 'lang');
 
+  let response = 0;
+  if (lang === 'vi') {
+    console.log('🌐 Ngôn ngữ trang:', lang);
+    response = await hanleVi({
+      page,
+      ads_name,
+      result,
+      bm_id,
+    });
+  } else if (lang === 'en') {
+    console.log('🌐 Ngôn ngữ trang:', lang);
+    response = await hanleEn({
+      page,
+      ads_name,
+      result,
+      bm_id,
+    });
+  }
+
+  // await new Promise(() => {});
+  await page.waitForTimeout(10000);
+  await browser.close();
+  return response;
+};
+const hanleEn = async ({
+  page,
+  ads_name,
+  result,
+  bm_id,
+}: {
+  page: Page;
+  ads_name: string;
+  result: number;
+  bm_id: string;
+}) => {
+  await page.waitForLoadState('networkidle');
+  let isVerify = 0;
+  try {
+    const verify = page.locator('div', {
+      hasText: /^Verify Facebook account$/,
+    });
+    const count = await verify.count();
+
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Verify Facebook account'`,
+    );
+    if (count > 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(2);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) }).then(() => {
+        isVerify = 1;
+      });
+      console.log('✅ Đã click vào phần tử Verify Facebook account');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Verify Facebook account');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  if (isVerify) {
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi email$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi email'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi email');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi email');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click:', err.message);
+    }
+    await page.waitForTimeout(30000);
+    const verifyCode = await getFacebookSecurityCodesFromEmail({ email: '' });
+    console.log('verifyCode', verifyCode);
+    const codeToEnter = verifyCode.at(-1) ?? '';
+    try {
+      const input = await page.locator('input[placeholder="123456"]');
+      await input.click();
+      for (const char of codeToEnter) {
+        await page.keyboard.type(char, { delay: randomDelay(80, 150) });
+      }
+      console.log('✅ Đã nhập mã verifyCode.at(-1)', verifyCode.at(-1));
+    } catch (error: any) {
+      console.log('❌ Lỗi khi nhập verifyCode.at(-1):', error.message);
+    }
+
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Gửi:', err.message);
+    }
+    await page.waitForTimeout(6000);
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Xong$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(2);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Xong');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Xong');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Xong:', err.message);
+    }
+  }
+
+  await page.waitForTimeout(1500);
+  await page.mouse.move(200, 300);
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(1000);
+
+  try {
+    const verify = page.locator(`div[role="heading"]:has-text("${ads_name}")`);
+    const count = await verify.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text ${ads_name}`);
+    if (count >= 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.first();
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) });
+      console.log(`✅ Đã click vào phần tử ${ads_name}`);
+    } else {
+      console.log(`⚠️ Không tìm thấy phần tử ${ads_name}`);
+    }
+  } catch (error: any) {
+    console.log('❌ Lỗi khi click vào ${ads_name}:', error.message);
+  }
+  await page.waitForTimeout(2000);
+
+  try {
+    const nameLocator = page.locator('div', {
+      hasText: /^Assign partner$/,
+    });
+    const count = await nameLocator.count();
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Assign partner'`,
+    );
+
+    if (count > 0) {
+      await nameLocator.first().scrollIntoViewIfNeeded();
+      await page.waitForTimeout(1200);
+      await nameLocator.first().click({ delay: 200 });
+      console.log('✅ Đã click vào phần tử Assign partner');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Assign partner');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+
+  await page.waitForTimeout(1500);
+
+  try {
+    const input = await page.locator(
+      'input[placeholder="Partner Business ID"]',
+    );
+    await input.click();
+    await page.keyboard.type(bm_id, { delay: 100 });
+    console.log('✅ Đã nhập Partner Business ID');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập Partner Business ID:', error.message);
+  }
+
+  await page.waitForTimeout(1200);
+
+  try {
+    const switchLocator = page.locator(
+      'input[aria-label="Manage ad accounts"][role="switch"][type="checkbox"]',
+    );
+
+    await switchLocator.waitFor({ state: 'visible', timeout: 10000 });
+    await switchLocator.click({ delay: 200 });
+    console.log('✅ Đã bật quyền Manage ad accounts');
+  } catch (error: any) {
+    console.log('❌ Không bật được quyền Manage ad accounts:', error.message);
+  }
+
+  try {
+    const verify = page.locator('div', {
+      hasText: /^Assign$/,
+    });
+    const count = await verify.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Assign'`);
+    if (count >= 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(2);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) });
+      console.log('✅ Đã click vào phần tử Assign');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Assign');
+    }
+  } catch (error: any) {
+    console.log('❌ Lỗi khi click vào Assign:', error.message);
+  }
+  await new Promise(() => {});
+  try {
+    await page.waitForSelector(
+      'div[role="heading"][aria-level="3"]:has-text("Partner Added")',
+      { timeout: 30000 },
+    );
+    console.log('✅ Partner Added thành công!');
+    result = 1;
+  } catch {
+    console.log('⚠️ Không thấy thông báo "Partner Added" sau 30 giây.');
+  }
+  return result;
+};
+const hanleVi = async ({
+  page,
+  ads_name,
+  result,
+  bm_id,
+}: {
+  page: Page;
+  ads_name: string;
+  result: number;
+  bm_id: string;
+}) => {
   await page.waitForLoadState('networkidle');
   let isVerify = 0;
   try {
@@ -182,9 +430,6 @@ export const autoChangePartner = async (data: any) => {
   await page.waitForTimeout(1000);
 
   try {
-    // const verify = page.locator('div[role="heading"][aria-level="4"]', {
-    //   hasText: ads_name,
-    // });
     const verify = page.locator(`div[role="heading"]:has-text("${ads_name}")`);
     const count = await verify.count();
     console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text ${ads_name}`);
@@ -278,17 +523,14 @@ export const autoChangePartner = async (data: any) => {
   } catch {
     console.log('⚠️ Không thấy thông báo "Đã thêm đối tác" sau 30 giây.');
   }
-  // await new Promise(() => {});
-  await page.waitForTimeout(10000);
-  await browser.close();
   return result;
 };
 
 // autoChangePartner({
-//   bm_origin: '1043878897701771',
-//   ads_name: 'BM-LN2',
-//   bm_id: '2353282795072609',
-//   ads_account_id: '1360591371901484',
+//   bm_origin: '884533352261849',
+//   ads_name: 'Che sau 2',
+//   bm_id: '23865108109789353',
+//   ads_account_id: '601606618695323',
 //   cookie_origin: {
 //     cookies: [
 //       {
