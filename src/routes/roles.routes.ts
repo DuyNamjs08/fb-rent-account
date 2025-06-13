@@ -1,7 +1,8 @@
 import express from 'express';
 const router = express.Router();
 import roleController from '../controllers/role.controller';
-import { authenToken } from '../middlewares/auth.middleware';
+import { requireRoles } from '../middlewares/auth.middleware';
+import UserRole from '../constants/UserRole';
 
 /**
  * @swagger
@@ -156,5 +157,9 @@ router.put('/role/:id', roleController.updateRole);
  *          200:
  *              description: Xóa quyền thành công !
  */
-router.delete('/role/:id', authenToken, roleController.deleteRole);
+router.delete(
+  '/role/:id',
+  requireRoles([UserRole.ADMIN]),
+  roleController.deleteRole,
+);
 export default router;
