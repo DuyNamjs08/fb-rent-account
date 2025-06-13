@@ -55,11 +55,11 @@ services:
       - redis_data:/data
     networks:
       - app-network
-    healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    # healthcheck:
+    #   test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
 
   postgres:
     image: postgres:17-alpine
@@ -159,9 +159,9 @@ services:
     image: postgres:17-alpine
     container_name: rent-fb-backup
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
