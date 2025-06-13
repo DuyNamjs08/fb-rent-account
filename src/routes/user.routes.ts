@@ -1,6 +1,8 @@
 import express from 'express';
 import userController from '../controllers/user.controller';
 import { uploadMiddleware } from '../middlewares/upload.middleware';
+import { requireRoles } from '../middlewares/auth.middleware';
+import UserRole from '../constants/UserRole';
 
 const router = express.Router();
 
@@ -559,6 +561,10 @@ router.put(
  *          200:
  *              description: Xóa người dùng thành công !
  */
-router.delete('/user/:id', userController.deleteUser);
+router.delete(
+  '/user/:id',
+  requireRoles([UserRole.ADMIN]),
+  userController.deleteUser,
+);
 
 export default router;

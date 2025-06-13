@@ -43,7 +43,7 @@ import UserRole from '../constants/UserRole';
  *                                  type: string
  *                                  example: 2025-04-28T05:34:49.485Z
  */
-router.post('/role', roleController.createRole);
+router.post('/role', requireRoles([UserRole.ADMIN]), roleController.createRole);
 
 /**
  * @swagger
@@ -74,7 +74,7 @@ router.post('/role', roleController.createRole);
  *                                      type: string
  *                                      example: 2025-04-28T05:34:49.485Z
  */
-router.get('/role', roleController.getAllRoles);
+router.get('/role', requireRoles([UserRole.ADMIN]), roleController.getAllRoles);
 
 /**
  * @swagger
@@ -110,7 +110,11 @@ router.get('/role', roleController.getAllRoles);
  *                                  type: string
  *                                  example: 2025-04-28T05:34:49.485Z
  */
-router.get('/role/:id', roleController.getRoleById);
+router.get(
+  '/role/:id',
+  requireRoles([UserRole.ADMIN]),
+  roleController.getRoleById,
+);
 
 /**
  * @swagger
@@ -138,7 +142,11 @@ router.get('/role/:id', roleController.getRoleById);
  *          200:
  *              description: Cập nhật role thành công
  */
-router.put('/role/:id', roleController.updateRole);
+router.put(
+  '/role/:id',
+  requireRoles([UserRole.ADMIN]),
+  roleController.updateRole,
+);
 
 /**
  * @swagger
