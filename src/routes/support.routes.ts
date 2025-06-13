@@ -13,4 +13,7 @@ router.post(
 );
 router.delete('/support/:id', supportController.deleteSupport);
 
+router.post('/support/message', supportController.createMessage);
+router.get('/support/message/:id', supportController.getMessageByRequestId);
+
 export default router;
