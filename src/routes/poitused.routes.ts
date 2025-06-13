@@ -10,6 +10,10 @@ router.get(
   requireRoles([UserRole.ADMIN]),
   pointUsedController.getAllpoints,
 );
-router.delete('/points-used', pointUsedController.deleteUserUsedPoint);
+router.delete(
+  '/points-used',
+  requireRoles([UserRole.ADMIN]),
+  pointUsedController.deleteUserUsedPoint,
+);
 router.post('/check-spending', pointUsedController.checkSpending);
 export default router;
