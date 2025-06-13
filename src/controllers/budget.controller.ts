@@ -3,6 +3,21 @@ import { successResponse, errorResponse } from '../helpers/response';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
+import { z } from 'zod';
+const createBudgetSchema = z.object({
+  name: z.string().min(1, 'Tên là bắt buộc'),
+  description: z
+    .array(z.string().min(1, 'Mỗi mô tả không được rỗng'))
+    .min(1, 'Cần ít nhất một mô tả'),
+  amount: z.number().nonnegative('Số tiền không thể âm'),
+  start_date: z.string().min(1, 'Ngày bắt đầu là bắt buộc'),
+  end_date: z.string().min(1, 'Ngày kết thúc là bắt buộc'),
+  currency: z.string().min(1, 'Đơn vị tiền tệ là bắt buộc'),
+  percentage: z.number(),
+});
+const getIdSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+});
 const budgetController = {
   createBudget: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -15,29 +30,14 @@ const budgetController = {
         currency,
         percentage,
       } = req.body;
-      if (
-        !name ||
-        !description ||
-        !amount ||
-        !start_date ||
-        !end_date ||
-        !currency ||
-        !percentage
-      ) {
+      const parsed = createBudgetSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Thiếu thông tin bắt buộc!',
-          {},
+          'Dữ liệu không hợp lệ',
+          errors,
           httpStatusCodes.BAD_REQUEST,
-        );
-        return;
-      }
-      if (amount < 0) {
-        errorResponse(
-          res,
-          'Số tiền không thể âm!',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
         return;
       }
@@ -49,6 +49,7 @@ const budgetController = {
           start_date,
           end_date,
           currency,
+          percentage,
         },
       });
       successResponse(res, 'Tạo ngân sách thành công', budget);
@@ -83,6 +84,17 @@ const budgetController = {
   getbudgetById: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const budget = await prisma.budget.findUnique({
         where: { id },
       });
@@ -119,29 +131,14 @@ const budgetController = {
         currency,
         percentage,
       } = req.body;
-      if (
-        !name ||
-        !description ||
-        !amount ||
-        !start_date ||
-        !end_date ||
-        !currency ||
-        !percentage
-      ) {
+      const parsed = createBudgetSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Thiếu thông tin bắt buộc!',
-          {},
+          'Dữ liệu không hợp lệ',
+          errors,
           httpStatusCodes.BAD_REQUEST,
-        );
-        return;
-      }
-      if (amount < 0) {
-        errorResponse(
-          res,
-          'Số tiền không thể âm!',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
         return;
       }
@@ -166,6 +163,7 @@ const budgetController = {
           start_date,
           end_date,
           currency,
+          percentage,
         },
       });
 
@@ -183,6 +181,17 @@ const budgetController = {
   deletebudget: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const budgetExist = await prisma.budget.findUnique({
         where: { id },
       });

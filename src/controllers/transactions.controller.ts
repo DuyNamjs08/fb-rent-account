@@ -5,16 +5,31 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
 import redisClient from '../config/redis-config';
 import { generateShortCode } from './user.controller';
+import { z } from 'zod';
+
+const rechargeSchema = z.object({
+  amountVND: z.preprocess(
+    (val) => Number(val),
+    z.number().positive('Số tiền phải lớn hơn 0'),
+  ),
+  user_id: z.string().min(1, 'user_id là bắt buộc'),
+});
+const rechargeIdSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+});
+
 const transactionController = {
   createTransactionV2: async (req: Request, res: Response): Promise<void> => {
     const { amountVND, user_id } = req.body;
-    if (
-      !amountVND ||
-      isNaN(Number(amountVND)) ||
-      Number(amountVND) <= 0 ||
-      !user_id
-    ) {
-      errorResponse(res, 'Vui lòng nhập đúng thông tin', {}, 404);
+    const parsed = rechargeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      errorResponse(
+        res,
+        'Dữ liệu không hợp lệ',
+        errors,
+        httpStatusCodes.BAD_REQUEST,
+      );
       return;
     }
     let shortCode: string = '';
@@ -63,13 +78,15 @@ const transactionController = {
       date,
       user_id,
     } = req.body;
-    if (
-      !short_code ||
-      !amountVND ||
-      isNaN(Number(amountVND)) ||
-      Number(amountVND) <= 0
-    ) {
-      errorResponse(res, 'Vui lòng nhập đúng thông tin', {}, 404);
+    const parsed = rechargeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      errorResponse(
+        res,
+        'Dữ liệu không hợp lệ',
+        errors,
+        httpStatusCodes.BAD_REQUEST,
+      );
       return;
     }
     const amountVNDchange = Math.floor(Number(amountVND));
@@ -260,6 +277,17 @@ const transactionController = {
   gettransactionById: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const parsed = rechargeIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const transaction = await prisma.transaction.findFirst({
         where: {
           id,
@@ -279,6 +307,17 @@ const transactionController = {
   deletetransaction: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const parsed = rechargeIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const transaction = await prisma.transaction.findFirst({
         where: {
           id,

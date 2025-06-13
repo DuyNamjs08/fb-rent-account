@@ -3,15 +3,27 @@ import { successResponse, errorResponse } from '../helpers/response';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
+import { z } from 'zod';
+const createCookieSchema = z.object({
+  email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
+  storage_state: z.array(z.any()).refine((arr) => arr.length > 0, {
+    message: 'Cần ít nhất một phần tử mô tả',
+  }),
+});
+const getIdSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+});
 const cookieController = {
   createCookie: async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, storage_state } = req.body;
-      if (!email || !storage_state) {
+      const parsed = createCookieSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Vui lòng nhập đầy đủ thông tin !',
-          {},
+          'Dữ liệu không hợp lệ',
+          errors,
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
         return;
@@ -64,6 +76,17 @@ const cookieController = {
   deleteCookies: async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id;
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const cookiesExist = await prisma.cookies.findUnique({
         where: { id: id },
       });

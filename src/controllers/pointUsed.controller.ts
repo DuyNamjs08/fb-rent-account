@@ -1,4 +1,3 @@
-import roleService from '../services/Roles.service';
 import { Request, Response } from 'express';
 import { successResponse, errorResponse } from '../helpers/response';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
@@ -7,6 +6,30 @@ import prisma from '../config/prisma';
 import { fbParnert } from '../workers/fb-partner';
 import { fbRemoveParnert } from '../workers/fb-partner-remove';
 import { createRepeatJob, fbCheckAccount } from '../workers/fb-check-account';
+import { z } from 'zod';
+
+const createChargeSchema = z.object({
+  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
+  ads_account_id: z.string().min(1, 'ads_account_id là bắt buộc'),
+  user_id: z.string().min(1, 'user_id là bắt buộc'),
+  amountPoint: z.number().positive('Vui lòng nhập số tiền lớn hơn 0'),
+  bm_origin: z.string().min(1, 'bm_origin là bắt buộc'),
+  ads_name: z.string().min(1, 'ads_name là bắt buộc'),
+  bot_id: z.string().min(1, 'bot_id là bắt buộc'),
+});
+
+const deleteChargeSchema = z.object({
+  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
+  ads_account_id: z.string().min(1, 'ads_account_id là bắt buộc'),
+  user_id: z.string().min(1, 'user_id là bắt buộc'),
+  id: z.string().min(1, 'id là bắt buộc'),
+  bm_origin: z.string().min(1, 'bm_origin là bắt buộc'),
+  ads_name: z.string().min(1, 'ads_name là bắt buộc'),
+  bot_id: z.string().min(1, 'bot_id là bắt buộc'),
+});
+const getUserIdSchema = z.object({
+  user_id: z.string().min(1, 'user_id là bắt buộc'),
+});
 const pointUsedController = {
   checkSpending: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -49,29 +72,14 @@ const pointUsedController = {
         ads_name,
         bot_id,
       } = req.body;
-      if (
-        !bm_id ||
-        !ads_account_id ||
-        !user_id ||
-        !amountPoint ||
-        !bm_origin ||
-        !ads_name ||
-        !bot_id
-      ) {
+      const parsed = createChargeSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Vui lòng nhập đủ thông tin',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
-        );
-        return;
-      }
-      if (amountPoint < 0) {
-        errorResponse(
-          res,
-          'Vui lòng nhập số tiền lớn hơn 0',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
@@ -237,8 +245,15 @@ const pointUsedController = {
   getAllPointsByUserId: async (req: Request, res: Response): Promise<void> => {
     try {
       const { user_id, pageSize = 10, page = 1, query = '' } = req.query;
-      if (!user_id) {
-        errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
+      const parsed = getUserIdSchema.safeParse({ user_id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
         return;
       }
       const checkUser = await prisma.user.findUnique({
@@ -308,20 +323,14 @@ const pointUsedController = {
         id,
         bot_id,
       } = req.query;
-      if (
-        !bm_id ||
-        !ads_account_id ||
-        !user_id ||
-        !bm_origin ||
-        !ads_name ||
-        !id ||
-        !bot_id
-      ) {
+      const parsed = deleteChargeSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Vui lòng nhập đúng thông tin',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
@@ -356,44 +365,6 @@ const pointUsedController = {
         id,
       });
       successResponse(res, 'Quá trình gỡ tài khoản đang được xử lý!', '');
-    } catch (error: any) {
-      const statusCode = error.message.includes('not found') ? 404 : 400;
-      if (statusCode === 404) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, error, statusCode);
-      } else {
-        errorResponse(res, error?.message, error, statusCode);
-      }
-    }
-  },
-
-  getRoleById: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const role = await roleService.getRoleById(req.params.id);
-      successResponse(res, 'Success', role);
-    } catch (error: any) {
-      errorResponse(
-        res,
-        error?.message,
-        error,
-        httpStatusCodes.INTERNAL_SERVER_ERROR,
-      );
-    }
-  },
-
-  updateRole: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const role = await roleService.getRoleById(req.params.id);
-      if (!role) {
-        errorResponse(
-          res,
-          httpReasonCodes.NOT_FOUND,
-          {},
-          httpStatusCodes.NOT_FOUND,
-        );
-        return;
-      }
-      const roleNew = await roleService.updateRole(req.params.id, req.body);
-      successResponse(res, 'Cập nhật quyền thành công !', roleNew);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {

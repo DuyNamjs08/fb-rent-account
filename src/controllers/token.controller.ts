@@ -177,7 +177,7 @@ const TokenController = {
             { mail: data.email, password: data.password, user_id: user.id },
             process.env.ACCESS_TOKEN_SECRET as string,
             {
-              expiresIn: '1m',
+              expiresIn: '7d',
             },
           );
           const updateAccessToken = await TokenService.updateAccessToken(

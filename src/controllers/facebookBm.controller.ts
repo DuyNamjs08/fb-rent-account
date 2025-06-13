@@ -1,10 +1,10 @@
-import roleService from '../services/Roles.service';
 import { Request, Response } from 'express';
 import { successResponse, errorResponse } from '../helpers/response';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import CryptoJS from 'crypto-js';
 import prisma from '../config/prisma';
+import { z } from 'zod';
 const SECRET_KEY = process.env.ENCRYPTION_KEY_SECRET;
 
 export function encryptToken(token: string) {
@@ -22,16 +22,26 @@ export function decryptToken(ciphertext: string) {
   const originalText = bytes.toString(CryptoJS.enc.Utf8);
   return originalText;
 }
+const createBmSchema = z.object({
+  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
+  bm_name: z.string().min(1, 'bm_name là bắt buộc'),
+  system_user_token: z.string().min(1, 'system_user_token là bắt buộc'),
+});
+const getIdSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+});
 const facebookBmController = {
   createBM: async (req: Request, res: Response): Promise<void> => {
     try {
       const { bm_name, bm_id, system_user_token } = req.body;
-      if (!bm_id || !bm_name || !system_user_token) {
+      const parsed = createBmSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Thiếu các trường thông tin khi tạo BM',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
@@ -71,6 +81,17 @@ const facebookBmController = {
   updateFacebookBM: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id, bm_name, bm_id, system_user_token } = req.body;
+      const parsed = createBmSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const facebookBm = await prisma.facebookBM.findUnique({
         where: {
           id: id,
@@ -118,12 +139,15 @@ const facebookBmController = {
   deleteFacebookBm: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.query;
-      if (!id) {
+
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Thiếu trường',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
@@ -154,19 +178,6 @@ const facebookBmController = {
       } else {
         errorResponse(res, error?.message, error, statusCode);
       }
-    }
-  },
-  getRoleById: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const role = await roleService.getRoleById(req.params.id);
-      successResponse(res, 'Success', role);
-    } catch (error: any) {
-      errorResponse(
-        res,
-        error?.message,
-        error,
-        httpStatusCodes.INTERNAL_SERVER_ERROR,
-      );
     }
   },
 };

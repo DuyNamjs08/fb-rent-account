@@ -3,16 +3,32 @@ import { successResponse, errorResponse } from '../helpers/response';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
+import { z } from 'zod';
+
+const createMessageSchema = z.object({
+  title: z.string().min(1, 'Tiêu đề là bắt buộc'),
+  message: z.string().min(1, 'Nội dung là bắt buộc'),
+});
+const updateMessageSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+  title: z.string().min(1, 'Tiêu đề là bắt buộc'),
+  message: z.string().min(1, 'Nội dung là bắt buộc'),
+});
+const getIdSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+});
 const policiesController = {
   createPolicies: async (req: Request, res: Response): Promise<void> => {
     try {
       const { title, message } = req.body;
-      if (!title || !message) {
+      const parsed = createMessageSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Vui lòng nhập đủ thông tin !',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
@@ -50,12 +66,14 @@ const policiesController = {
   getPoliciesById: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      if (!id) {
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Vui lòng nhập đủ thông tin !',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
@@ -79,12 +97,14 @@ const policiesController = {
     try {
       const { id } = req.params;
       const { title, message } = req.body;
-      if (!title || !message || !id) {
+      const parsed = updateMessageSchema.safeParse({ ...req.body, id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Vui lòng nhập đủ thông tin !',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
@@ -111,12 +131,14 @@ const policiesController = {
   deletePolicies: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      if (!id) {
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Vui lòng nhập đủ thông tin !',
-          {},
-          httpStatusCodes.INTERNAL_SERVER_ERROR,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
         );
         return;
       }

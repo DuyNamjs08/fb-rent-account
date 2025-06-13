@@ -70,11 +70,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    # healthcheck:
+    #   test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
 
   app:
     build:
@@ -82,11 +82,11 @@ services:
       target: production
     container_name: rent-fb-app
     restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
+    # depends_on:
+    #   redis:
+    #     condition: service_healthy
+    #   postgres:
+    #     condition: service_healthy
     environment:
       NODE_ENV: production
       REDIS_HOST: rent-fb-redis
@@ -102,11 +102,11 @@ services:
       - /tmp
     networks:
       - app-network
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:4000/health']
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    # healthcheck:
+    #   test: ['CMD', 'curl', '-f', 'http://localhost:4000/health']
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
     security_opt:
       - no-new-privileges:true
     cap_drop:
