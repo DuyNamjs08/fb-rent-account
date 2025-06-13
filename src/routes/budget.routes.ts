@@ -15,11 +15,7 @@ router.put(
   requireRoles([UserRole.ADMIN]),
   budgetController.updatebudget,
 );
-router.get(
-  '/budget/:id',
-  requireRoles([UserRole.ADMIN]),
-  budgetController.getbudgetById,
-);
+router.get('/budget/:id', budgetController.getbudgetById);
 router.delete(
   '/budget/:id',
   requireRoles([UserRole.ADMIN]),
