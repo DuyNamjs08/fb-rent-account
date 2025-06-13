@@ -1,12 +1,11 @@
-import roleService from '../services/Roles.service';
 import { Request, Response } from 'express';
 import { successResponse, errorResponse } from '../helpers/response';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { httpStatusCodes } from '../helpers/statusCodes';
-import UserService from '../services/User.service';
 import prisma from '../config/prisma';
 import axios from 'axios';
 import { decryptToken } from './facebookBm.controller';
+import { z } from 'zod';
 function mapItemToAdsAccount(item: any) {
   return {
     id: item.id,
@@ -80,10 +79,30 @@ function mapItemToAdsAccount(item: any) {
     vertical_name: item.vertical_name,
   };
 }
+const getIdSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+});
+const getUserIdSchema = z.object({
+  user_id: z.string().min(1, 'user_id là bắt buộc'),
+});
+const getBmIdSchema = z.object({
+  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
+});
 const TKQCController = {
   getAdsRentedByUser: async (req: Request, res: Response): Promise<void> => {
     try {
       const { user_id } = req.query;
+      const parsed = getUserIdSchema.safeParse({ user_id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const user = await prisma.user.findUnique({
         where: {
           id: user_id as string,
@@ -157,12 +176,13 @@ const TKQCController = {
   asyncTKQC: async (req: Request, res: Response): Promise<void> => {
     try {
       const { bm_id = '' } = req.body;
-      console.log('bm_id', bm_id);
-      if (!bm_id) {
+      const parsed = getBmIdSchema.safeParse({ bm_id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ hoặc rỗng',
-          {},
+          'Dữ liệu không hợp lệ',
+          errors,
           httpStatusCodes.BAD_REQUEST,
         );
         return;
@@ -324,65 +344,6 @@ const TKQCController = {
         error,
         httpStatusCodes.INTERNAL_SERVER_ERROR,
       );
-    }
-  },
-
-  getRoleById: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const role = await roleService.getRoleById(req.params.id);
-      successResponse(res, 'Success', role);
-    } catch (error: any) {
-      errorResponse(
-        res,
-        error?.message,
-        error,
-        httpStatusCodes.INTERNAL_SERVER_ERROR,
-      );
-    }
-  },
-
-  updateRole: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const role = await roleService.getRoleById(req.params.id);
-      if (!role) {
-        errorResponse(
-          res,
-          httpReasonCodes.NOT_FOUND,
-          {},
-          httpStatusCodes.NOT_FOUND,
-        );
-        return;
-      }
-      const roleNew = await roleService.updateRole(req.params.id, req.body);
-      successResponse(res, 'Cập nhật quyền thành công !', roleNew);
-    } catch (error: any) {
-      const statusCode = error.message.includes('not found') ? 404 : 400;
-      if (statusCode === 404) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, error, statusCode);
-      } else {
-        errorResponse(res, error?.message, error, statusCode);
-      }
-    }
-  },
-
-  deleteRole: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const role = await roleService.getRoleById(req.params.id);
-      if (!role) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, {}, 404);
-        return;
-      }
-      const users = await UserService.getUserByRoleId(req.params.id);
-      await Promise.all(users.map((item) => UserService.deleteUser(item.id)));
-      await roleService.deleteRole(req.params.id);
-      successResponse(res, 'Xóa quyền thành công !', role);
-    } catch (error: any) {
-      const statusCode = error.message.includes('not found') ? 404 : 400;
-      if (statusCode === 404) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, error, statusCode);
-      } else {
-        errorResponse(res, error?.message, error, statusCode);
-      }
     }
   },
 };

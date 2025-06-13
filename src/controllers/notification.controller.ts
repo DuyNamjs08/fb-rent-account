@@ -4,7 +4,20 @@ import { errorResponse } from '../helpers/response';
 import { httpStatusCodes } from '../helpers/statusCodes';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
-
+import { z } from 'zod';
+const createNotificationSchema = z.object({
+  user_id: z.string().min(1, 'user_id là bắt buộc'),
+  title: z.string().min(1, 'title là bắt buộc'),
+  content: z.string().min(1, 'content là bắt buộc'),
+  type: z.string().min(1, 'type là bắt buộc'),
+  action_url: z.string().url('action_url phải là một URL hợp lệ').optional(),
+});
+const getIdSchema = z.object({
+  id: z.string().min(1, 'id là bắt buộc'),
+});
+const getUserIdSchema = z.object({
+  user_id: z.string().min(1, 'user_id là bắt buộc'),
+});
 const notificationController = {
   getAllNotifications: async (req: Request, res: Response): Promise<void> => {
     const { user_id } = req.query;
@@ -39,6 +52,17 @@ const notificationController = {
   createNotification: async (req: Request, res: Response): Promise<void> => {
     try {
       const { user_id, title, content, type, action_url } = req.body;
+      const parsed = createNotificationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const noti = await prisma.notification.create({
         data: { user_id, title, content, type, action_url },
       });
@@ -58,6 +82,17 @@ const notificationController = {
   ): Promise<void> => {
     try {
       const { id } = req.params;
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const noti = await prisma.notification.findUnique({ where: { id } });
       if (!noti) {
         res.status(404).json({ message: 'Thông báo không tồn tại.' });
@@ -93,6 +128,17 @@ const notificationController = {
     const { user_id } = req.query;
     try {
       // Cập nhật tất cả thông báo chưa đọc thành đã đọc
+      const parsed = getUserIdSchema.safeParse({ user_id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       await prisma.notification.updateMany({
         where: {
           user_id: user_id as string,
@@ -131,6 +177,17 @@ const notificationController = {
   deleteNotification: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const parsed = getIdSchema.safeParse({ id });
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const noti = await prisma.notification.delete({
         where: { id },
       });
