@@ -8,11 +8,25 @@ import { customAlphabet } from 'nanoid';
 import prisma from '../config/prisma';
 import { Prisma } from '@prisma/client';
 import { uploadToR2 } from '../middlewares/upload.middleware';
+import { z } from 'zod';
 
 export const generateShortCode = () => {
   const nanoid = customAlphabet('0123456789', 8); // chỉ 4 chữ số
   return `NAP${nanoid()}`; // Ví dụ: NAP4921
 };
+const updateUserSchema = z.object({
+  email: z.string().email({ message: 'Email không hợp lệ' }).optional(),
+  phone: z
+    .string()
+    .regex(/^\+?\d{9,15}$/, { message: 'Số điện thoại không hợp lệ' })
+    .optional(),
+  username: z.string().min(3, 'Username phải có ít nhất 3 ký tự').optional(),
+  password: z.string().min(6, 'Password phải có ít nhất 6 ký tự').optional(),
+  oldPassword: z
+    .string()
+    .min(6, 'Old password phải có ít nhất 6 ký tự')
+    .optional(),
+});
 const userController = {
   createUser: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -133,7 +147,18 @@ const userController = {
 
   updateUser: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email, phone, username } = req.body;
+      const { email, phone, username, password, oldPassword } = req.body;
+      const parsed = updateUserSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       const id = req.params.id;
       const User = await UserService.getUserById(id);
       if (!User) {
@@ -145,13 +170,28 @@ const userController = {
         );
         return;
       }
-
-      const { password } = req.body;
-      if (password) {
+      if (password && oldPassword) {
+        const byHash = await bcrypt.compare(oldPassword, User.password);
+        if (!byHash) {
+          errorResponse(
+            res,
+            'Tài khoản hoặc mật khẩu không chính xác',
+            {},
+            httpStatusCodes.UNAUTHORIZED,
+          );
+          return;
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
-        req.body.password = hashedPassword;
-      } else {
-        delete req.body.password;
+        const newpass = await prisma.user.update({
+          where: {
+            id,
+          },
+          data: {
+            password: hashedPassword,
+          },
+        });
+        successResponse(res, 'Cập nhật mật khẩu thành công !', newpass);
+        return;
       }
       const findmail = await prisma.user.findUnique({
         where: {
