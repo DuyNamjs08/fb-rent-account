@@ -129,8 +129,7 @@ const supportController = {
         );
       }
     }
-  },
-  // load more, search, filter
+  }, // load more, search, filter
   getAllSupport: async (req: Request, res: Response): Promise<void> => {
     try {
       const {
@@ -148,9 +147,19 @@ const supportController = {
       const where: any = {};
       if (search) {
         where.OR = [
-          { title: { contains: search as string, mode: 'insensitive' } },
+          {
+            title: {
+              contains: search as string,
+              mode: 'insensitive',
+            },
+          },
           { content: { contains: search as string, mode: 'insensitive' } },
-          { fullName: { contains: search as string, mode: 'insensitive' } },
+          {
+            fullName: {
+              contains: search as string,
+              mode: 'insensitive',
+            },
+          },
           { email: { contains: search as string, mode: 'insensitive' } },
         ];
       }
@@ -242,6 +251,175 @@ const supportController = {
       } else {
         errorResponse(res, error?.message, error, statusCode);
       }
+    }
+  },
+  createMessage: async (req: Request, res: Response): Promise<void> => {
+    const { supportRequestId, senderId, message } = req.body;
+
+    if (!supportRequestId || !senderId || !message) {
+      errorResponse(
+        res,
+        httpReasonCodes.NOT_FOUND,
+        {},
+        httpStatusCodes.NOT_FOUND,
+      );
+      return;
+    }
+
+    try {
+      const supportRequest = await prisma.supportRequests.findUnique({
+        where: { id: supportRequestId },
+      });
+
+      if (!supportRequest) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const sender = await prisma.user.findUnique({
+        where: { id: senderId },
+      });
+
+      if (!sender) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const newMessage = await prisma.messageRequest.create({
+        data: {
+          supportRequestId,
+          senderId,
+          message,
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              role: true,
+              images: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+      successResponse(res, 'Tạo tin nhắn thành công', newMessage);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  getMessageByRequestId: async (req: Request, res: Response) => {
+    try {
+      const supportRequestId = req.params.id;
+      const supportRequest = await prisma.supportRequests.findUnique({
+        where: {
+          id: supportRequestId,
+        },
+      });
+
+      if (!supportRequest) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const message = await prisma.messageRequest.findMany({
+        where: {
+          supportRequestId,
+        },
+        orderBy: {
+          created_at: 'asc',
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              role: true,
+              images: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+      successResponse(res, 'Lấy tin nhắn thành công', message);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  updateStatusByRequestId: async(req: Request, res: Response) => {
+    try {
+      const supportRequestId = req.params.id;
+      const { status } = req.body;
+      if (!status) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const findSupportRequest = await prisma.supportRequests.findUnique({
+        where: {
+          id: supportRequestId,
+        },
+      });
+      if (!findSupportRequest) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const updateStatus = await prisma.supportRequests.update({
+        where: { id: supportRequestId },
+        data: {
+          status,
+          updated_at: new Date(),
+        },
+      });
+
+      successResponse(res, 'Cập nhật status thành công', updateStatus);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 };
