@@ -10,7 +10,6 @@ router.get('/support', supportController.getAllSupport);
 router.get('/support/:id', supportController.getSupportById);
 router.post(
   '/support',
-  requireRoles([UserRole.ADMIN]),
   uploadMiddleware.array('attachments', 5),
   supportController.createSupport,
 );
@@ -18,10 +17,6 @@ router.post(
 router.patch('/support/status/:id', supportController.updateStatusByRequestId);
 router.post('/support/message', supportController.createMessage);
 router.get('/support/message/:id', supportController.getMessageByRequestId);
-router.delete(
-  '/support/:id',
-  requireRoles([UserRole.ADMIN]),
-  supportController.deleteSupport,
-);
+router.delete('/support/:id', supportController.deleteSupport);
 
 export default router;
