@@ -14,6 +14,10 @@ router.post(
   uploadMiddleware.array('attachments', 5),
   supportController.createSupport,
 );
+// router.delete('/support/:id', supportController.deleteSupport);
+router.patch('/support/status/:id', supportController.updateStatusByRequestId);
+router.post('/support/message', supportController.createMessage);
+router.get('/support/message/:id', supportController.getMessageByRequestId);
 router.delete(
   '/support/:id',
   requireRoles([UserRole.ADMIN]),

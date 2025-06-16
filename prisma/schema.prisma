@@ -68,6 +68,7 @@ model User {
   notifications  Notification[]
   list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
   supportRequests   SupportRequests[]
+  sentMessages      MessageRequest[]
 
   transactions   Transaction[]  @relation("UserTransactions")
   budget_id String? // ID ngân sách liên kết với người dùng
@@ -289,9 +290,22 @@ model SupportRequests {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   user        User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  messages    MessageRequest[]
 
   @@map("support_requests")
 }
 
+model MessageRequest {
+  id               String   @id @default(uuid())
+  supportRequestId String
+  senderId         String
+  message          String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
+  supportRequest   SupportRequests @relation(fields: [supportRequestId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sender           User            @relation(fields: [senderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("message_requests")
+}
 
