@@ -27,6 +27,15 @@ const TokenController = {
         );
         return;
       }
+      if (!user.is_verified) {
+        errorResponse(
+          res,
+          'Tài khoản chưa được xác thực email.',
+          {},
+          httpStatusCodes.UNAUTHORIZED,
+        );
+        return;
+      }
       const byHash = await bcrypt.compare(req.body.password, user.password);
       if (!byHash) {
         errorResponse(

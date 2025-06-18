@@ -566,5 +566,8 @@ router.delete(
   requireRoles([UserRole.ADMIN]),
   userController.deleteUser,
 );
+// routes/user.ts
+router.post('/verify-email', userController.verifyEmail);
+router.post('/resend-verification', userController.resendVerification);
 
 export default router;

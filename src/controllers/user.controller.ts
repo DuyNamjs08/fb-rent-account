@@ -9,7 +9,14 @@ import prisma from '../config/prisma';
 import { Prisma } from '@prisma/client';
 import { uploadToR2 } from '../middlewares/upload.middleware';
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
+import { EmailService } from '../services/Email.service';
+import jwt from 'jsonwebtoken';
 
+import 'dotenv/config';
+
+const FRONTEND_BASE_URL =
+  process.env.VITE_URL_TEST || 'https://api.duynam.store';
 export const generateShortCode = () => {
   const nanoid = customAlphabet('0123456789', 8); // chỉ 4 chữ số
   return `NAP${nanoid()}`; // Ví dụ: NAP4921
@@ -30,16 +37,7 @@ const updateUserSchema = z.object({
 const userController = {
   createUser: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { role } = req.body;
-      // if (role === 'admin') {
-      //   errorResponse(
-      //     res,
-      //     'Role đã ngừng cung cấp, vui lòng chọn role khác',
-      //     {},
-      //     httpStatusCodes.BAD_REQUEST,
-      //   );
-      //   return;
-      // }
+      const { role, email } = req.body;
       const userExists = await UserService.getUserByEmail(req.body.email);
       if (userExists) {
         errorResponse(res, 'Email đã tồn tại', {}, httpStatusCodes.CONFLICT);
@@ -54,12 +52,27 @@ const userController = {
       }
       const { password } = req.body;
       const hashedPassword = await bcrypt.hash(password, 10);
+      // Tạo token xác thực (có thể dùng uuid hoặc JWT)
+      const verificationToken = uuidv4();
+      const tokenExpiresAt = new Date(Date.now() + 60 * 1000); // Token hết hạn sau 30s
+
       req.body.password = hashedPassword;
       const user = await UserService.createUser({
         ...req.body,
+        is_verified: false,
         short_code: shortCode,
+        verification_token: verificationToken,
+        token_expires_at: tokenExpiresAt,
       });
-      successResponse(res, 'Tạo người dùng thành công', user);
+      // Gửi email xác thực
+      const verifyLink = `${FRONTEND_BASE_URL}/verify-notice?token=${verificationToken}`;
+      await EmailService.sendVerificationEmail(email, verifyLink);
+      console.log('4444444', verificationToken, tokenExpiresAt);
+      successResponse(
+        res,
+        'Đăng ký thành công, vui lòng kiểm tra email để xác nhận.',
+        null,
+      );
     } catch (error: any) {
       errorResponse(
         res,
@@ -290,6 +303,89 @@ const userController = {
       } else {
         errorResponse(res, error?.message, error, statusCode);
       }
+    }
+  },
+  verifyEmail: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { token, cancel } = req.body;
+      console.log('lalalalala777777', cancel, req.body, token);
+
+      const user = await prisma.user.findFirst({
+        where: {
+          verification_token: token,
+        },
+      });
+      // xóa user khi user từ chối xác thực
+      if (cancel && user) {
+        await prisma.user.delete({ where: { id: user.id } });
+        successResponse(res, 'Đã thực hiện xóa user');
+        return;
+      }
+      console.log('userrrrr1111', user);
+      if (!user) {
+        errorResponse(
+          res,
+          'Token không tồn tại hoặc người dùng không hợp lệ',
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      if (
+        !user.token_expires_at ||
+        new Date(user.token_expires_at) < new Date()
+      ) {
+        errorResponse(
+          res,
+          'Token đã hết hạn vui lòng xác thực lại',
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      if (user) {
+        await UserService.updateUser(user.id, {
+          is_verified: true,
+          verification_token: null,
+          token_expires_at: null,
+        });
+        console.log('kakakakaka------1111');
+        successResponse(res, 'Xác thực thành công');
+      }
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  resendVerification: async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      console.log('email111', email);
+      const user = await prisma.user.findUnique({ where: { email } });
+      console.log('emaill2222', user);
+      if (!user || user.is_verified) {
+        errorResponse(res, 'Tài khoản không hợp lệ hoặc đã xác thực', {}, 400);
+        return;
+      }
+      const newToken = uuidv4();
+      const tokenExpiresAt = new Date(Date.now() + 60 * 1000); // 30s hoặc 24h
+      await prisma.user.update({
+        where: { email },
+        data: {
+          verification_token: newToken,
+          token_expires_at: tokenExpiresAt,
+        },
+      });
+      const verifyLink = `${FRONTEND_BASE_URL}/verify-notice?token=${newToken}`;
+      await EmailService.sendVerificationEmail(user.email, verifyLink);
+      successResponse(res, 'Đã gửi lại email xác thực!');
+    } catch (err: any) {
+      errorResponse(res, err.message, {}, 500);
     }
   },
 };

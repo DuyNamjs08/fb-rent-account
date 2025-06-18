@@ -8,6 +8,8 @@ class UserService {
     username,
     phone = '',
     role,
+    verification_token,
+    token_expires_at,
   }: {
     email: string;
     password: string;
@@ -16,6 +18,8 @@ class UserService {
     username: string;
     phone: string;
     role: string;
+    verification_token: string;
+    token_expires_at: string;
   }) {
     const User = await prisma.user.create({
       data: {
@@ -26,6 +30,8 @@ class UserService {
         short_code,
         username,
         phone,
+        verification_token,
+        token_expires_at,
       },
     });
     return User;

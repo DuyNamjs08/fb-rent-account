@@ -59,6 +59,9 @@ model User {
   images                   String?
   role_id                   String?
   role                    String? @default("user") // user | admin | super_admin
+  is_verified Boolean @default(false)
+  verification_token      String? @unique // Token xác nhận email
+  token_expires_at        DateTime?   // Thời hạn xác nhận
   token                   Token[]
   points     Int           @default(0)
   short_code    String         @unique
@@ -68,6 +71,7 @@ model User {
   notifications  Notification[]
   list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
   supportRequests   SupportRequests[]
+
 
   transactions   Transaction[]  @relation("UserTransactions")
   budget_id String? // ID ngân sách liên kết với người dùng
