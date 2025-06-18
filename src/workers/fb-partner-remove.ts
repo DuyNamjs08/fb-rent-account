@@ -13,10 +13,6 @@ export const fbRemoveParnert = new Bull('fb-remove-parnert', {
     port: parseInt(process.env.REDIS_PORT || '6380', 10),
     password: process.env.REDIS_PASSWORD,
   },
-  limiter: {
-    max: 50, // tối đa 50 job
-    duration: 1000, // mỗi 1000ms
-  },
   defaultJobOptions: {
     attempts: 1, // chỉ chạy 1 lần, không retry
     removeOnComplete: true,
@@ -25,7 +21,7 @@ export const fbRemoveParnert = new Bull('fb-remove-parnert', {
 });
 const updateDb = async (data: any) => {
   try {
-    const { ads_account_id, bm_origin, ads_name, bot_id } = data;
+    const { ads_account_id, bm_origin, ads_name, bot_id, bm_id } = data;
     const cookie = await prisma.cookies.findUnique({
       where: {
         id: bot_id,
@@ -44,6 +40,7 @@ const updateDb = async (data: any) => {
       ads_account_id,
       ads_name,
       cookie_origin: cookie.storage_state,
+      bm_id,
     });
     return {
       status_remove_spend_limit: resultRemoveLimit,
@@ -54,7 +51,7 @@ const updateDb = async (data: any) => {
     throw fallbackError;
   }
 };
-fbRemoveParnert.process(15, async (job) => {
+fbRemoveParnert.process(2, async (job) => {
   const { data } = job;
   const { bm_id, ads_account_id, user_id, amountPoint, id, ads_name } = data;
   try {

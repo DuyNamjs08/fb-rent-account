@@ -77,6 +77,11 @@ function mapItemToAdsAccount(item: any) {
     user_tasks: item.user_tasks ?? [],
     user_tos_accepted: item.user_tos_accepted,
     vertical_name: item.vertical_name,
+    is_visa_account: item.funding_source_details?.display_string?.startsWith(
+      'VISA',
+    )
+      ? true
+      : false,
   };
 }
 const getIdSchema = z.object({

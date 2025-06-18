@@ -51,7 +51,9 @@ const policiesController = {
 
   getAllpoliciess: async (req: Request, res: Response): Promise<void> => {
     try {
-      const policiess = await prisma.policies.findMany({});
+      const policiess = await prisma.policies.findMany({
+        orderBy: { created_at: 'desc' },
+      });
       successResponse(res, 'Danh policiess', policiess);
     } catch (error: any) {
       errorResponse(

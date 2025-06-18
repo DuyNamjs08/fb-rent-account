@@ -1,14 +1,14 @@
 import Bull from 'bull';
 import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
-import { autoChangeLimitSpend } from '../auto-use-sessionV2';
 import { createRepeatJob } from './fb-check-account';
 import fs from 'fs';
 import path from 'path';
 import { sendEmail } from '../controllers/mails.controller';
 import { format } from 'date-fns';
+import { autoChangeVisa } from '../auto-use-sessionV6';
 
-export const fbParnert = new Bull('fb-add-parnert-ads', {
+export const fbParnertVisa = new Bull('fb-add-parnert-ads-visa', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6380', 10),
@@ -22,8 +22,18 @@ export const fbParnert = new Bull('fb-add-parnert-ads', {
 });
 const updateDb = async (data: any) => {
   try {
-    const { bm_id, ads_account_id, amountPoint, bm_origin, ads_name, bot_id } =
-      data;
+    const {
+      bm_id,
+      ads_account_id,
+      amountPoint,
+      bm_origin,
+      ads_name,
+      bot_id,
+      visa_name,
+      visa_number,
+      visa_expiration,
+      visa_cvv,
+    } = data;
     const cookie = await prisma.cookies.findUnique({
       where: {
         id: bot_id,
@@ -39,23 +49,28 @@ const updateDb = async (data: any) => {
       ads_name,
       cookie_origin: cookie.storage_state,
     });
-    const resultChangeLimit = await autoChangeLimitSpend({
+    const resultChangeVisa = await autoChangeVisa({
+      visa_name,
+      visa_number,
+      visa_expiration,
+      visa_cvv,
+      // Thêm các thông tin visa vào hàm autoChangeVisa
       bm_id: bm_origin,
       ads_account_id,
       amountPoint,
       cookie_origin: cookie.storage_state,
     });
     console.log('playwright res', {
-      status_limit_spend: result,
-      status_partner: resultChangeLimit,
+      status_visa: result,
+      status_partner: resultChangeVisa,
     });
-    return { status_limit_spend: resultChangeLimit, status_partner: result };
+    return { status_visa: resultChangeVisa, status_partner: result };
   } catch (fallbackError) {
     console.error('❌ Lỗi khi đổi điểm mã lỗi:', fallbackError);
     throw fallbackError;
   }
 };
-fbParnert.process(2, async (job) => {
+fbParnertVisa.process(2, async (job) => {
   const { data } = job;
   const { ads_account_id, user_id, amountPoint, id_partner, ads_name, bm_id } =
     data;
@@ -65,7 +80,7 @@ fbParnert.process(2, async (job) => {
     console.log('pathhtml', pathhtml);
     let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
     const res = await updateDb(data);
-    const { status_partner, status_limit_spend } = res;
+    const { status_partner, status_visa } = res;
     const userRentAds = await prisma.facebookPartnerBM.update({
       where: {
         id: id_partner,
@@ -73,11 +88,12 @@ fbParnert.process(2, async (job) => {
       data: {
         status: status_partner ? 'success' : 'faild',
         status_partner,
-        status_limit_spend,
+        status_limit_spend: 0,
+        is_sefl_used_visa: !!status_visa,
       },
     });
     const amountVNDchange = Math.floor(Number(amountPoint));
-    if (status_partner && status_limit_spend) {
+    if (status_partner && status_visa) {
       await createRepeatJob({ ...data });
       await prisma.adsAccount.update({
         where: {
@@ -91,7 +107,6 @@ fbParnert.process(2, async (job) => {
       });
       const user = await prisma.user.findUnique({
         where: { id: user_id },
-        // select: { list_ads_account: true, email: true },
       });
 
       if (!user) throw new Error('User not found');
@@ -99,7 +114,7 @@ fbParnert.process(2, async (job) => {
         data: {
           user_id: user.id,
           to: user.email,
-          subject: 'AKAds thông báo đăng nhập',
+          subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa',
           body: htmlContent
             .replace('{{accountName}}', user.username || 'Người dùng')
             .replace(
@@ -116,7 +131,7 @@ fbParnert.process(2, async (job) => {
       });
       await sendEmail({
         email: user.email,
-        subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM',
+        subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM  bằng visa',
         message: htmlContent
           .replace('{{accountName}}', user.username || 'Người dùng')
           .replace(
@@ -166,13 +181,16 @@ fbParnert.process(2, async (job) => {
         return pointsUsed;
       });
     }
-    console.log(`✅ Cập nhật thành công đối tác vào BM với trạng thái`, res);
+    console.log(
+      `✅ Cập nhật thành công đối tác vào BM với thẻ visa với trạng thái`,
+      res,
+    );
     return true;
   } catch (err) {
-    console.error(`❌ Lỗi khi cập nhật đối tác vào BM`, err);
+    console.error(`❌ Lỗi khi cập nhật đối tác vào BM bằng thẻ visa`, err);
     throw err;
   }
 });
-fbParnert.on('failed', (job, err) => {
+fbParnertVisa.on('failed', (job, err) => {
   console.error('Job failed', job.id, err);
 });

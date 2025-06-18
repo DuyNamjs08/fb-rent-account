@@ -130,7 +130,11 @@ model FacebookPartnerBM {
   status_limit_spend        Int?
   status_dischard_limit_spend        Int?
   status_dischard_partner      Int?
+  is_sefl_used_visa      Boolean? @default(false)
   message      String?
+  update_package      Int? @default(0) // 0 = không cập nhật, 1 = cập nhật
+  start_date     String[] @default([])
+  end_date       String[] @default([])
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -148,6 +152,23 @@ model FacebookBM {
   updated_at  DateTime @updatedAt
 
   @@map("facebook_bm")
+}
+model FacebookVisa {
+  id          String      @id @default(uuid())
+  visa_name String
+  visa_number String
+  visa_expiration String
+  visa_cvv String
+  verify_code String
+  bm_name     String
+  bm_origin     String      
+  ads_account_id String 
+  user_id       String
+  status        String?   @default("pending")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("facebook_visa")
 }
 model Cookies {
   id          String      @id @default(uuid())
@@ -251,6 +272,8 @@ model AdsAccount {
   status_rented String? 
   spend_limit Int?
   note_aka    String?
+  active    Boolean? @default(true) 
+  is_visa_account Boolean? @default(false) 
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt

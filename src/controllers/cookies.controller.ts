@@ -6,9 +6,11 @@ import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { z } from 'zod';
 const createCookieSchema = z.object({
   email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
-  storage_state: z.array(z.any()).refine((arr) => arr.length > 0, {
-    message: 'Cần ít nhất một phần tử mô tả',
-  }),
+  storage_state: z
+    .record(z.any())
+    .refine((obj) => Object.keys(obj).length > 0, {
+      message: 'Cần ít nhất một phần tử mô tả',
+    }),
 });
 const getIdSchema = z.object({
   id: z.string().min(1, 'id là bắt buộc'),
