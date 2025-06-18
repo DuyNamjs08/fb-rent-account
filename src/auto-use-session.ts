@@ -23,7 +23,6 @@ export const autoChangePartner = async (data: any) => {
     // },
     slowMo: 100, // Tự động chậm lại giữa mỗi thao tác
   });
-  let result = 0;
 
   // const oldCookiesPath = path.resolve(__dirname, '../fb-cookies.json');
   // const storageStatePath = path.resolve(
@@ -79,6 +78,7 @@ export const autoChangePartner = async (data: any) => {
   const lang = await page.getAttribute('html', 'lang');
 
   let response = 0;
+  let result = 0;
   if (lang === 'vi') {
     console.log('🌐 Ngôn ngữ trang:', lang);
     response = await hanleVi({
@@ -86,6 +86,7 @@ export const autoChangePartner = async (data: any) => {
       ads_name,
       result,
       bm_id,
+      ads_account_id,
     });
   } else if (lang === 'en') {
     console.log('🌐 Ngôn ngữ trang:', lang);
@@ -94,12 +95,14 @@ export const autoChangePartner = async (data: any) => {
       ads_name,
       result,
       bm_id,
+      ads_account_id,
     });
   }
 
   // await new Promise(() => {});
   await page.waitForTimeout(10000);
   await browser.close();
+  console.log('response', response);
   return response;
 };
 const hanleEn = async ({
@@ -107,22 +110,24 @@ const hanleEn = async ({
   ads_name,
   result,
   bm_id,
+  ads_account_id,
 }: {
   page: Page;
   ads_name: string;
   result: number;
   bm_id: string;
+  ads_account_id: string;
 }) => {
   await page.waitForLoadState('networkidle');
   let isVerify = 0;
   try {
     const verify = page.locator('div', {
-      hasText: /^Verify Facebook account$/,
+      hasText: /^Verify account$/,
     });
     const count = await verify.count();
 
     console.log(
-      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Verify Facebook account'`,
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Verify account'`,
     );
     if (count > 0) {
       await page.waitForTimeout(1000 + randomDelay());
@@ -131,9 +136,9 @@ const hanleEn = async ({
       await element.click({ delay: randomDelay(150, 300) }).then(() => {
         isVerify = 1;
       });
-      console.log('✅ Đã click vào phần tử Verify Facebook account');
+      console.log('✅ Đã click vào phần tử Verify account');
     } else {
-      console.log('⚠️ Không tìm thấy phần tử Verify Facebook account');
+      console.log('⚠️ Không tìm thấy phần tử Verify account');
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click:', err.message);
@@ -142,18 +147,20 @@ const hanleEn = async ({
   if (isVerify) {
     try {
       const verify = page.locator('div', {
-        hasText: /^Gửi email$/,
+        hasText: /^Send email$/,
       });
       const count = await verify.count();
-      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi email'`);
+      console.log(
+        `🔍 Tìm thấy ${count} phần tử chính xác có text 'Send email'`,
+      );
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
         const element = verify.nth(1);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
-        console.log('✅ Đã click vào phần tử Gửi email');
+        console.log('✅ Đã click vào phần tử Send email');
       } else {
-        console.log('⚠️ Không tìm thấy phần tử Gửi email');
+        console.log('⚠️ Không tìm thấy phần tử Send email');
       }
     } catch (err: any) {
       console.log('❌ Lỗi khi click:', err.message);
@@ -175,48 +182,60 @@ const hanleEn = async ({
 
     try {
       const verify = page.locator('div', {
-        hasText: /^Gửi$/,
+        hasText: /^Submit$/,
       });
       const count = await verify.count();
-      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi'`);
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Submit'`);
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
         const element = verify.nth(1);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
-        console.log('✅ Đã click vào phần tử Gửi');
+        console.log('✅ Đã click vào phần tử Submit');
       } else {
-        console.log('⚠️ Không tìm thấy phần tử Gửi');
+        console.log('⚠️ Không tìm thấy phần tử Submit');
       }
     } catch (err: any) {
-      console.log('❌ Lỗi khi click Gửi:', err.message);
+      console.log('❌ Lỗi khi click Submit:', err.message);
     }
     await page.waitForTimeout(6000);
     try {
       const verify = page.locator('div', {
-        hasText: /^Xong$/,
+        hasText: /^Done$/,
       });
       const count = await verify.count();
-      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Done'`);
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
         const element = verify.nth(2);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
-        console.log('✅ Đã click vào phần tử Xong');
+        console.log('✅ Đã click vào phần tử Done');
       } else {
-        console.log('⚠️ Không tìm thấy phần tử Xong');
+        console.log('⚠️ Không tìm thấy phần tử Done');
       }
     } catch (err: any) {
-      console.log('❌ Lỗi khi click Xong:', err.message);
+      console.log('❌ Lỗi khi click Done:', err.message);
     }
   }
 
   await page.waitForTimeout(1500);
   await page.mouse.move(200, 300);
   await page.mouse.wheel(0, 400);
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
 
+  try {
+    const input = await page.locator(
+      'input[placeholder="Search by name or ID"]',
+    );
+    await input.first().click();
+    await page.keyboard.type(ads_account_id, { delay: 500 });
+    console.log('✅ Đã nhập Search by name or ID');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập Search by name or ID:', error.message);
+  }
+  await page.waitForTimeout(2000);
+  // await new Promise(() => {});
   try {
     const verify = page.locator(`div[role="heading"]:has-text("${ads_name}")`);
     const count = await verify.count();
@@ -301,7 +320,6 @@ const hanleEn = async ({
   } catch (error: any) {
     console.log('❌ Lỗi khi click vào Assign:', error.message);
   }
-  await new Promise(() => {});
   try {
     await page.waitForSelector(
       'div[role="heading"][aria-level="3"]:has-text("Partner Added")',
@@ -319,11 +337,13 @@ const hanleVi = async ({
   ads_name,
   result,
   bm_id,
+  ads_account_id,
 }: {
   page: Page;
   ads_name: string;
   result: number;
   bm_id: string;
+  ads_account_id: string;
 }) => {
   await page.waitForLoadState('networkidle');
   let isVerify = 0;
@@ -427,7 +447,20 @@ const hanleVi = async ({
   await page.waitForTimeout(1500);
   await page.mouse.move(200, 300);
   await page.mouse.wheel(0, 400);
-  await page.waitForTimeout(1000);
+
+  await page.waitForTimeout(2000);
+
+  try {
+    const input = await page.locator(
+      'input[placeholder="Tìm kiếm theo tên hoặc ID"]',
+    );
+    await input.first().click();
+    await page.keyboard.type(ads_account_id, { delay: 500 });
+    console.log('✅ Đã nhập Tìm kiếm theo tên hoặc ID');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập Tìm kiếm theo tên hoặc ID:', error.message);
+  }
+  await page.waitForTimeout(2000);
 
   try {
     const verify = page.locator(`div[role="heading"]:has-text("${ads_name}")`);
@@ -475,7 +508,7 @@ const hanleVi = async ({
       'input[placeholder="ID đối tác kinh doanh"]',
     );
     await input.click();
-    await page.keyboard.type(bm_id, { delay: 100 });
+    await page.keyboard.type(bm_id, { delay: 400 });
     console.log('✅ Đã nhập ID đối tác kinh doanh');
   } catch (error: any) {
     console.log('❌ Lỗi khi nhập ID đối tác kinh doanh:', error.message);
@@ -489,7 +522,7 @@ const hanleVi = async ({
     );
 
     await switchLocator.waitFor({ state: 'visible', timeout: 10000 });
-    await switchLocator.click({ delay: 200 });
+    await switchLocator.click({ delay: 500 });
     console.log('✅ Đã bật quyền quản lý chiến dịch');
   } catch (error: any) {
     console.log('❌ Không bật được quyền:', error.message);
@@ -527,10 +560,10 @@ const hanleVi = async ({
 };
 
 // autoChangePartner({
-//   bm_origin: '884533352261849',
-//   ads_name: 'Che sau 2',
-//   bm_id: '23865108109789353',
-//   ads_account_id: '601606618695323',
+//   bm_origin: '389076542869829',
+//   ads_name: 'NHẬM LUXURY 13',
+//   bm_id: '1015722189158178',
+//   ads_account_id: '794079162674836',
 //   cookie_origin: {
 //     cookies: [
 //       {

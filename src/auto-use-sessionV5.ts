@@ -1,6 +1,4 @@
-import { chromium, BrowserContext } from 'playwright';
-import fs from 'fs';
-import path from 'path';
+import { chromium, BrowserContext, Page } from 'playwright';
 import { randomDelay } from './auto-use-session';
 import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
 
@@ -13,29 +11,9 @@ export const autoChangeLimitSpend = async (data: any) => {
   } = data;
   const browser = await chromium.launch({
     headless: false,
-    // proxy: {
-    //   server: 'http://proxy.example.com:8000',
-    //   username: 'proxy_user',
-    //   password: 'proxy_pass',
-    // },
-    slowMo: 120, // Tự động chậm lại giữa mỗi thao tác
+    slowMo: 300, // Tự động chậm lại giữa mỗi thao tác
   });
-  let result = 0;
-  // const oldCookiesPath = path.resolve(__dirname, '../fb-cookies.json');
-  // const storageStatePath = path.resolve(
-  //   __dirname,
-  //   '../fb-cookies-browser.json',
-  // );
-  // if (fs.existsSync(oldCookiesPath) && !fs.existsSync(storageStatePath)) {
-  //   console.log('⚙️ Đang chuyển đổi cookie cũ sang định dạng Playwright...');
-  //   const rawCookies = JSON.parse(fs.readFileSync(oldCookiesPath, 'utf-8'));
-  //   const storageState = {
-  //     cookies: rawCookies,
-  //     origins: [],
-  //   };
-  //   fs.writeFileSync(storageStatePath, JSON.stringify(storageState, null, 2));
-  //   console.log('✅ Đã tạo file storageState:', storageStatePath);
-  // }
+
   let context: BrowserContext;
   if (cookie_origin) {
     console.log('✅ Tìm thấy file cookies, đang load...');
@@ -72,7 +50,234 @@ export const autoChangeLimitSpend = async (data: any) => {
     console.error('❌ page.goto crashed:', e);
     await browser.close();
   }
+  const lang = await page.getAttribute('html', 'lang');
+  let response = 0;
+  let result = 0;
+  if (lang === 'vi') {
+    console.log('🌐 Ngôn ngữ trang thêm hạn mức:', lang);
+    response = await hanleVi({
+      page,
+      result,
+      amountPoint,
+    });
+  } else if (lang === 'en') {
+    console.log('🌐 Ngôn ngữ trang thêm hạn mức:', lang);
+    response = await hanleEn({
+      page,
+      result,
+      amountPoint,
+    });
+  }
 
+  await page.waitForTimeout(10000);
+  await browser.close();
+  return response;
+};
+const hanleEn = async ({
+  page,
+  result,
+  amountPoint,
+}: {
+  page: Page;
+  result: number;
+  amountPoint: number;
+}) => {
+  await page.waitForLoadState('networkidle');
+  // phần xác minh tài khoản
+  let isVerify = 0;
+  try {
+    const verify = page.locator('div', {
+      hasText: /^Xác minh tài khoản$/,
+    });
+    const count = await verify.count();
+
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Xác minh tài khoản'`,
+    );
+    if (count > 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(2);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) }).then(() => {
+        isVerify = 1;
+      });
+      console.log('✅ Đã click vào phần tử Xác minh tài khoản');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Xác minh tài khoản');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  if (isVerify) {
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi email$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi email'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi email');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi email');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click:', err.message);
+    }
+    await page.waitForTimeout(30000);
+    const verifyCode = await getFacebookSecurityCodesFromEmail({ email: '' });
+    console.log('verifyCode', verifyCode);
+    const codeToEnter = verifyCode.at(-1) ?? '';
+    try {
+      const input = await page.locator('input[placeholder="123456"]');
+      await input.click();
+      for (const char of codeToEnter) {
+        await page.keyboard.type(char, { delay: randomDelay(80, 150) });
+      }
+      console.log('✅ Đã nhập mã verifyCode.at(-1)', verifyCode.at(-1));
+    } catch (error: any) {
+      console.log('❌ Lỗi khi nhập verifyCode.at(-1):', error.message);
+    }
+
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Gửi:', err.message);
+    }
+    await page.waitForTimeout(6000);
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Xong$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(2);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Xong');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Xong');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Xong:', err.message);
+    }
+  }
+
+  await page.waitForTimeout(1500);
+  const heading = page.locator('div[role="heading"][aria-level="3"]', {
+    hasText: 'Payment activity',
+  });
+  await heading.scrollIntoViewIfNeeded({ timeout: 400 });
+  await page.waitForTimeout(1000);
+
+  try {
+    const allSpans = page.locator(
+      'span.x8t9es0.x1fvot60.xxio538.x1heor9g.xq9mrsl.x1h4wwuj.x1pd3egz.xeuugli.xh8yej3',
+    );
+    const count = await allSpans.count();
+    console.log(`🔎 Tìm thấy ${count} phần tử.`);
+    if (count == 18) {
+      // Click vào tất cả hoặc chỉ phần tử đầu
+      await allSpans.nth(16).scrollIntoViewIfNeeded();
+      await allSpans.nth(16).click({ delay: 200, force: true });
+      console.log(
+        '✅ Đã click vào phần tử đầu tiên trong danh sách 16 phần tử.',
+      );
+    } else if (count == 16) {
+      await allSpans.nth(14).scrollIntoViewIfNeeded();
+      await allSpans.nth(14).click({ delay: 200, force: true });
+      console.log(
+        '✅ Đã click vào phần tử đầu tiên trong danh sách 14 phần tử.',
+      );
+    } else {
+      console.log(`⚠️ Số lượng phần tử KHÔNG PHẢI là ${count} , không click.`);
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click vào phần tử:', err.message);
+  }
+  await page.waitForTimeout(2000);
+  try {
+    const button = page.locator('span', { hasText: /^Change$/ });
+    await button.waitFor({ state: 'visible', timeout: 5000 });
+    await button.scrollIntoViewIfNeeded();
+    await button.click({ delay: 200 });
+    console.log('✅ Đã click vào nút "Change"');
+  } catch (err: any) {
+    console.error('❌ Không thể click vào nút "Change":', err.message);
+  }
+  await page.waitForTimeout(2000);
+  try {
+    const input = await page.locator('input[name="accountSpendLimitInput"]');
+
+    await input.click({ delay: 200 });
+    await page.keyboard.type(String(amountPoint), { delay: 200 });
+    console.log('✅ Đã nhập giới hạn chi tiêu');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập giới hạn chi tiêu:', error.message);
+  }
+  await page.waitForTimeout(1400);
+  try {
+    const verify = page.locator('span', {
+      hasText: /^Save$/,
+    });
+    const count = await verify.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Save'`);
+    if (count >= 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(1);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) });
+      console.log('✅ Đã click vào phần tử Save');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Save');
+    }
+  } catch (error: any) {
+    console.log('❌ Lỗi khi click vào Save:', error.message);
+  }
+  await page.waitForTimeout(15000);
+  const successText = page.locator('span', {
+    hasText: /^Account spending limit updated$/,
+  });
+
+  if (await successText.isVisible({})) {
+    console.log('✅ Có Thành công "Account spending limit updated"');
+    result = 1;
+  } else {
+    console.log('❌ Không có Thành công "Account spending limit updated"');
+  }
+  return result;
+};
+
+// phần tiếng việt =====================================================
+
+const hanleVi = async ({
+  page,
+  result,
+  amountPoint,
+}: {
+  page: Page;
+  result: number;
+  amountPoint: number;
+}) => {
   await page.waitForLoadState('networkidle');
   // phần xác minh tài khoản
   let isVerify = 0;
@@ -215,32 +420,8 @@ export const autoChangeLimitSpend = async (data: any) => {
   } catch (err: any) {
     console.error('❌ Không thể click vào nút "Thay đổi":', err.message);
   }
-  await page.waitForTimeout(1200);
-  try {
-    const label = page.locator(
-      'label:has(span:text("Thời điểm đặt lại giới hạn"))',
-    );
-    await label.click({ delay: 200 });
-    console.log('✅ Đã click vào nút "Thời điểm đặt lại giới hạn"');
-  } catch (err: any) {
-    console.error(
-      '❌ Không thể click vào nút "Thời điểm đặt lại giới hạn":',
-      err.message,
-    );
-  }
-  await page.waitForTimeout(1200);
-  try {
-    const target = page.locator('span', {
-      hasText: /^Thủ công, chỉ khi tôi thay đổi$/,
-    });
-    await target.waitFor({ state: 'visible' });
-    await target.click({ delay: 200, force: true });
-    console.log('✅ Đã click vào nút "Thủ công"');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào nút "Thủ công":', err.message);
-  }
 
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2000);
   try {
     const input = await page.locator('input[name="accountSpendLimitInput"]');
 
@@ -284,15 +465,12 @@ export const autoChangeLimitSpend = async (data: any) => {
       '❌ Không có Thành công "Đã cập nhật giới hạn chi tiêu cho tài khoản"',
     );
   }
-  await page.waitForTimeout(10000);
-  await browser.close();
   return result;
 };
-
 // autoChangeLimitSpend({
-//   bm_id: '1043878897701771',
-//   ads_account_id: '1360591371901484',
-//   amountPoint: 1000000,
+//   bm_id: '884533352261849',
+//   ads_account_id: '511278344380577',
+//   amountPoint: 5000000,
 //   cookie_origin: {
 //     cookies: [
 //       {

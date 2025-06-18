@@ -2,7 +2,7 @@ import { chromium, BrowserContext, Page } from 'playwright';
 import { randomDelay } from './auto-use-session';
 import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
 
-export const autoChangeLimitSpend = async (data: any) => {
+export const autoChangeVisa = async (data: any) => {
   const {
     bm_id = '',
     ads_account_id = '',
@@ -514,7 +514,7 @@ const hanleVi = async ({
   return result;
 };
 
-// autoChangeLimitSpend({
+// autoChangeVisa({
 //   bm_id: '884533352261849',
 //   ads_account_id: '511278344380577',
 //   amountPoint: 1000000,

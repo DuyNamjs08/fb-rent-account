@@ -1,6 +1,4 @@
-import { chromium, BrowserContext } from 'playwright';
-import fs from 'fs';
-import path from 'path';
+import { chromium, BrowserContext, Page } from 'playwright';
 import { randomDelay } from './auto-use-session';
 import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
 
@@ -8,34 +6,14 @@ export const autoRemovePartner = async (data: any) => {
   const {
     ads_account_id = '',
     bm_origin = '',
+    bm_id = '',
     ads_name = '',
     cookie_origin,
   } = data;
   const browser = await chromium.launch({
     headless: false,
-    // proxy: {
-    //   server: 'http://proxy.example.com:8000',
-    //   username: 'proxy_user',
-    //   password: 'proxy_pass',
-    // },
-    slowMo: 100, // Tự động chậm lại giữa mỗi thao tác
+    slowMo: 400, // Tự động chậm lại giữa mỗi thao tác
   });
-  let result = 0;
-  // const oldCookiesPath = path.resolve(__dirname, '../fb-cookies.json');
-  // const storageStatePath = path.resolve(
-  //   __dirname,
-  //   '../fb-cookies-browser.json',
-  // );
-  // if (fs.existsSync(oldCookiesPath) && !fs.existsSync(storageStatePath)) {
-  //   console.log('⚙️ Đang chuyển đổi cookie cũ sang định dạng Playwright...');
-  //   const rawCookies = JSON.parse(fs.readFileSync(oldCookiesPath, 'utf-8'));
-  //   const storageState = {
-  //     cookies: rawCookies,
-  //     origins: [],
-  //   };
-  //   fs.writeFileSync(storageStatePath, JSON.stringify(storageState, null, 2));
-  //   console.log('✅ Đã tạo file storageState:', storageStatePath);
-  // }
   let context: BrowserContext;
   if (cookie_origin) {
     console.log('✅ Tìm thấy file cookies, đang load...');
@@ -73,7 +51,48 @@ export const autoRemovePartner = async (data: any) => {
     console.error('❌ page.goto crashed:', e);
     await browser.close();
   }
+  const lang = await page.getAttribute('html', 'lang');
 
+  let response = 0;
+  let result = 0;
+  if (lang === 'vi') {
+    console.log('🌐 Ngôn ngữ trang:', lang);
+    response = await hanleVi({
+      page,
+      ads_name,
+      result,
+      ads_account_id,
+      bm_id,
+    });
+  } else if (lang === 'en') {
+    console.log('🌐 Ngôn ngữ trang:', lang);
+    response = await hanleEn({
+      page,
+      ads_name,
+      result,
+      ads_account_id,
+      bm_id,
+    });
+  }
+
+  await page.waitForTimeout(10000);
+  await browser.close();
+  console.log('response', response);
+  return response;
+};
+const hanleEn = async ({
+  page,
+  ads_name,
+  result,
+  ads_account_id,
+  bm_id,
+}: {
+  page: Page;
+  ads_name: string;
+  result: number;
+  ads_account_id: string;
+  bm_id: string;
+}) => {
   await page.waitForLoadState('networkidle');
   // phần xác minh tài khoản
   let isVerify = 0;
@@ -178,12 +197,21 @@ export const autoRemovePartner = async (data: any) => {
   await page.waitForTimeout(1500);
   await page.mouse.move(200, 300);
   await page.mouse.wheel(0, 400);
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
 
   try {
-    // const verify = page.locator('div[role="heading"][aria-level="4"]', {
-    //   hasText: ads_name,
-    // });
+    const input = await page.locator(
+      'input[placeholder="Search by name or ID"]',
+    );
+    await input.first().click();
+    await page.keyboard.type(ads_account_id, { delay: 500 });
+    console.log('✅ Đã nhập Search by name or ID');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập Search by name or ID:', error.message);
+  }
+  await page.waitForTimeout(2000);
+
+  try {
     const verify = page.locator(`div[role="heading"]:has-text("${ads_name}")`);
     const count = await verify.count();
     console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text ${ads_name}`);
@@ -200,6 +228,239 @@ export const autoRemovePartner = async (data: any) => {
     console.log('❌ Lỗi khi click vào ${ads_name}:', error.message);
   }
   await page.waitForTimeout(1200);
+  try {
+    const nameLocator = page.locator('span', {
+      hasText: /^Đối tác$/,
+    });
+    const count = await nameLocator.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'đối tác'`);
+
+    if (count >= 4) {
+      await page.waitForTimeout(1200);
+      await nameLocator.nth(1).click({ delay: 200 });
+      console.log('✅ Đã click vào phần tử đối tác');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử đối tác');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(2000);
+
+  try {
+    const input = await page.locator(
+      'input[placeholder="Tìm kiếm theo tên hoặc ID"]',
+    );
+    await input.nth(1).click();
+    await page.keyboard.type(bm_id, { delay: 500 });
+    console.log('✅ Đã nhập Tìm kiếm theo tên hoặc ID');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập Tìm kiếm theo tên hoặc ID:', error.message);
+  }
+  await page.waitForTimeout(2000);
+  try {
+    const nameLocator = page.locator('div', {
+      hasText: /^Quản lý$/,
+    });
+    const count = await nameLocator.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Quản lý'`);
+
+    if (count >= 4) {
+      await page.waitForTimeout(1200);
+      await nameLocator.nth(1).click({ delay: 200 });
+      console.log('✅ Đã click vào phần tử Quản lý');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Quản lý');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  try {
+    const nameLocator = page.locator('div', {
+      hasText: /^Gỡ quyền truy cập$/,
+    });
+    const count = await nameLocator.count();
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Gỡ quyền truy cập'`,
+    );
+
+    if (count >= 0) {
+      await page.waitForTimeout(1200);
+      await nameLocator.nth(2).click({ delay: 200 });
+      console.log('✅ Đã click vào phần tử Gỡ quyền truy cập');
+      result = 1;
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Gỡ quyền truy cập');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  return result;
+};
+
+// phần tiếng việt =====================================================
+
+const hanleVi = async ({
+  page,
+  ads_name,
+  result,
+  ads_account_id,
+  bm_id,
+}: {
+  page: Page;
+  ads_name: string;
+  result: number;
+  ads_account_id: string;
+  bm_id: string;
+}) => {
+  await page.waitForLoadState('networkidle');
+  // phần xác minh tài khoản
+  let isVerify = 0;
+  try {
+    const verify = page.locator('div', {
+      hasText: /^Xác minh tài khoản$/,
+    });
+    const count = await verify.count();
+
+    console.log(
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Xác minh tài khoản'`,
+    );
+    if (count > 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.nth(2);
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) }).then(() => {
+        isVerify = 1;
+      });
+      console.log('✅ Đã click vào phần tử Xác minh tài khoản');
+    } else {
+      console.log('⚠️ Không tìm thấy phần tử Xác minh tài khoản');
+    }
+  } catch (err: any) {
+    console.log('❌ Lỗi khi click:', err.message);
+  }
+  await page.waitForTimeout(1500);
+  if (isVerify) {
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi email$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi email'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi email');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi email');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click:', err.message);
+    }
+    await page.waitForTimeout(30000);
+    const verifyCode = await getFacebookSecurityCodesFromEmail({ email: '' });
+    console.log('verifyCode', verifyCode);
+    const codeToEnter = verifyCode.at(-1) ?? '';
+    try {
+      const input = await page.locator('input[placeholder="123456"]');
+      await input.click();
+      for (const char of codeToEnter) {
+        await page.keyboard.type(char, { delay: randomDelay(80, 150) });
+      }
+      console.log('✅ Đã nhập mã verifyCode.at(-1)', verifyCode.at(-1));
+    } catch (error: any) {
+      console.log('❌ Lỗi khi nhập verifyCode.at(-1):', error.message);
+    }
+
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Gửi$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(1);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Gửi');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Gửi');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Gửi:', err.message);
+    }
+    await page.waitForTimeout(6000);
+    try {
+      const verify = page.locator('div', {
+        hasText: /^Xong$/,
+      });
+      const count = await verify.count();
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
+      if (count >= 0) {
+        await page.waitForTimeout(1000 + randomDelay());
+        const element = verify.nth(2);
+        await element.hover();
+        await element.click({ delay: randomDelay(150, 300) });
+        console.log('✅ Đã click vào phần tử Xong');
+      } else {
+        console.log('⚠️ Không tìm thấy phần tử Xong');
+      }
+    } catch (err: any) {
+      console.log('❌ Lỗi khi click Xong:', err.message);
+    }
+  }
+  // phần xác minh tài khoản
+
+  await page.waitForTimeout(1500);
+  await page.mouse.move(200, 300);
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(2000);
+
+  try {
+    const input = await page.locator(
+      'input[placeholder="Tìm kiếm theo tên hoặc ID"]',
+    );
+    await input.first().click();
+    await page.keyboard.type(ads_account_id, { delay: 500 });
+    console.log('✅ Đã nhập Tìm kiếm theo tên hoặc ID');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập Tìm kiếm theo tên hoặc ID:', error.message);
+  }
+  await page.waitForTimeout(2000);
+
+  try {
+    const verify = page.locator(`div[role="heading"]:has-text("${ads_name}")`);
+    const count = await verify.count();
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text ${ads_name}`);
+    if (count >= 0) {
+      await page.waitForTimeout(1000 + randomDelay());
+      const element = verify.first();
+      await element.hover();
+      await element.click({ delay: randomDelay(150, 300) });
+      console.log(`✅ Đã click vào phần tử ${ads_name}`);
+    } else {
+      console.log(`⚠️ Không tìm thấy phần tử ${ads_name}`);
+    }
+  } catch (error: any) {
+    console.log('❌ Lỗi khi click vào ${ads_name}:', error.message);
+  }
+  await page.waitForTimeout(2000);
+
+  try {
+    const input = await page.locator(
+      'input[placeholder="Tìm kiếm theo tên hoặc ID"]',
+    );
+    await input.nth(1).click();
+    await page.keyboard.type(bm_id, { delay: 500 });
+    console.log('✅ Đã nhập Tìm kiếm theo tên hoặc ID');
+  } catch (error: any) {
+    console.log('❌ Lỗi khi nhập Tìm kiếm theo tên hoặc ID:', error.message);
+  }
+  await page.waitForTimeout(2000);
   try {
     const nameLocator = page.locator('span', {
       hasText: /^Đối tác$/,
@@ -256,16 +517,13 @@ export const autoRemovePartner = async (data: any) => {
   } catch (err: any) {
     console.log('❌ Lỗi khi click:', err.message);
   }
-
-  await page.waitForTimeout(10000);
-  await browser.close();
   return result;
 };
-
 // autoRemovePartner({
-//   ads_account_id: '1360591371901484',
-//   ads_name: 'BM-LN2',
-//   bm_origin: '1043878897701771',
+//   ads_account_id: '511278344380577',
+//   ads_name: 'Che sau 1',
+//   bm_origin: '884533352261849',
+//   bm_id: '',
 //   cookie_origin: {
 //     cookies: [
 //       {

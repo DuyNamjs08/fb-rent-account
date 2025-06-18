@@ -17,6 +17,8 @@ import statisticsBmRoutes from './routes/statistics.routes';
 import policiesRoutes from './routes/policies.routes';
 import budgetRoutes from './routes/budget.routes';
 import notificationRoutes from './routes/notification.routes';
+import testRoutes from './routes/test.routes';
+import fbVisaRoutes from './routes/fbVisa.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -27,6 +29,7 @@ import prisma from './config/prisma';
 import './workers/fb-partner';
 import './workers/fb-partner-remove';
 import './workers/fb-check-account';
+import './workers/fb-test';
 import supportRoutes from './routes/support.routes';
 import morgan from 'morgan';
 
@@ -85,6 +88,8 @@ app.use('/api/v1/', statisticsBmRoutes);
 app.use('/api/v1/', policiesRoutes);
 app.use('/api/v1/', budgetRoutes);
 app.use('/api/v1/', notificationRoutes);
+app.use('/api/v1/', testRoutes);
+app.use('/api/v1/', fbVisaRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);
