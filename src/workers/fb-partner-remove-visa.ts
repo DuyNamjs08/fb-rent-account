@@ -1,12 +1,12 @@
 import Bull from 'bull';
-import { autoDisChardLimitSpend } from '../auto-use-sessionV3';
 import { autoRemovePartner } from '../auto-use-sessionV4';
 import prisma from '../config/prisma';
 import { sendEmail } from '../controllers/mails.controller';
 import fs from 'fs';
 import path from 'path';
 import { format } from 'date-fns';
-export const fbRemoveParnert = new Bull('fb-remove-parnert', {
+import { autoRemoveVisa } from '../auto-use-sessionV7';
+export const fbRemoveParnertVisa = new Bull('fb-remove-parnert-visa', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6380', 10),
@@ -29,11 +29,6 @@ const updateDb = async (data: any) => {
     if (!cookie) {
       throw new Error('Không tìm thấy cookie');
     }
-    const resultRemoveLimit = await autoDisChardLimitSpend({
-      bm_id: bm_origin,
-      ads_account_id,
-      cookie_origin: cookie.storage_state,
-    });
     const resultRemoveParnert = await autoRemovePartner({
       bm_origin,
       ads_account_id,
@@ -41,6 +36,12 @@ const updateDb = async (data: any) => {
       cookie_origin: cookie.storage_state,
       bm_id,
     });
+    const resultRemoveLimit = await autoRemoveVisa({
+      bm_id: bm_origin,
+      ads_account_id,
+      cookie_origin: cookie.storage_state,
+    });
+
     return {
       status_remove_spend_limit: resultRemoveLimit,
       status_remove_partner: resultRemoveParnert,
@@ -50,7 +51,7 @@ const updateDb = async (data: any) => {
     throw fallbackError;
   }
 };
-fbRemoveParnert.process(2, async (job) => {
+fbRemoveParnertVisa.process(2, async (job) => {
   const { data } = job;
   const { bm_id, ads_account_id, user_id, amountPoint, id, ads_name } = data;
   try {
@@ -119,6 +120,7 @@ fbRemoveParnert.process(2, async (job) => {
           status_limit_spend: null,
           status_dischard_limit_spend: 1,
           status_dischard_partner: 1,
+          is_sefl_used_visa: false,
         },
       });
     }

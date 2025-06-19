@@ -230,17 +230,17 @@ const hanleEn = async ({
   await page.waitForTimeout(1200);
   try {
     const nameLocator = page.locator('span', {
-      hasText: /^Đối tác$/,
+      hasText: /^Partners$/,
     });
     const count = await nameLocator.count();
-    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'đối tác'`);
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Partners'`);
 
     if (count >= 4) {
       await page.waitForTimeout(1200);
       await nameLocator.nth(1).click({ delay: 200 });
-      console.log('✅ Đã click vào phần tử đối tác');
+      console.log('✅ Đã click vào phần tử Partners');
     } else {
-      console.log('⚠️ Không tìm thấy phần tử đối tác');
+      console.log('⚠️ Không tìm thấy phần tử Partners');
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click:', err.message);
@@ -249,28 +249,28 @@ const hanleEn = async ({
 
   try {
     const input = await page.locator(
-      'input[placeholder="Tìm kiếm theo tên hoặc ID"]',
+      'input[placeholder="Search by name or ID"]',
     );
     await input.nth(1).click();
     await page.keyboard.type(bm_id, { delay: 500 });
-    console.log('✅ Đã nhập Tìm kiếm theo tên hoặc ID');
+    console.log('✅ Đã nhập Search by name or ID');
   } catch (error: any) {
-    console.log('❌ Lỗi khi nhập Tìm kiếm theo tên hoặc ID:', error.message);
+    console.log('❌ Lỗi khi nhập Search by name or ID:', error.message);
   }
   await page.waitForTimeout(2000);
   try {
     const nameLocator = page.locator('div', {
-      hasText: /^Quản lý$/,
+      hasText: /^Manage$/,
     });
     const count = await nameLocator.count();
-    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Quản lý'`);
+    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Manage'`);
 
     if (count >= 4) {
       await page.waitForTimeout(1200);
       await nameLocator.nth(1).click({ delay: 200 });
-      console.log('✅ Đã click vào phần tử Quản lý');
+      console.log('✅ Đã click vào phần tử Manage');
     } else {
-      console.log('⚠️ Không tìm thấy phần tử Quản lý');
+      console.log('⚠️ Không tìm thấy phần tử Manage');
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click:', err.message);
@@ -278,20 +278,20 @@ const hanleEn = async ({
   await page.waitForTimeout(1500);
   try {
     const nameLocator = page.locator('div', {
-      hasText: /^Gỡ quyền truy cập$/,
+      hasText: /^Remove access$/,
     });
     const count = await nameLocator.count();
     console.log(
-      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Gỡ quyền truy cập'`,
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Remove access'`,
     );
 
     if (count >= 0) {
       await page.waitForTimeout(1200);
       await nameLocator.nth(2).click({ delay: 200 });
-      console.log('✅ Đã click vào phần tử Gỡ quyền truy cập');
+      console.log('✅ Đã click vào phần tử Remove access');
       result = 1;
     } else {
-      console.log('⚠️ Không tìm thấy phần tử Gỡ quyền truy cập');
+      console.log('⚠️ Không tìm thấy phần tử Remove access');
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click:', err.message);

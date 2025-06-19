@@ -20,6 +20,8 @@
     "play3": "npx ts-node src/auto-use-sessionV3.ts",
     "play4": "npx ts-node src/auto-use-sessionV4.ts",
     "play5": "npx ts-node src/auto-use-sessionV5.ts",
+    "play6": "npx ts-node src/auto-use-sessionV6.ts",
+    "play7": "npx ts-node src/auto-use-sessionV7.ts",
     "login": "npx ts-node src/login.ts",
     "mail": "npx ts-node src/controllers/autoTakeVerify.controller.ts",
     "prod": "docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build",

@@ -1,12 +1,12 @@
 import Bull from 'bull';
 import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
-import { createRepeatJob } from './fb-check-account';
 import fs from 'fs';
 import path from 'path';
 import { sendEmail } from '../controllers/mails.controller';
 import { format } from 'date-fns';
 import { autoChangeVisa } from '../auto-use-sessionV6';
+import { createRepeatJobVisa } from './fb-check-visa';
 
 export const fbParnertVisa = new Bull('fb-add-parnert-ads-visa', {
   redis: {
@@ -33,6 +33,7 @@ const updateDb = async (data: any) => {
       visa_number,
       visa_expiration,
       visa_cvv,
+      verify_code,
     } = data;
     const cookie = await prisma.cookies.findUnique({
       where: {
@@ -94,7 +95,7 @@ fbParnertVisa.process(2, async (job) => {
     });
     const amountVNDchange = Math.floor(Number(amountPoint));
     if (status_partner && status_visa) {
-      await createRepeatJob({ ...data });
+      await createRepeatJobVisa({ ...data });
       await prisma.adsAccount.update({
         where: {
           id: 'act_' + ads_account_id,
