@@ -132,6 +132,9 @@ model FacebookPartnerBM {
   status_dischard_partner      Int?
   is_sefl_used_visa      Boolean? @default(false)
   message      String?
+  budget_id      String?
+  budget      String?
+  is_email_sent      Boolean? @default(false) // Đã gửi email thông báo hay chưa
   update_package      Int? @default(0) // 0 = không cập nhật, 1 = cập nhật
   start_date     String[] @default([])
   end_date       String[] @default([])
@@ -293,7 +296,6 @@ model Budget {
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-
   @@map("budgets")
 }
 

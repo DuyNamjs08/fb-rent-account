@@ -178,7 +178,7 @@ const pointUsedController = {
       successResponse(
         res,
         'Quá trình thuê tài khoản đang điễn ra vui lòng đợi giây lát !!',
-        'poitsUsedTransaction',
+        poitsUsedTransaction,
       );
     } catch (error: any) {
       errorResponse(

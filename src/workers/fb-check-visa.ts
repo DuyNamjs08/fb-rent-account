@@ -2,26 +2,22 @@ import Bull from 'bull';
 import prisma from '../config/prisma';
 import { decryptToken } from '../controllers/facebookBm.controller';
 import axios from 'axios';
-import { differenceInDays } from 'date-fns';
-import { fbRemoveParnert } from './fb-partner-remove';
-function isMoreThan7DaysOld(createdAt: string | Date): boolean {
+import { differenceInDays, format, isAfter } from 'date-fns';
+import fs from 'fs';
+import path from 'path';
+import { sendEmail } from '../controllers/mails.controller';
+import { fbRemoveParnertVisa } from './fb-partner-remove-visa';
+
+function isLessThan2DaysOld(end_date: string | Date): boolean {
   const now = new Date();
-  const createdDate = new Date(createdAt);
+  const createdDate = new Date(end_date);
 
   const diffDays = differenceInDays(now, createdDate);
 
-  return diffDays > 7;
+  return diffDays <= 2;
 }
 
-function isMoreThan2MinutesOld(createdAt: string | Date): boolean {
-  const now = new Date();
-  const createdDate = new Date(createdAt);
-
-  const diffMs = now.getTime() - createdDate.getTime();
-  return diffMs > 2 * 60 * 1000;
-}
-
-export const fbCheckAccount = new Bull('fb-check-account', {
+export const fbCheckAccountVisa = new Bull('fb-check-account-visa', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6380', 10),
@@ -50,6 +46,10 @@ const updateDb = async (data: any) => {
     job,
   } = data;
   try {
+    // console.log('data used point', data);
+    const pathhtml = path.resolve(__dirname, '../html/rent-visa-expried.html');
+    // console.log('pathhtml', pathhtml);
+    let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
     const systemUserToken = await prisma.facebookBM.findUnique({
       where: { bm_id: bm_origin },
     });
@@ -78,73 +78,100 @@ const updateDb = async (data: any) => {
       where: {
         ads_account_id,
         status_partner: 1,
-        status_limit_spend: 1,
+        is_sefl_used_visa: true,
         status: 'success',
-        is_sefl_used_visa: false,
       },
     });
-    if (Number(result.spend_cap) >= amountPoint * 0.95) {
-      // gửi đi cảnh báo và xóa job
-      await prisma.facebookPartnerBM.update({
-        where: {
-          id: findBm?.id,
-        },
+    if (!findBm) {
+      throw new Error('Không tìm thấy BM đã thuê');
+    }
+    const statart_date = findBm?.start_date?.at(-1);
+    const end_date = findBm?.end_date?.at(-1) || new Date();
+
+    const todayVN = new Date();
+    console.log('budget', findBm?.budget);
+    console.log('spend_cap', result.spend_cap);
+    console.log('isAfter(todayVN, end_date)', result.spend_cap);
+    if (isLessThan2DaysOld(end_date) && !findBm?.is_email_sent) {
+      const user = await prisma.user.findUnique({
+        where: { id: user_id },
+      });
+      if (!user) {
+        throw new Error('Người dùng không tồn tại');
+      }
+      await prisma.emailLog.create({
         data: {
-          message: 'Quý khách đã chạy ngưỡng 95% số tiền thuê tài khoản!',
+          user_id,
+          to: user.email,
+          subject:
+            'AKAds thông báo tài khoản quảng cáo thuê BM tự add thẻ visa sắp hết hạn',
+          body: htmlContent
+            .replace('{{accountName}}', user.username || 'Người dùng')
+            .replace('{{accountNameV2}}', user.username || 'Người dùng')
+            .replace(
+              '{{statart_date}}',
+              format(
+                new Date(statart_date || new Date()),
+                'dd/MM/yyyy HH:mm:ss',
+              ) || new Date().toLocaleString(),
+            )
+            .replace(
+              '{{end_date}}',
+              format(new Date(end_date || new Date()), 'dd/MM/yyyy HH:mm:ss') ||
+                new Date().toLocaleString(),
+            )
+            .replace('{{ads_name}}', ads_name || '')
+            .replace('{{bm_id}}', bm_id || ''),
+          status: 'success',
+          type: 'rent_ads',
         },
       });
-      console.log('cảnh báo !!!!!!!!!');
-      await removeRepeatJob(job);
-      return;
-    } else if (
-      Number(result.amount_spent) == 0 &&
-      findBm?.created_at &&
-      isMoreThan7DaysOld(findBm?.created_at || '')
-    ) {
-      const amountVNDchange = Math.floor(Number(amountPoint));
-      const poitsUsedTransaction = await prisma.$transaction(async (tx) => {
-        const adsAccount = await tx.adsAccount.findFirst({
-          where: {
-            account_id: ads_account_id,
-          },
-        });
-        if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');
-        const user = await tx.user.findUnique({
-          where: { id: user_id },
-        });
-        const newListAds = user?.list_ads_account.filter(
-          (item) => item !== ads_account_id,
-        );
-        await tx.user.update({
-          where: { id: user_id },
-          data: {
-            points: { increment: amountVNDchange },
-            list_ads_account: newListAds || [],
-          },
-        });
-        const pointsUsed = await tx.pointUsage.create({
-          data: {
-            user_id,
-            points_used: amountVNDchange,
-            target_account: ads_account_id,
-            description: 'Hoàn điểm tài khoản quảng cáo',
-            status: 'success',
-          },
-        });
-        return pointsUsed;
+      await sendEmail({
+        email: user.email,
+        subject:
+          'AKAds thông báo tài khoản quảng cáo thuê BM tự add thẻ visa sắp hết hạn',
+        message: htmlContent
+          .replace('{{accountName}}', user.username || 'Người dùng')
+          .replace('{{accountNameV2}}', user.username || 'Người dùng')
+          .replace(
+            '{{statart_date}}',
+            format(
+              new Date(statart_date || new Date()),
+              'dd/MM/yyyy HH:mm:ss',
+            ) || new Date().toLocaleString(),
+          )
+          .replace(
+            '{{end_date}}',
+            format(new Date(end_date || new Date()), 'dd/MM/yyyy HH:mm:ss') ||
+              new Date().toLocaleString(),
+          )
+          .replace('{{ads_name}}', ads_name || '')
+          .replace('{{bm_id}}', bm_id || ''),
       });
-      console.log('poitsUsedTransaction', poitsUsedTransaction);
-      await fbRemoveParnert.add({
-        bm_id,
+      await prisma.facebookPartnerBM.update({
+        where: { id: findBm.id as string },
+        data: {
+          is_email_sent: true,
+        },
+      });
+    } else if (isAfter(todayVN, end_date)) {
+      console.log('🛑 đã hết hạn gói xóa khỏi gói');
+      await fbRemoveParnertVisa.add({
         ads_account_id,
-        user_id,
         bm_origin,
         ads_name,
         bot_id,
+        bm_id,
         id: findBm.id,
+        user_id,
+        amountPoint,
       });
       await removeRepeatJob(job);
-      return;
+    } else if (
+      findBm?.budget &&
+      Number(result.spend_cap) > Number(findBm?.budget)
+    ) {
+      console.log('bạn tiêu quá nên có voucher');
     }
   } catch (fallbackError) {
     await removeRepeatJob(job);
@@ -153,7 +180,7 @@ const updateDb = async (data: any) => {
   }
 };
 
-fbCheckAccount.process(15, async (job) => {
+fbCheckAccountVisa.process(2, async (job) => {
   const { data } = job;
   console.log('🔄 Processing repeat job:', job.id, data);
 
@@ -197,7 +224,7 @@ const shouldStopOnFail = (error: any): boolean => {
 const removeRepeatJob = async (job: Bull.Job) => {
   try {
     // Lấy tất cả repeat jobs
-    const repeatJobs = await fbCheckAccount.getRepeatableJobs();
+    const repeatJobs = await fbCheckAccountVisa.getRepeatableJobs();
 
     // Tìm job có cùng pattern
     const targetJob = repeatJobs.find(
@@ -207,7 +234,7 @@ const removeRepeatJob = async (job: Bull.Job) => {
     );
 
     if (targetJob) {
-      await fbCheckAccount.removeRepeatableByKey(targetJob.key);
+      await fbCheckAccountVisa.removeRepeatableByKey(targetJob.key);
       console.log(`🗑️ Removed repeat job: ${targetJob.id}`);
     } else {
       console.log('❌ Could not find repeat job to remove');
@@ -218,7 +245,7 @@ const removeRepeatJob = async (job: Bull.Job) => {
 };
 
 // 📊 Event handlers cho repeat jobs
-fbCheckAccount.on('failed', async (job, err) => {
+fbCheckAccountVisa.on('failed', async (job, err) => {
   console.log(`❌ Job ${job.id} failed:`, err.message);
 
   // Với repeat job, individual job instance sẽ bị xóa
@@ -240,7 +267,7 @@ fbCheckAccount.on('failed', async (job, err) => {
   }
 });
 
-fbCheckAccount.on('completed', (job, result) => {
+fbCheckAccountVisa.on('completed', (job, result) => {
   console.log(`✅ Job ${job.id} completed successfully`);
   // Reset failed count khi thành công
   if (job.opts.repeat && job.opts.jobId) {
@@ -265,16 +292,16 @@ const resetFailedCountForRepeatJob = (jobId: string) => {
 };
 
 // 🚀 Tạo repeat job
-export const createRepeatJob = async (data: any) => {
+export const createRepeatJobVisa = async (data: any) => {
   try {
     const { bm_id, ads_account_id } = data;
-    await fbCheckAccount.add(
+    await fbCheckAccountVisa.add(
       {
         ...data,
       },
       {
         repeat: {
-          every: 1 * 60 * 1000, // 1 phút
+          every: 60 * 60 * 1000, // 1 phút
         },
         jobId: `fb-check-account-${bm_id}-${ads_account_id}`, // Unique jobId
         removeOnFail: true,
@@ -284,7 +311,7 @@ export const createRepeatJob = async (data: any) => {
     );
 
     console.log(
-      `🔄 Created repeat job for BM: ${bm_id}, Ads: ${ads_account_id}`,
+      `🔄 Created repeat job for BM with add card visa: ${bm_id}, Ads: ${ads_account_id}`,
     );
   } catch (error) {
     console.error('❌ Error creating repeat job:', error);
@@ -295,11 +322,11 @@ export const createRepeatJob = async (data: any) => {
 export const stopRepeatJob = async (bm_id: string, ads_account_id: string) => {
   try {
     const jobId = `fb-check-account-${bm_id}-${ads_account_id}`;
-    const repeatJobs = await fbCheckAccount.getRepeatableJobs();
+    const repeatJobs = await fbCheckAccountVisa.getRepeatableJobs();
 
     const targetJob = repeatJobs.find((job) => job.id === jobId);
     if (targetJob) {
-      await fbCheckAccount.removeRepeatableByKey(targetJob.key);
+      await fbCheckAccountVisa.removeRepeatableByKey(targetJob.key);
       console.log(`🛑 Stopped repeat job: ${jobId}`);
       return true;
     }
@@ -315,7 +342,7 @@ export const stopRepeatJob = async (bm_id: string, ads_account_id: string) => {
 // 📊 Kiểm tra repeat jobs
 export const checkRepeatJobs = async () => {
   try {
-    const repeatJobs = await fbCheckAccount.getRepeatableJobs();
+    const repeatJobs = await fbCheckAccountVisa.getRepeatableJobs();
     console.log('📊 Active repeat jobs:', repeatJobs.length);
 
     repeatJobs.forEach((job) => {
@@ -334,10 +361,10 @@ export const checkRepeatJobs = async () => {
 export const cleanupOldJobInstances = async () => {
   try {
     // Xóa completed jobs cũ hơn 5 phút
-    await fbCheckAccount.clean(5 * 60 * 1000, 'completed');
+    await fbCheckAccountVisa.clean(5 * 60 * 1000, 'completed');
 
     // Xóa failed jobs cũ hơn 5 phút
-    await fbCheckAccount.clean(5 * 60 * 1000, 'failed');
+    await fbCheckAccountVisa.clean(5 * 60 * 1000, 'failed');
 
     console.log('🧹 Cleaned up old job instances');
   } catch (error) {

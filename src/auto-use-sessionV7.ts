@@ -2,16 +2,8 @@ import { chromium, BrowserContext, Page } from 'playwright';
 import { randomDelay } from './auto-use-session';
 import { getFacebookSecurityCodesFromEmail } from './controllers/autoTakeVerify.controller';
 
-export const autoChangeVisa = async (data: any) => {
-  const {
-    bm_id = '',
-    ads_account_id = '',
-    cookie_origin,
-    visa_name,
-    visa_number,
-    visa_expiration,
-    visa_cvv,
-  } = data;
+export const autoRemoveVisa = async (data: any) => {
+  const { bm_id = '', ads_account_id = '', cookie_origin } = data;
   const browser = await chromium.launch({
     headless: false,
     slowMo: 300, // Tự động chậm lại giữa mỗi thao tác
@@ -62,31 +54,13 @@ export const autoChangeVisa = async (data: any) => {
     response = await hanleEn({
       page,
       result,
-      visa_name,
-      visa_number,
-      visa_expiration,
-      visa_cvv,
     });
   }
   await page.waitForTimeout(10000);
   await browser.close();
   return response;
 };
-const hanleEn = async ({
-  page,
-  result,
-  visa_name,
-  visa_number,
-  visa_expiration,
-  visa_cvv,
-}: {
-  page: Page;
-  result: number;
-  visa_name: string;
-  visa_number: string;
-  visa_expiration: string;
-  visa_cvv: string;
-}) => {
+const hanleEn = async ({ page, result }: { page: Page; result: number }) => {
   await page.waitForLoadState('networkidle');
   let isVerify = 0;
   try {
@@ -197,115 +171,59 @@ const hanleEn = async ({
     hasText: 'Payment methods',
   });
   await heading.scrollIntoViewIfNeeded({ timeout: 400 });
-  await page.waitForTimeout(1000);
-
+  await page.waitForTimeout(1500);
   try {
-    const allSpans = page.locator('span', { hasText: /^Add payment method$/ });
+    const allSpans = page.locator(
+      'span.x8t9es0.x1fvot60.xxio538.x1heor9g.xq9mrsl.x1h4wwuj.x1pd3egz.xeuugli.xh8yej3',
+    );
     const count = await allSpans.count();
-    console.log(`🔎 Tìm thấy ${count} phần tử Add payment method`);
-    if (count > 0) {
+    console.log(`🔎 Tìm thấy ${count} phần tử.`);
+    if (count == 16) {
       // Click vào tất cả hoặc chỉ phần tử đầu
-      await allSpans.nth(0).hover();
-      await allSpans.nth(0).click({ delay: 200, force: true });
-      console.log('✅ Đã click vào phần tử Add payment method');
-    } else {
+      await allSpans.nth(13).scrollIntoViewIfNeeded();
+      await allSpans.nth(13).click({ delay: 200, force: true });
       console.log(
-        `⚠️ Số lượng phần tử Add payment method KHÔNG PHẢI là ${count} , không click.`,
+        '✅ Đã click vào phần tử đầu tiên trong danh sách 16 phần tử.',
       );
+    } else {
+      console.log(`⚠️ Số lượng phần tử KHÔNG PHẢI là ${count} , không click.`);
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click vào phần tử:', err.message);
   }
-
   await page.waitForTimeout(1500);
   try {
-    const checkbox = page.locator(
-      'input[aria-label="I have an ad credit to claim."]',
-    );
-    await checkbox.waitFor({ state: 'visible', timeout: 5000 });
-    await checkbox.scrollIntoViewIfNeeded();
-    await checkbox.click({ delay: 200 });
-    console.log('✅ Đã click vào checkbox');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào checkbox:', err.message);
-  }
-  await page.waitForTimeout(1400);
-  try {
-    const target = page.locator('span', {
-      hasText: /^Next$/,
-    });
-    await target.nth(0).waitFor({ state: 'visible' });
-    await target.nth(0).hover();
-    await target.nth(0).click({ delay: 200, force: true });
-    console.log('✅ Đã click vào nút "Next"');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào nút "Next":', err.message);
-  }
-
-  await page.waitForTimeout(1500);
-  try {
-    const checkbox = page.locator('input[name="firstName"]');
-    await checkbox.waitFor({ state: 'visible', timeout: 5000 });
-    await checkbox.click({ delay: 200 });
-    await page.keyboard.type(String(visa_name), { delay: 500 });
-    console.log('✅ Đã click vào firstName');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào firstName:', err.message);
-  }
-  await page.waitForTimeout(1500);
-  try {
-    const checkbox = page.locator('input[name="cardNumber"]');
-    await checkbox.waitFor({ state: 'visible', timeout: 5000 });
-    await checkbox.click({ delay: 200 });
-    await page.keyboard.type(String(visa_number), { delay: 500 });
-    console.log('✅ Đã click vào cardNumber');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào cardNumber:', err.message);
-  }
-  await page.waitForTimeout(1500);
-  try {
-    const checkbox = page.locator('input[name="expiration"]');
-    await checkbox.waitFor({ state: 'visible', timeout: 5000 });
-    await checkbox.click({ delay: 200 });
-    await page.keyboard.type(String(visa_expiration), { delay: 500 });
-    console.log('✅ Đã click vào expiration');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào expiration:', err.message);
-  }
-  await page.waitForTimeout(1500);
-  try {
-    const checkbox = page.locator('input[name="securityCode"]');
-    await checkbox.waitFor({ state: 'visible', timeout: 5000 });
-    await checkbox.click({ delay: 200 });
-    await page.keyboard.type(String(visa_cvv), { delay: 500 });
-    console.log('✅ Đã click vào securityCode');
-  } catch (err: any) {
-    console.error('❌ Không thể click vào securityCode:', err.message);
-  }
-  await page.waitForTimeout(2000);
-
-  try {
-    const verify = page.locator('span', {
-      hasText: /^Save$/,
-    });
-    const count = await verify.count();
-    console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Save'`);
-    if (count >= 0) {
-      await page.waitForTimeout(1000 + randomDelay());
-      const element = verify.nth(1);
-      await element.hover();
-      await element.click({ delay: randomDelay(150, 300) });
-      console.log('✅ Đã click vào phần tử Save');
-    } else {
-      console.log('⚠️ Không tìm thấy phần tử Save');
+    const button = page.locator('div', { hasText: /^Remove$/ });
+    const count = await button.count();
+    console.log(`🔎 Tìm thấy ${count} phần tử Remove 1`);
+    if (count > 0) {
+      await button.first().scrollIntoViewIfNeeded();
+      await button.first().hover();
+      await button.first().click({ delay: 1000, force: true });
+      console.log('✅ Đã click vào nút "Remove"');
     }
-  } catch (error: any) {
-    console.log('❌ Lỗi khi click vào Save:', error.message);
+  } catch (err: any) {
+    console.error('❌ Không thể click vào nút "Remove":', err.message);
   }
-  // await new Promise(() => {});
+  await page.waitForTimeout(3000);
+  try {
+    const button = page.locator('span', { hasText: /^Remove$/ });
+    const count = await button.count();
+    console.log(`🔎 Tìm thấy ${count} phần tử Remove 2`);
+    if (count > 0) {
+      await button.first().scrollIntoViewIfNeeded();
+      await button.first().hover();
+      await button.first().click({ delay: 1000, force: true });
+      console.log('✅ Đã click vào nút "Remove"');
+    }
+  } catch (err: any) {
+    console.error('❌ Không thể click vào nút "Remove":', err.message);
+  }
+
   await page.waitForTimeout(20000);
   const successText = page.locator('span', {
-    hasText: 'successfully',
+    hasText:
+      /^This payment method was successfully removed from your account. To run ads in the future, add another payment method.$/,
   });
   const countSuccess = await successText.count();
   if (countSuccess > 0) {
@@ -317,11 +235,7 @@ const hanleEn = async ({
   return result;
 };
 
-// autoChangeVisa({
-//   visa_name: 'LU DUY NAM',
-//   visa_number: '4780 9701 2638 2219',
-//   visa_expiration: '11/32',
-//   visa_cvv: '542',
+// autoRemoveVisa({
 //   bm_id: '389076542869829',
 //   ads_account_id: '794079162674836',
 //   cookie_origin: {
