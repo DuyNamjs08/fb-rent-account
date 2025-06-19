@@ -6,6 +6,11 @@ import prisma from '../config/prisma';
 import { uploadToR2 } from '../middlewares/upload.middleware';
 import { z } from 'zod';
 import path from 'path';
+import UserService from '../services/User.service';
+import fs from 'fs';
+import { sendEmail, sendEmailFromUser } from './mails.controller';
+import { format } from 'date-fns';
+
 // import roleService from "../services/Roles.service";
 
 const supportController = {
@@ -134,7 +139,7 @@ const supportController = {
     try {
       const {
         page = '1',
-        limit = '3',
+        limit,
         search = '',
         status = '',
         priority = '',
@@ -212,6 +217,93 @@ const supportController = {
         },
       });
       successResponse(res, 'Success', supportRequest);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  getSupportByUserId: async (
+    req: Request,
+    res: Response,
+    id: any,
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const user = await prisma.user.findUnique({
+        where: {
+          id: id,
+        },
+      });
+      if (!user) {
+        errorResponse(res, 'Không tìm thấy user', {}, 404);
+        return;
+      }
+
+      const {
+        page = '1',
+        limit,
+        search = '',
+        status = '',
+        priority = '',
+      } = req.query;
+
+      const pageNumber = parseInt(page as string, 10) || 1;
+      const pageSize = parseInt(limit as string, 10) || 10;
+      const skip = (pageNumber - 1) * pageSize;
+
+      const where: any = {
+        user_id: id,
+      };
+
+      if (search) {
+        where.OR = [
+          {
+            title: {
+              contains: search as string,
+              mode: 'insensitive',
+            },
+          },
+          { content: { contains: search as string, mode: 'insensitive' } },
+          {
+            fullName: {
+              contains: search as string,
+              mode: 'insensitive',
+            },
+          },
+          { email: { contains: search as string, mode: 'insensitive' } },
+        ];
+      }
+
+      if (status && status !== 'all') {
+        where.status = status as string;
+      }
+
+      if (priority && priority !== 'all') {
+        where.priority = priority as string;
+      }
+      const totalRecords = await prisma.supportRequests.count({ where });
+
+      const supportRequests = await prisma.supportRequests.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: {
+          updated_at: 'desc',
+        },
+      });
+      successResponse(res, 'Danh sách yêu cầu hỗ trợ', {
+        data: supportRequests,
+        pagination: {
+          page: pageNumber,
+          limit: pageSize,
+          totalRecords,
+          totalPages: Math.ceil(totalRecords / pageSize),
+        },
+      });
     } catch (error: any) {
       errorResponse(
         res,
@@ -375,7 +467,7 @@ const supportController = {
       );
     }
   },
-  updateStatusByRequestId: async(req: Request, res: Response) => {
+  updateStatusByRequestId: async (req: Request, res: Response) => {
     try {
       const supportRequestId = req.params.id;
       const { status } = req.body;
@@ -413,6 +505,127 @@ const supportController = {
       });
 
       successResponse(res, 'Cập nhật status thành công', updateStatus);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  sendMailAdmin: async (req: Request, res: Response) => {
+    try {
+      const { email, priority, category, content, title } = req.body;
+      const mailAdmin = process.env.EMAIL_ADMIN as string;
+      const user = await UserService.getUserByEmail(email);
+      if (!user) {
+        errorResponse(
+          res,
+          'Tài khoản không tồn tại',
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      console.log('USER', user);
+      // Đọc template HTML
+      const pathhtml = path.resolve(__dirname, '../html/notify-admin.html');
+      if (!fs.existsSync(pathhtml)) {
+        throw new Error('File HTML không tồn tại');
+      }
+      let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
+      htmlContent = htmlContent
+        .replace('{{title}}', title)
+        .replace('{{category}}', category)
+        .replace('{{content}}', content)
+        .replace('{{NAME}}', user.username || 'Người dùng')
+        .replace('{{USER_EMAIL}}', user.email)
+        .replace('{{USER_PHONE}}', user.phone ?? 'Không có')
+        .replace('{{CREATED_AT}}', user.created_at.toLocaleString('vi-VN'))
+        .replace(
+          '{{priority}}',
+          priority ? priority.toLocaleString('vi-VN') : '',
+        );
+
+      // Lưu log email
+      await prisma.emailLog.create({
+        data: {
+          user_id: user?.id,
+          to: mailAdmin,
+          subject: 'AKAds Thông Báo',
+          body: htmlContent,
+          status: 'success',
+          type: 'notify support requests',
+        },
+      });
+
+      // Gửi email
+      await sendEmailFromUser({
+        email: user.email,
+        subject: 'AKAds Thông Báo',
+        message: htmlContent,
+      });
+
+      successResponse(res, 'Email thông báo cho admin đã được gửi', {});
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  sendMailUser: async (req: Request, res: Response) => {
+    try {
+      const { title, status, updated_at, name, email, phone } = req.body;
+      const user = await UserService.getUserByEmail(email);
+      if (!user) {
+        errorResponse(
+          res,
+          'Tài khoản không tồn tại',
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      // Đọc template HTML
+      const pathhtml = path.resolve(__dirname, '../html/notify-user.html');
+      if (!fs.existsSync(pathhtml)) {
+        throw new Error('File HTML không tồn tại');
+      }
+      let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
+      htmlContent = htmlContent
+        .replace('{{title}}', title)
+        .replace('{{status}}', status)
+        .replace('{{updated_at}}', updated_at)
+        .replace('{{name}}', name)
+        .replace('{{email}}', email)
+        .replace('{{phone}}', phone);
+
+      // Lưu log email
+      await prisma.emailLog.create({
+        data: {
+          user_id: user?.id,
+          to: user.email,
+          subject: 'AKAds Thông Báo',
+          body: htmlContent,
+          status: 'success',
+          type: 'notify support requests',
+        },
+      });
+
+      // Gửi email
+      await sendEmail({
+        email: user.email,
+        subject: 'AKAds Thông Báo',
+        message: htmlContent,
+      });
+
+      successResponse(res, 'Email thông báo cho admin đã được gửi', {});
     } catch (error: any) {
       errorResponse(
         res,

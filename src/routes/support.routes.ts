@@ -8,15 +8,19 @@ const router = express.Router();
 
 router.get('/support', supportController.getAllSupport);
 router.get('/support/:id', supportController.getSupportById);
+router.get('/support/user/:id', supportController.getSupportByUserId);
 router.post(
   '/support',
   uploadMiddleware.array('attachments', 5),
   supportController.createSupport,
 );
-// router.delete('/support/:id', supportController.deleteSupport);
 router.patch('/support/status/:id', supportController.updateStatusByRequestId);
 router.post('/support/message', supportController.createMessage);
 router.get('/support/message/:id', supportController.getMessageByRequestId);
 router.delete('/support/:id', supportController.deleteSupport);
+
+// send mail
+router.post('/support/mail/admin', supportController.sendMailAdmin);
+router.post('/support/mail/user', supportController.sendMailUser);
 
 export default router;
