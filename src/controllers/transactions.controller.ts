@@ -183,6 +183,15 @@ const transactionController = {
           skip,
           take: pageSizeNum,
           orderBy: { created_at: 'desc' },
+          include: {
+            user: {
+              select: {
+                username: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
         }),
         prisma.transaction.count({ where: whereCondition }),
       ]);
@@ -240,15 +249,23 @@ const transactionController = {
       const numericValue = Number(searchQuery);
       const isValidNumber = !Number.isNaN(numericValue);
       const whereCondition = {
-        OR: [
-          ...stringFields.map((field) => ({
-            [field]: { contains: searchQuery, mode: 'insensitive' as const },
-          })),
-          ...(isValidNumber
-            ? numberFields.map((field) => ({
-                [field]: { equals: numericValue },
-              }))
-            : []),
+        AND: [
+          { user_id: user_id as string },
+          {
+            OR: [
+              ...stringFields.map((field) => ({
+                [field]: {
+                  contains: searchQuery,
+                  mode: 'insensitive' as const,
+                },
+              })),
+              ...(isValidNumber
+                ? numberFields.map((field) => ({
+                    [field]: { equals: numericValue },
+                  }))
+                : []),
+            ],
+          },
         ],
       };
       const [transactions, count] = await Promise.all([
@@ -257,6 +274,15 @@ const transactionController = {
           skip,
           take: pageSizeNum,
           orderBy: { created_at: 'desc' },
+          include: {
+            user: {
+              select: {
+                username: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
         }),
         prisma.transaction.count({ where: whereCondition }),
       ]);
