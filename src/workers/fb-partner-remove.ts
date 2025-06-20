@@ -121,6 +121,14 @@ fbRemoveParnert.process(2, async (job) => {
           status_dischard_partner: 1,
         },
       });
+      await prisma.adsAccount.update({
+        where: {
+          id: 'act_' + ads_account_id,
+        },
+        data: {
+          status_rented: 'available',
+        },
+      });
     }
     console.log(`✅ Xóa thành công đối tác vào BM với trạng thái`, res);
     return res;

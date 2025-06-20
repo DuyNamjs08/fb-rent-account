@@ -2,29 +2,71 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Thuê tài khoản thành công</title>
   </head>
   <body
     style="
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #edf0f3;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      line-height: 1.6;
     "
   >
-    <div style="width: 100%; background-color: #edf0f3; padding: 30px 0">
+    <div style="width: 100%; padding: 30px 20px">
       <div
         style="
           max-width: 600px;
-          margin: auto;
-          background: white;
-          border-radius: 8px;
+          margin: 0 auto;
+          background: #ffffff;
+          border-radius: 16px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
           overflow: hidden;
         "
       >
-        <!-- Header -->
+        <!-- Header with success indicator -->
         <div
-          style="text-align: center; padding: 20px; background-color: #edf0f3"
+          style="
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            padding: 30px;
+            text-align: center;
+            color: white;
+          "
+        >
+          <div
+            style="
+              width: 60px;
+              height: 60px;
+              background: rgba(255, 255, 255, 0.2);
+              border-radius: 50%;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 15px;
+            "
+          >
+            <svg
+              width="30"
+              height="30"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="3"
+            >
+              <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+          </div>
+
+          <h1 style="margin: 0; font-size: 24px; font-weight: 600">
+            Thuê tài khoản thành công! 🎉
+          </h1>
+        </div>
+
+        <!-- Logo section -->
+        <div
+          style="text-align: center; padding: 25px 30px; background: #f8f9fa"
         >
           <img
             src="https://pub-a8569a3946cf4e1f8eaeb9efdf397392.r2.dev/user-uploads/Screenshot_2025-05-27_at_14.52.27.png-1748332508673"
@@ -33,38 +75,272 @@
           />
         </div>
 
-        <!-- Body -->
+        <!-- Main content -->
         <div style="padding: 30px">
-          <h2 style="margin-top: 0">
-            Xin chào <span style="color: red">{{accountName}}!</span>
+          <h2 style="margin: 0 0 20px; font-size: 22px; color: #2d3748">
+            Xin chào
+            <span style="color: #48bb78; font-weight: 600">{{accountName}}</span
+            >!
           </h2>
-          <p style="font-size: 18px; font-weight: bold">
-            Bạn đã thuê tài khoản BM thành công tại AKAds! 🎉
-          </p>
-          <p>Thông tin chi tiết về tài khoản bạn vừa thuê:</p>
-          <ul style="line-height: 1.8">
-            <li><strong>Tên tài khoản:</strong> {{accountName}}</li>
-            <li><strong>Thời gian thuê:</strong> {{rentDuration}}</li>
-            <li><strong>Thời gian bắt đầu:</strong> {{rentDuration}}</li>
-            <li><strong>Tên tài khoản quảng cáo:</strong> {{ads_name}}</li>
-            <li><strong>Id BM:</strong> {{bm_id}}</li>
-            <li><strong>Hạn mức:</strong> {{amountPoint}}</li>
-            <!-- <li><strong>Hạn sử dụng:</strong> {{rentEndTime}}</li> -->
-          </ul>
 
-          <p style="margin-top: 20px">
-            Nếu bạn không thực hiện được thao tác này, vui lòng liên hệ với
-            chúng tôi ngay để được hỗ trợ.
+          <p
+            style="
+              margin: 0 0 25px;
+              font-size: 16px;
+              color: #4a5568;
+              line-height: 1.6;
+            "
+          >
+            Bạn đã thuê tài khoản BM thành công tại AKAds! Tài khoản của bạn đã
+            được kích hoạt và sẵn sàng sử dụng.
           </p>
 
-          <p style="margin-top: 40px">
-            Có thắc mắc hoặc cần hỗ trợ? Hãy truy cập
-            <a href="https://akamedia.vn/" style="color: #007bff"
-              >trang hỗ trợ của chúng tôi</a
-            >.
-          </p>
+          <!-- Account info box -->
+          <div
+            style="
+              background: #f7fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 25px;
+              margin: 25px 0;
+            "
+          >
+            <h3
+              style="
+                margin: 0 0 20px;
+                font-size: 18px;
+                color: #2d3748;
+                font-weight: 600;
+              "
+            >
+              📋 Thông tin chi tiết về tài khoản:
+            </h3>
 
-          <p>Trân trọng,<br />Đội ngũ AKAds</p>
+            <table style="width: 100%; border-collapse: collapse">
+              <tr>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #4a5568;
+                    font-weight: 500;
+                    width: 40%;
+                  "
+                >
+                  Tên tài khoản:
+                </td>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #2d3748;
+                    font-weight: 600;
+                  "
+                >
+                  {{accountName}}
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #4a5568;
+                    font-weight: 500;
+                  "
+                >
+                  Thời gian thuê:
+                </td>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #2d3748;
+                    font-weight: 600;
+                  "
+                >
+                  {{rentDuration}}
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #4a5568;
+                    font-weight: 500;
+                  "
+                >
+                  Thời gian bắt đầu:
+                </td>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #2d3748;
+                    font-weight: 600;
+                  "
+                >
+                  {{startTime}}
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #4a5568;
+                    font-weight: 500;
+                  "
+                >
+                  Tên tài khoản quảng cáo:
+                </td>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #2d3748;
+                    font-weight: 600;
+                  "
+                >
+                  {{ads_name}}
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #4a5568;
+                    font-weight: 500;
+                  "
+                >
+                  ID BM:
+                </td>
+                <td
+                  style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e2e8f0;
+                    color: #2d3748;
+                    font-weight: 600;
+                  "
+                >
+                  {{bm_id}}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #4a5568; font-weight: 500">
+                  Hạn mức:
+                </td>
+                <td
+                  style="
+                    padding: 8px 0;
+                    color: #e53e3e;
+                    font-weight: 700;
+                    font-size: 16px;
+                  "
+                >
+                  {{amountPoint}}
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Success message -->
+          <div
+            style="
+              background: linear-gradient(135deg, #f0fff4, #e6fffa);
+              border: 2px solid #9ae6b4;
+              border-radius: 12px;
+              padding: 20px;
+              margin: 25px 0;
+              text-align: center;
+            "
+          >
+            <p
+              style="
+                margin: 0;
+                color: #22543d;
+                font-size: 16px;
+                font-weight: 500;
+              "
+            >
+              ✅ Tài khoản đã được kích hoạt thành công! Bạn có thể bắt đầu sử
+              dụng ngay bây giờ.
+            </p>
+          </div>
+
+          <!-- Support section -->
+          <div
+            style="
+              background: #ebf8ff;
+              border: 1px solid #90cdf4;
+              border-radius: 12px;
+              padding: 20px;
+              margin: 25px 0;
+            "
+          >
+            <p
+              style="
+                margin: 0 0 15px;
+                color: #2c5282;
+                font-size: 16px;
+                font-weight: 500;
+              "
+            >
+              💬 Cần hỗ trợ?
+            </p>
+            <p
+              style="
+                margin: 0 0 15px;
+                color: #2a69ac;
+                font-size: 14px;
+                line-height: 1.5;
+              "
+            >
+              Nếu bạn gặp bất kỳ vấn đề gì hoặc cần hỗ trợ, vui lòng liên hệ với
+              chúng tôi ngay.
+            </p>
+            <a
+              href="https://akamedia.vn/"
+              style="
+                display: inline-block;
+                background: #4299e1;
+                color: white;
+                text-decoration: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 14px;
+              "
+            >
+              🔗 Trang hỗ trợ
+            </a>
+          </div>
+
+          <!-- Footer -->
+          <div
+            style="
+              text-align: center;
+              padding: 20px 0;
+              border-top: 1px solid #e2e8f0;
+              margin-top: 30px;
+            "
+          >
+            <p style="margin: 0 0 5px; color: #4a5568; font-size: 14px">
+              Trân trọng,
+            </p>
+            <p
+              style="
+                margin: 0;
+                color: #2d3748;
+                font-size: 16px;
+                font-weight: 600;
+              "
+            >
+              Đội ngũ AKAds
+            </p>
+          </div>
         </div>
       </div>
     </div>

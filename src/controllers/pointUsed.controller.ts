@@ -83,10 +83,10 @@ const pointUsedController = {
         );
         return;
       }
-      const amountVNDchange = Math.floor(Number(amountPoint));
+
       const user = await prisma.user.findUnique({
         where: { id: user_id },
-        select: { points: true },
+        select: { points: true, percentage: true },
       });
 
       if (!user) {
@@ -98,8 +98,10 @@ const pointUsedController = {
         );
         return;
       }
-
-      if (user.points < amountVNDchange) {
+      const amountOrigin = Math.floor(Number(amountPoint));
+      const amountVNDchange =
+        amountOrigin - amountOrigin * (user.percentage || 0.1);
+      if (user.points < amountOrigin) {
         errorResponse(
           res,
           'Bạn không đủ điểm để thực hiện giao dịch',
@@ -118,13 +120,13 @@ const pointUsedController = {
         await tx.user.update({
           where: { id: user_id },
           data: {
-            points: { decrement: amountVNDchange },
+            points: { decrement: amountOrigin },
           },
         });
         const pointsUsed = await tx.pointUsage.create({
           data: {
             user_id,
-            points_used: amountVNDchange,
+            points_used: amountOrigin,
             target_account: ads_account_id,
             description: 'Đổi điểm tài khoản quảng cáo',
             status: 'success',
@@ -167,7 +169,8 @@ const pointUsedController = {
         bm_id,
         ads_account_id,
         user_id,
-        amountPoint,
+        amountPoint: amountVNDchange,
+        amountOrigin,
         bm_origin,
         ads_name,
         bot_id,

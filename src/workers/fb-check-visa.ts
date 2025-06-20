@@ -156,16 +156,16 @@ const updateDb = async (data: any) => {
       });
     } else if (isAfter(todayVN, end_date)) {
       console.log('🛑 đã hết hạn gói xóa khỏi gói');
-      await fbRemoveParnertVisa.add({
-        ads_account_id,
-        bm_origin,
-        ads_name,
-        bot_id,
-        bm_id,
-        id: findBm.id,
-        user_id,
-        amountPoint,
-      });
+      // await fbRemoveParnertVisa.add({
+      //   ads_account_id,
+      //   bm_origin,
+      //   ads_name,
+      //   bot_id,
+      //   bm_id,
+      //   id: findBm.id,
+      //   user_id,
+      //   amountPoint,
+      // });
       await removeRepeatJob(job);
     } else if (
       findBm?.budget &&

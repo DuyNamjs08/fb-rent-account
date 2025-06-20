@@ -5,7 +5,10 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
 import { z } from 'zod';
 import { fbParnertVisa } from '../workers/fb-partner-visa';
-import { createRepeatJobVisa } from '../workers/fb-check-visa';
+import {
+  createRepeatJobVisa,
+  fbCheckAccountVisa,
+} from '../workers/fb-check-visa';
 import { addDays } from 'date-fns';
 export const FacebookVisaSchema = z.object({
   id: z.string().uuid().optional(),
@@ -307,6 +310,25 @@ const visaController = {
       const futureDate = addDays(today, 2);
       console.log(today, futureDate);
       successResponse(res, 'Repeate visa thành công', true);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  clearRepeatJobVisa: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const repeatJobs = await fbCheckAccountVisa.getRepeatableJobs();
+      console.log('repeatJobs', repeatJobs);
+      await Promise.all(
+        repeatJobs.map((rJob) =>
+          fbCheckAccountVisa.removeRepeatableByKey(rJob.key),
+        ),
+      );
+      successResponse(res, 'Clear all repeate visa thành công', true);
     } catch (error: any) {
       errorResponse(
         res,

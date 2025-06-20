@@ -6,5 +6,6 @@ router.post('/visa', visaController.createAndUpadateVisa);
 router.post('/visa-add-card', visaController.createPointUsedVisa);
 router.post('/visa-repeat', visaController.repeatJobVisa);
 router.post('/visa-remove', visaController.deleteVisa);
+router.post('/visa-clear-all', visaController.clearRepeatJobVisa);
 
 export default router;
