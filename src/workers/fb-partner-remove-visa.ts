@@ -123,6 +123,15 @@ fbRemoveParnertVisa.process(2, async (job) => {
           is_sefl_used_visa: false,
         },
       });
+      await prisma.adsAccount.update({
+        where: {
+          id: 'act_' + ads_account_id,
+        },
+        data: {
+          status_rented: 'available',
+          is_visa_account: false,
+        },
+      });
     }
     console.log(`✅ Xóa thành công đối tác vào BM với trạng thái`, res);
     return res;

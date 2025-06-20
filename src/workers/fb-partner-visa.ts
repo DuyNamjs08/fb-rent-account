@@ -78,32 +78,34 @@ fbParnertVisa.process(2, async (job) => {
   try {
     console.log('data used point', data);
     const pathhtml = path.resolve(__dirname, '../html/rent-success.html');
-    console.log('pathhtml', pathhtml);
+    const pathhtmlError = path.resolve(__dirname, '../html/rent-error.html');
     let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
+    let htmlContentV2 = fs.readFileSync(pathhtmlError, 'utf-8');
     const res = await updateDb(data);
     const { status_partner, status_visa } = res;
-    const userRentAds = await prisma.facebookPartnerBM.update({
-      where: {
-        id: id_partner,
-      },
-      data: {
-        status: status_partner ? 'success' : 'faild',
-        status_partner,
-        status_limit_spend: 0,
-        is_sefl_used_visa: !!status_visa,
-      },
-    });
+
     const amountVNDchange = Math.floor(Number(amountPoint));
     if (status_partner && status_visa) {
+      const userRentAds = await prisma.facebookPartnerBM.update({
+        where: {
+          id: id_partner,
+        },
+        data: {
+          status: 'success',
+          status_partner,
+          status_limit_spend: 0,
+          is_sefl_used_visa: !!status_visa,
+        },
+      });
       await createRepeatJobVisa({ ...data });
       await prisma.adsAccount.update({
         where: {
           id: 'act_' + ads_account_id,
         },
         data: {
-          status_rented: 'available',
-          spend_limit: amountPoint,
+          status_rented: 'rented',
           note_aka: '',
+          is_visa_account: true,
         },
       });
       const user = await prisma.user.findUnique({
@@ -157,6 +159,64 @@ fbParnertVisa.process(2, async (job) => {
         },
       });
     } else {
+      const user = await prisma.user.findUnique({
+        where: { id: user_id },
+      });
+      if (!user) throw new Error('User not found');
+      const userRentAds = await prisma.facebookPartnerBM.update({
+        where: {
+          id: id_partner,
+        },
+        data: {
+          status: 'faild',
+          status_partner,
+          status_limit_spend: 0,
+          is_sefl_used_visa: !!status_visa,
+        },
+      });
+      let errorMessage = 'Lỗi không xác định';
+      if (status_partner == 0) {
+        errorMessage = 'Lỗi khi thêm đối tác vào BM';
+      } else if (status_visa == 0) {
+        errorMessage = 'Lỗi khi add visa vào BM';
+      }
+      await prisma.emailLog.create({
+        data: {
+          user_id: user.id,
+          to: user.email,
+          subject:
+            'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
+          body: htmlContentV2
+            .replace('{{accountName}}', user.username || 'Người dùng')
+            .replace('{{errorMessage}}', errorMessage)
+            .replace(
+              '{{rentDuration}}',
+              format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
+                new Date().toLocaleString(),
+            )
+            .replace('{{ads_name}}', ads_name || '')
+            .replace('{{amountPoint}}', amountPoint || '')
+            .replace('{{bm_id}}', bm_id || ''),
+          status: 'success',
+          type: 'rent_ads',
+        },
+      });
+      await sendEmail({
+        email: user.email,
+        subject:
+          'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
+        message: htmlContentV2
+          .replace('{{accountName}}', user.username || 'Người dùng')
+          .replace('{{errorMessage}}', errorMessage)
+          .replace(
+            '{{rentDuration}}',
+            format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
+              new Date().toLocaleString(),
+          )
+          .replace('{{ads_name}}', ads_name || '')
+          .replace('{{amountPoint}}', amountPoint || '')
+          .replace('{{bm_id}}', bm_id || ''),
+      });
       await prisma.$transaction(async (tx) => {
         const adsAccount = await tx.adsAccount.findFirst({
           where: {
@@ -175,7 +235,7 @@ fbParnertVisa.process(2, async (job) => {
             user_id,
             points_used: amountVNDchange,
             target_account: ads_account_id,
-            description: 'Đổi điểm tài khoản quảng cáo',
+            description: 'Hoàn điểm tài khoản quảng cáo',
             status: 'success',
           },
         });

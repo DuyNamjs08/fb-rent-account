@@ -83,16 +83,15 @@ const hanleEn = async ({
   amountPoint: number;
 }) => {
   await page.waitForLoadState('networkidle');
-  // phần xác minh tài khoản
   let isVerify = 0;
   try {
     const verify = page.locator('div', {
-      hasText: /^Xác minh tài khoản$/,
+      hasText: /^Verify account$/,
     });
     const count = await verify.count();
 
     console.log(
-      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Xác minh tài khoản'`,
+      `🔍 Tìm thấy ${count} phần tử chính xác có text 'Verify account'`,
     );
     if (count > 0) {
       await page.waitForTimeout(1000 + randomDelay());
@@ -101,9 +100,9 @@ const hanleEn = async ({
       await element.click({ delay: randomDelay(150, 300) }).then(() => {
         isVerify = 1;
       });
-      console.log('✅ Đã click vào phần tử Xác minh tài khoản');
+      console.log('✅ Đã click vào phần tử Verify account');
     } else {
-      console.log('⚠️ Không tìm thấy phần tử Xác minh tài khoản');
+      console.log('⚠️ Không tìm thấy phần tử Verify account');
     }
   } catch (err: any) {
     console.log('❌ Lỗi khi click:', err.message);
@@ -112,18 +111,20 @@ const hanleEn = async ({
   if (isVerify) {
     try {
       const verify = page.locator('div', {
-        hasText: /^Gửi email$/,
+        hasText: /^Send email$/,
       });
       const count = await verify.count();
-      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi email'`);
+      console.log(
+        `🔍 Tìm thấy ${count} phần tử chính xác có text 'Send email'`,
+      );
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
         const element = verify.nth(1);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
-        console.log('✅ Đã click vào phần tử Gửi email');
+        console.log('✅ Đã click vào phần tử Send email');
       } else {
-        console.log('⚠️ Không tìm thấy phần tử Gửi email');
+        console.log('⚠️ Không tìm thấy phần tử Send email');
       }
     } catch (err: any) {
       console.log('❌ Lỗi khi click:', err.message);
@@ -145,42 +146,47 @@ const hanleEn = async ({
 
     try {
       const verify = page.locator('div', {
-        hasText: /^Gửi$/,
+        hasText: /^Submit$/,
       });
       const count = await verify.count();
-      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Gửi'`);
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Submit'`);
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
         const element = verify.nth(1);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
-        console.log('✅ Đã click vào phần tử Gửi');
+        console.log('✅ Đã click vào phần tử Submit');
       } else {
-        console.log('⚠️ Không tìm thấy phần tử Gửi');
+        console.log('⚠️ Không tìm thấy phần tử Submit');
       }
     } catch (err: any) {
-      console.log('❌ Lỗi khi click Gửi:', err.message);
+      console.log('❌ Lỗi khi click Submit:', err.message);
     }
     await page.waitForTimeout(6000);
     try {
       const verify = page.locator('div', {
-        hasText: /^Xong$/,
+        hasText: /^Done$/,
       });
       const count = await verify.count();
-      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Xong'`);
+      console.log(`🔍 Tìm thấy ${count} phần tử chính xác có text 'Done'`);
       if (count >= 0) {
         await page.waitForTimeout(1000 + randomDelay());
         const element = verify.nth(2);
         await element.hover();
         await element.click({ delay: randomDelay(150, 300) });
-        console.log('✅ Đã click vào phần tử Xong');
+        console.log('✅ Đã click vào phần tử Done');
       } else {
-        console.log('⚠️ Không tìm thấy phần tử Xong');
+        console.log('⚠️ Không tìm thấy phần tử Done');
       }
     } catch (err: any) {
-      console.log('❌ Lỗi khi click Xong:', err.message);
+      console.log('❌ Lỗi khi click Done:', err.message);
     }
   }
+
+  await page.waitForTimeout(1500);
+  await page.mouse.move(200, 300);
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(2000);
 
   await page.waitForTimeout(1500);
   const heading = page.locator('div[role="heading"][aria-level="3"]', {

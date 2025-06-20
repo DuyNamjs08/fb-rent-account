@@ -272,7 +272,7 @@ model AdsAccount {
   user_tos_accepted               Json?     // Điều khoản user đã chấp nhận
   vertical_name                   String?   // Ngành dọc (retail, ecommerce,...)
 // phần thêm 
-  status_rented String? 
+  status_rented String? @default("available") // Trạng thái thuê (available, rented, unavailable)
   spend_limit Int?
   note_aka    String?
   active    Boolean? @default(true) 
