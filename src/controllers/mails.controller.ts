@@ -26,6 +26,28 @@ export const sendEmail = async (data: any) => {
     throw new Error(error.message);
   }
 };
+export const sendEmailFromUser = async (data: any) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: data.email,
+    to: process.env.EMAIL_ADMIN,
+    subject: data.subject,
+    html: data?.message,
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+};
 export const createMailsController = async (
   req: Request,
   res: Response,
