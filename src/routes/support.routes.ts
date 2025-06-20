@@ -20,7 +20,7 @@ router.get('/support/message/:id', supportController.getMessageByRequestId);
 router.delete('/support/:id', supportController.deleteSupport);
 
 // send mail
-router.post('/support/mail/admin', supportController.sendMailAdmin);
-router.post('/support/mail/user', supportController.sendMailUser);
+router.post('/support/mail-admin', supportController.sendMailAdmin);
+router.post('/support/mail-user', supportController.sendMailUser);
 
 export default router;
