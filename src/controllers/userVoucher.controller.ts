@@ -13,63 +13,97 @@ const userVoucherController = {
         !user_id ||
         !Array.isArray(voucher_states) ||
         voucher_states.some(
-          (v) => !v.voucher_id || typeof v.is_checked !== 'boolean',
+          (v) =>
+            !v.voucher_id ||
+            typeof v.is_checked !== 'boolean' ||
+            (v.is_checked && (typeof v.quantity !== 'number' || v.quantity < 0)),
         )
       ) {
         res.status(400).json({ error: 'Invalid payload' });
         return;
       }
 
-      const allVoucherIds = voucher_states.map((v) => v.voucher_id);
+      for (const state of voucher_states) {
+        const { voucher_id, is_checked, quantity } = state;
 
-      // Lấy danh sách voucher hiện tại user đã sở hữu
-      const existing = await prisma.userVoucher.findMany({
-        where: {
-          user_id,
-          voucher_id: { in: allVoucherIds },
-        },
-        select: { voucher_id: true },
-      });
+        if (!is_checked || quantity === 0) {
+          // Xoá nếu is_checked=false hoặc quantity=0
+          await prisma.userVoucher.deleteMany({
+            where: {
+              user_id,
+              voucher_id,
+            },
+          });
+          continue;
+        }
 
-      const existingIds = new Set(existing.map((v) => v.voucher_id));
+        // Lấy thông tin voucher và tổng số lượng đã gán
+        const voucher = await prisma.voucher.findUnique({
+          where: { id: voucher_id },
+          include: { _count: { select: { userVouchers: true } } },
+        });
 
-      const toCreate = voucher_states
-        .filter((v) => v.is_checked && !existingIds.has(v.voucher_id))
-        .map((v) => ({
-          user_id,
-          voucher_id: v.voucher_id,
-        }));
+        if (!voucher) {
+          // IGNORE: không tìm thấy voucher thì bỏ qua
+          continue;
+        }
 
-      const toDelete = voucher_states
-        .filter((v) => !v.is_checked && existingIds.has(v.voucher_id))
-        .map((v) => v.voucher_id);
-
-      // Tạo mới nếu có
-      if (toCreate.length > 0) {
-        await prisma.userVoucher.createMany({ data: toCreate });
-      }
-
-      // Xoá nếu có
-      if (toDelete.length > 0) {
-        await prisma.userVoucher.deleteMany({
+        // Lấy thông tin userVoucher hiện tại
+        const existingUserVoucher = await prisma.userVoucher.findUnique({
           where: {
+            user_id_voucher_id: {
+              user_id,
+              voucher_id,
+            },
+          },
+        });
+
+        // Tính toán tổng số lượng đã cấp phát
+        let totalAssigned = 0;
+        if (voucher.max_usage) {
+          const allUserVouchers = await prisma.userVoucher.findMany({
+            where: { voucher_id },
+          });
+          totalAssigned = allUserVouchers.reduce(
+            (sum, uv) => sum + uv.quantity,
+            0,
+          );
+        }
+
+        // Nếu đã tồn tại, số lượng hiện tại không được tính vào tổng
+        const currentQuantity = existingUserVoucher
+          ? existingUserVoucher.quantity
+          : 0;
+        const availableQuantity = voucher.max_usage
+          ? voucher.max_usage - (totalAssigned - currentQuantity)
+          : Infinity;
+
+        if (quantity > availableQuantity) {
+          res.status(400).json({
+            error: `Voucher ${voucher.name} chỉ còn lại ${availableQuantity} voucher`,
+          });
+          return;
+        }
+
+        // Tạo hoặc cập nhật
+        await prisma.userVoucher.upsert({
+          where: {
+            user_id_voucher_id: {
+              user_id,
+              voucher_id,
+            },
+          },
+          update: { quantity },
+          create: {
             user_id,
-            voucher_id: { in: toDelete },
+            voucher_id,
+            quantity,
           },
         });
       }
 
       res.json({
         message: 'Cập nhật danh sách voucher thành công',
-        assigned: toCreate.map((v) => v.voucher_id),
-        unassigned: toDelete,
-        unchanged: voucher_states
-          .filter(
-            (v) =>
-              (v.is_checked && existingIds.has(v.voucher_id)) ||
-              (!v.is_checked && !existingIds.has(v.voucher_id)),
-          )
-          .map((v) => v.voucher_id),
       });
     } catch (error: any) {
       console.error('Error syncing vouchers:', error);
@@ -101,44 +135,50 @@ const userVoucherController = {
     try {
       const { user_id } = req.params;
 
-      // Lấy toàn bộ vouchers, bao gồm số lượt sử dụng
+      // Lấy toàn bộ vouchers
       const allVouchers = await prisma.voucher.findMany({
         include: {
-          _count: {
-            select: { userVouchers: true },
-          },
+          userVouchers: true, // Lấy tất cả userVouchers để tính tổng số lượng
         },
       });
 
-      // Lấy danh sách voucher_id mà user đã sở hữu
-      const assignedVouchers = await prisma.userVoucher.findMany({
+      // Lấy danh sách userVoucher của user hiện tại
+      const assignedUserVouchers = await prisma.userVoucher.findMany({
         where: { user_id },
-        select: { voucher_id: true },
+        select: { voucher_id: true, quantity: true },
       });
 
-      const assignedIds = new Set(assignedVouchers.map((v) => v.voucher_id));
+      // Tạo map để dễ tra cứu
+      const assignedMap = new Map(
+        assignedUserVouchers.map((uv) => [uv.voucher_id, uv.quantity]),
+      );
+
       const now = new Date();
 
       // Map lại kết quả gửi về cho FE
       const result = allVouchers.map((voucher) => {
+        const totalAssignedQuantity = voucher.userVouchers.reduce(
+          (sum, uv) => sum + uv.quantity,
+          0,
+        );
         const isExpired = voucher.expires_at ? voucher.expires_at < now : false;
+        const isChecked = assignedMap.has(voucher.id);
+        const quantity = isChecked ? assignedMap.get(voucher.id) : 0; // Mặc định là 0 nếu chưa có
+
         let isExceeded = false;
-        if (assignedIds.has(voucher.id)) {
-          // Nếu user đang sở hữu voucher, isExceeded = false
-          isExceeded = false;
-        } else {
-          // Nếu user không sở hữu voucher, kiểm tra max_usage
+        if (!isChecked) {
           isExceeded =
             voucher.max_usage !== null &&
-            voucher._count.userVouchers >= voucher.max_usage;
+            totalAssignedQuantity >= voucher.max_usage;
         }
+
         return {
           ...voucher,
-          is_checked: assignedIds.has(voucher.id),
-          // due date
+          is_checked: isChecked,
+          quantity,
           is_expired: isExpired,
-          // quá số lượng
           is_exceeded: isExceeded,
+          total_assigned: totalAssignedQuantity, // số lượng đã gán cho tất cả user
         };
       });
 
@@ -174,6 +214,7 @@ const userVoucherController = {
         name: item.user.username,
         email: item.user.email,
         is_used: item.is_used,
+        quantity: item.quantity,
         assigned_at: item.assigned_at,
       }));
 
