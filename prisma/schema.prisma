@@ -63,6 +63,7 @@ model User {
   points     Int           @default(0)
   short_code    String         @unique
   percentage   Float?  @default(0.1)        // Phần trăm phí của người dùng
+  active        Boolean?   @default(true) // Trạng thái hoạt động của người dùng
   pointUsages  PointUsage[]
   emailLogs      EmailLog[]
   notifications  Notification[]

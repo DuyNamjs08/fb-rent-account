@@ -188,6 +188,7 @@ fbParnertVisa.process(2, async (job) => {
             'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
           body: htmlContentV2
             .replace('{{accountName}}', user.username || 'Người dùng')
+            .replace('{{accountNameV2}}', user.username || 'Người dùng')
             .replace('{{errorMessage}}', errorMessage)
             .replace(
               '{{rentDuration}}',
@@ -195,7 +196,6 @@ fbParnertVisa.process(2, async (job) => {
                 new Date().toLocaleString(),
             )
             .replace('{{ads_name}}', ads_name || '')
-            .replace('{{amountPoint}}', amountPoint || '')
             .replace('{{bm_id}}', bm_id || ''),
           status: 'success',
           type: 'rent_ads',
@@ -207,6 +207,7 @@ fbParnertVisa.process(2, async (job) => {
           'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
         message: htmlContentV2
           .replace('{{accountName}}', user.username || 'Người dùng')
+          .replace('{{accountNameV2}}', user.username || 'Người dùng')
           .replace('{{errorMessage}}', errorMessage)
           .replace(
             '{{rentDuration}}',
@@ -214,7 +215,6 @@ fbParnertVisa.process(2, async (job) => {
               new Date().toLocaleString(),
           )
           .replace('{{ads_name}}', ads_name || '')
-          .replace('{{amountPoint}}', amountPoint || '')
           .replace('{{bm_id}}', bm_id || ''),
       });
       await prisma.$transaction(async (tx) => {
