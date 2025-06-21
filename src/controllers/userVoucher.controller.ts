@@ -122,14 +122,22 @@ const userVoucherController = {
       // Map lại kết quả gửi về cho FE
       const result = allVouchers.map((voucher) => {
         const isExpired = voucher.expires_at ? voucher.expires_at < now : false;
-        const isExceeded =
-          voucher.max_usage !== null &&
-          voucher._count.userVouchers >= voucher.max_usage;
-
+        let isExceeded = false;
+        if (assignedIds.has(voucher.id)) {
+          // Nếu user đang sở hữu voucher, isExceeded = false
+          isExceeded = false;
+        } else {
+          // Nếu user không sở hữu voucher, kiểm tra max_usage
+          isExceeded =
+            voucher.max_usage !== null &&
+            voucher._count.userVouchers >= voucher.max_usage;
+        }
         return {
           ...voucher,
           is_checked: assignedIds.has(voucher.id),
+          // due date
           is_expired: isExpired,
+          // quá số lượng
           is_exceeded: isExceeded,
         };
       });
