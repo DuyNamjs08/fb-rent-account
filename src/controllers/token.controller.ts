@@ -9,19 +9,41 @@ import prisma from '../config/prisma';
 import { sendEmail } from './mails.controller';
 import fs from 'fs';
 import path from 'path';
-
+import { z } from 'zod';
+const createAccessTokenSchema = z.object({
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự'),
+});
+const updateAccessTokenSchema = z.object({
+  refresh_token: z.string().min(1, 'Refresh token không được để trống'),
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự').optional(),
+});
 const TokenController = {
   createAccessToken: async (req: Request, res: Response): Promise<void> => {
     try {
-      const pathhtml = path.resolve(__dirname, '../html/index.html');
-      console.log('pathhtml', pathhtml);
-      let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
       const data = req.body;
-      const user = await UserService.getUserByEmail(data.email);
+      const parsed = createAccessTokenSchema.safeParse(data);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const user = await prisma.user.findFirst({
+        where: {
+          email: data.email,
+          active: true,
+        },
+      });
       if (!user) {
         errorResponse(
           res,
-          'Tài khoản không tồn tại',
+          'Tài khoản không tồn tại hoặc đã bị khóa',
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -72,25 +94,6 @@ const TokenController = {
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        // const emailLog = await prisma.emailLog.create({
-        //   data: {
-        //     user_id: user.id,
-        //     to: user.email,
-        //     subject: 'AKAds thông báo đăng nhập',
-        //     body: htmlContent
-        //       .replace('{{name}}', user.username || 'Người dùng')
-        //       .replace('{{loginTime}}', new Date().toLocaleString()),
-        //     status: 'success',
-        //     type: 'login_notification',
-        //   },
-        // });
-        // await sendEmail({
-        //   email: user.email,
-        //   subject: 'AKAds thông báo đăng nhập',
-        //   message: htmlContent
-        //     .replace('{{name}}', user.username || 'Người dùng')
-        //     .replace('{{loginTime}}', new Date().toLocaleString()),
-        // });
         successResponse(res, 'Success', Token);
         return;
       }
@@ -101,27 +104,6 @@ const TokenController = {
           refresh_token: refreshToken,
         },
       });
-      // gửi mail thông báo đăng nhập thành công
-
-      // const emailLog = await prisma.emailLog.create({
-      //   data: {
-      //     user_id: user.id,
-      //     to: user.email,
-      //     subject: 'AKAds thông báo đăng nhập',
-      //     body: htmlContent
-      //       .replace('{{name}}', user.username || 'Người dùng')
-      //       .replace('{{loginTime}}', new Date().toLocaleString()),
-      //     status: 'success',
-      //     type: 'login_notification',
-      //   },
-      // });
-      // await sendEmail({
-      //   email: user.email,
-      //   subject: 'AKAds thông báo đăng nhập',
-      //   message: htmlContent
-      //     .replace('{{name}}', user.username || 'Người dùng')
-      //     .replace('{{loginTime}}', new Date().toLocaleString()),
-      // });
       successResponse(res, 'Success create', Token);
     } catch (error: any) {
       errorResponse(
@@ -135,20 +117,27 @@ const TokenController = {
   updateAccessToken: async (req: Request, res: Response): Promise<void> => {
     try {
       const { refresh_token, email, password } = req.body;
-      if (!refresh_token) {
+
+      const parseResult = updateAccessTokenSchema.safeParse(req.body);
+      if (!parseResult.success) {
         errorResponse(
           res,
-          'Refresh token không được để trống',
-          {},
+          'Dữ liệu đầu vào không hợp lệ',
+          parseResult.error.format(),
           httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
-      const user = await UserService.getUserByEmail(email);
+      const user = await prisma.user.findFirst({
+        where: {
+          email: email,
+          active: true,
+        },
+      });
       if (!user) {
         errorResponse(
           res,
-          'Tài khoản không tồn tại',
+          'Tài khoản không tồn tại hoặc đã bị khóa',
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -171,7 +160,7 @@ const TokenController = {
         process.env.REFRESH_TOKEN_SECRET,
         async (err: any, data: any) => {
           if (err) {
-            return res.status(403).json('refresh token không hợp lệ');
+            return res.status(405).json('refresh token không hợp lệ');
           }
           const accessToken = jwt.sign(
             { mail: data.email, password: data.password, user_id: user.id },

@@ -193,6 +193,18 @@ const userController = {
         successResponse(res, 'Cập nhật mật khẩu thành công !', newpass);
         return;
       }
+      if (!email) {
+        const updateActive = await prisma.user.update({
+          where: {
+            id,
+          },
+          data: {
+            active: req.body.active,
+          },
+        });
+        successResponse(res, 'Cập nhật người dùng thành công !', updateActive);
+        return;
+      }
       const findmail = await prisma.user.findUnique({
         where: {
           email,
