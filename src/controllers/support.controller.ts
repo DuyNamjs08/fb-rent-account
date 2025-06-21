@@ -516,7 +516,7 @@ const supportController = {
   },
   sendMailAdmin: async (req: Request, res: Response) => {
     try {
-      const { email, priority, category, content, title } = req.body;
+      const { email, priority, category, content, title, created_at } = req.body;
       const mailAdmin = process.env.EMAIL_ADMIN as string;
       const user = await UserService.getUserByEmail(email);
       if (!user) {
@@ -543,7 +543,7 @@ const supportController = {
         .replace('{{NAME}}', user.username || 'Người dùng')
         .replace('{{USER_EMAIL}}', user.email)
         .replace('{{USER_PHONE}}', user.phone ?? 'Không có')
-        .replace('{{CREATED_AT}}', user.created_at.toLocaleString('vi-VN'))
+        .replace('{{CREATED_AT}}', created_at)
         .replace(
           '{{priority}}',
           priority ? priority.toLocaleString('vi-VN') : '',
