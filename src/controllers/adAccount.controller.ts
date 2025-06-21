@@ -351,6 +351,52 @@ const TKQCController = {
       );
     }
   },
+  getAllTKQCVisa: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const data = req.query;
+      const { pageSize = 10, page = 1 } = data;
+      const skip = (Number(page) - 1) * Number(pageSize);
+      const pageSizeNum = Number(pageSize) || 10;
+      const result = await prisma.adsAccount.findMany({
+        where: {
+          is_visa_account: true,
+        },
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, 'Danh sách tkqc', result);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  getAllTKQCsimple: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const data = req.query;
+      const { pageSize = 10, page = 1 } = data;
+      const skip = (Number(page) - 1) * Number(pageSize);
+      const pageSizeNum = Number(pageSize) || 10;
+      const result = await prisma.adsAccount.findMany({
+        where: {
+          is_visa_account: false,
+        },
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, 'Danh sách tkqc', result);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
 };
 
 export default TKQCController;

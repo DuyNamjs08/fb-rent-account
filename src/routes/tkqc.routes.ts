@@ -9,6 +9,8 @@ router.post(
   TKQCController.asyncTKQC,
 );
 router.get('/ad-accounts', TKQCController.getAllTKQC);
+router.get('/ad-accounts-visa', TKQCController.getAllTKQCVisa);
+router.get('/ad-accounts-simple', TKQCController.getAllTKQCsimple);
 router.get('/ads-rent-accounts', TKQCController.getAdsRentedByUser);
 router.get(
   '/ads-rent-accounts-all',
