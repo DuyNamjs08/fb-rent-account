@@ -19,7 +19,6 @@ CREATE TABLE "user_vouchers" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "voucher_id" TEXT NOT NULL,
-    "is_used" BOOLEAN NOT NULL DEFAULT false,
     "assigned_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "used_at" TIMESTAMP(3),
 
@@ -37,3 +36,6 @@ ALTER TABLE "user_vouchers" ADD CONSTRAINT "user_vouchers_user_id_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "user_vouchers" ADD CONSTRAINT "user_vouchers_voucher_id_fkey" FOREIGN KEY ("voucher_id") REFERENCES "vouchers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- Drop column is_used from user_vouchers
+ALTER TABLE "user_vouchers" DROP COLUMN IF EXISTS "is_used";

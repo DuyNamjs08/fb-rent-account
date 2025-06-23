@@ -4,9 +4,22 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const userVoucherController = {
+  // Helper: Xóa userVoucher quá hạn 48h (chưa dùng)
+  async removeExpiredUserVouchers() {
+    const now = new Date();
+    await prisma.userVoucher.deleteMany({
+      where: {
+        assigned_at: {
+          lt: new Date(now.getTime() - 48 * 60 * 60 * 1000), // 48h trước
+        },
+        is_used: false,
+      },
+    });
+  },
   // Gán voucher cho user
   async bulkToggleAssignVouchers(req: Request, res: Response): Promise<void> {
     try {
+      await userVoucherController.removeExpiredUserVouchers();
       const { user_id, voucher_states } = req.body;
 
       if (
@@ -118,6 +131,7 @@ const userVoucherController = {
   // Lấy danh sách voucher của user hiện tại
   async getMyVouchers(req: Request, res: Response): Promise<void> {
     try {
+      await userVoucherController.removeExpiredUserVouchers();
       const user_id = req.query.user_id as string;
       if (!user_id) {
         res.status(400).json({ message: 'Missing user_id in query' });
@@ -136,6 +150,7 @@ const userVoucherController = {
   // Lấy danh sách tất cả voucher
   async getAllVouchers(req: Request, res: Response): Promise<void> {
     try {
+      await userVoucherController.removeExpiredUserVouchers();
       const { user_id } = req.params;
 
       // Lấy toàn bộ vouchers
@@ -232,26 +247,6 @@ const userVoucherController = {
     } catch (error) {
       console.error('Error fetching assigned users:', error);
       res.status(500).json({ message: 'Failed to fetch assigned users' });
-    }
-  },
-  // Đánh dấu voucher là đã dùng
-  async markVoucherAsUsed(req: Request, res: Response) {
-    const { id } = req.params;
-    console.log('idddddd', id);
-    try {
-      const updated = await prisma.userVoucher.update({
-        where: { id },
-        data: {
-          is_used: true,
-          used_at: new Date(),
-        },
-      });
-
-      res.json({ message: 'Voucher marked as used', updated });
-    } catch (error) {
-      res
-        .status(400)
-        .json({ error: 'Failed to update voucher', detail: error });
     }
   },
 };

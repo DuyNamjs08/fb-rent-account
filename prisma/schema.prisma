@@ -356,7 +356,6 @@ model UserVoucher {
   voucher_id  String
 
   quantity    Int      @default(0) // số lượng voucher mà user sở hữu
-  is_used     Boolean  @default(false)
   assigned_at DateTime @default(now())
   used_at     DateTime? // thời điểm sử dụng voucher 
 
