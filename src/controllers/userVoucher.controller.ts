@@ -16,7 +16,8 @@ const userVoucherController = {
           (v) =>
             !v.voucher_id ||
             typeof v.is_checked !== 'boolean' ||
-            (v.is_checked && (typeof v.quantity !== 'number' || v.quantity < 0)),
+            (v.is_checked &&
+              (typeof v.quantity !== 'number' || v.quantity < 0)),
         )
       ) {
         res.status(400).json({ error: 'Invalid payload' });
@@ -56,6 +57,7 @@ const userVoucherController = {
               voucher_id,
             },
           },
+          select: { quantity: true },
         });
 
         // Tính toán tổng số lượng đã cấp phát
@@ -63,6 +65,7 @@ const userVoucherController = {
         if (voucher.max_usage) {
           const allUserVouchers = await prisma.userVoucher.findMany({
             where: { voucher_id },
+            select: { quantity: true },
           });
           totalAssigned = allUserVouchers.reduce(
             (sum, uv) => sum + uv.quantity,
@@ -194,7 +197,14 @@ const userVoucherController = {
 
       const assignedUsers = await prisma.userVoucher.findMany({
         where: { voucher_id },
-        include: {
+        select: {
+          id: true,
+          user_id: true,
+          voucher_id: true,
+          is_used: true,
+          assigned_at: true,
+          used_at: true,
+          quantity: true,
           user: {
             select: {
               id: true,

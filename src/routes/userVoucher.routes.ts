@@ -23,7 +23,5 @@ router.get(
   requireRoles([UserRole.ADMIN]),
   userVoucherController.getAssignedUsers,
 );
-// Cập nhật trạng thái voucher (đánh dấu đã dùng)
-// router.patch('/use-voucher/:id', userVoucherController.markVoucherAsUsed);
 
 export default router;
