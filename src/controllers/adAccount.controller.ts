@@ -228,7 +228,7 @@ const TKQCController = {
         'users',
         'balance',
         'currency',
-        'capabilities',
+        // 'capabilities',
         'business_city',
         'business_country_code',
         'business_name',
@@ -382,7 +382,7 @@ const TKQCController = {
       const pageSizeNum = Number(pageSize) || 10;
       const result = await prisma.adsAccount.findMany({
         where: {
-          is_visa_account: false,
+          is_visa_account: false || null,
         },
         skip,
         take: pageSizeNum,
