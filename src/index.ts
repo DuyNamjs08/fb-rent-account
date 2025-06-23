@@ -19,6 +19,8 @@ import budgetRoutes from './routes/budget.routes';
 import notificationRoutes from './routes/notification.routes';
 import testRoutes from './routes/test.routes';
 import fbVisaRoutes from './routes/fbVisa.routes';
+import voucherRoutes from './routes/voucher.routes';
+import userVoucherRoutes from './routes/userVoucher.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -90,6 +92,8 @@ app.use('/api/v1/', budgetRoutes);
 app.use('/api/v1/', notificationRoutes);
 app.use('/api/v1/', testRoutes);
 app.use('/api/v1/', fbVisaRoutes);
+app.use('/api/v1/', voucherRoutes);
+app.use('/api/v1/', userVoucherRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);
