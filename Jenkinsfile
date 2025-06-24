@@ -25,7 +25,8 @@ nvm use 20; \
 cd ${DEPLOY_DIR}; \
 git pull origin master; \
 npm run migrate; \
-npm run prod"
+npm run prod; \
+docker image prune -af"
                         """
                     }
                 }
