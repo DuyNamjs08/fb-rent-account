@@ -291,9 +291,10 @@ model Budget {
   description String[] @default([])   // Mô tả
   amount      Float     // Số tiền ngân sách
   currency    String    // Đơn vị tiền tệ (VD: VND, USD)
-  start_date   DateTime  // Ngày bắt đầu áp dụng ngân sách
-  end_date     DateTime  // Ngày kết thúc ngân sách
+  start_date   DateTime?  // Ngày bắt đầu áp dụng ngân sách
+  end_date     DateTime?  // Ngày kết thúc ngân sách
   percentage   Float  @default(0.1)
+  country String? @default("vi")
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
