@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
+import { errorResponse, successResponse } from '../helpers/response';
+import { httpStatusCodes } from '../helpers/statusCodes';
 
 const prisma = new PrismaClient();
 
@@ -10,47 +12,91 @@ const voucherController = {
       // Check code trùng
       const existing = await prisma.voucher.findUnique({ where: { code } });
       if (existing) {
-        res.status(409).json({ error: 'Mã voucher đã tồn tại' });
+        errorResponse(
+          res,
+          'Mã voucher đã tồn tại',
+          {},
+          httpStatusCodes.CONFLICT,
+        );
         return;
       }
       const voucher = await prisma.voucher.create({
         data: req.body,
       });
-      res.json(voucher);
-    } catch (err) {
-      res.status(400).json({ error: 'Tạo voucher bị lỗi', detail: err });
+      successResponse(res, 'Tạo voucher thành công', voucher);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
   async getAllVouchers(req: Request, res: Response) {
     try {
       const vouchers = await prisma.voucher.findMany();
-      res.json(vouchers);
-    } catch (err) {
-      res.status(500).json({ error: 'Lỗi lấy danh sách voucher' });
+      successResponse(res, 'Lấy danh sách voucher thành công', vouchers);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
   async getVoucherById(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const voucher = await prisma.voucher.findUnique({ where: { id } });
-    if (!voucher) {
-      res.status(404).json({ error: 'Không tìm thấy voucher' });
-      return;
+    try {
+      const voucher = await prisma.voucher.findUnique({ where: { id } });
+      if (!voucher) {
+        errorResponse(
+          res,
+          'Không tìm thấy voucher',
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      successResponse(res, 'Lấy thông tin voucher thành công', voucher);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
-    res.json(voucher);
   },
-
   async updateVoucher(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      // Check code trùng
+      const existing = await prisma.voucher.findUnique({ where: { id } });
+      if (existing) {
+        errorResponse(
+          res,
+          'Mã voucher đã tồn tại',
+          {},
+          httpStatusCodes.CONFLICT,
+        );
+        return;
+      }
       const voucher = await prisma.voucher.update({
         where: { id },
         data: req.body,
       });
-      res.json(voucher);
-    } catch (err) {
-      res.status(400).json({ error: 'Cập nhật voucher thất bại', detail: err });
+      successResponse(res, 'Cập nhật voucher thành công', voucher);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 
@@ -58,9 +104,14 @@ const voucherController = {
     try {
       const { id } = req.params;
       await prisma.voucher.delete({ where: { id } });
-      res.json({ message: 'Cập nhật voucher thành công' });
-    } catch (err) {
-      res.status(400).json({ error: 'Cập nhật voucher thất bại' });
+      successResponse(res, 'Xóa voucher thành công', {});
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 };

@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { errorResponse, successResponse } from '../helpers/response';
+import { httpStatusCodes } from '../helpers/statusCodes';
 
 const prisma = new PrismaClient();
 
@@ -33,7 +35,12 @@ const userVoucherController = {
               (typeof v.quantity !== 'number' || v.quantity < 0)),
         )
       ) {
-        res.status(400).json({ error: 'Invalid payload' });
+        errorResponse(
+          res,
+          'Dữ liệu không hợp lệ',
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
         return;
       }
 
@@ -95,9 +102,12 @@ const userVoucherController = {
           : Infinity;
 
         if (quantity > availableQuantity) {
-          res.status(400).json({
-            error: `Voucher ${voucher.name} chỉ còn lại ${availableQuantity} voucher`,
-          });
+          errorResponse(
+            res,
+            `Voucher ${voucher.name} chỉ còn lại ${availableQuantity} voucher`,
+            {},
+            httpStatusCodes.BAD_REQUEST,
+          );
           return;
         }
 
@@ -117,15 +127,14 @@ const userVoucherController = {
           },
         });
       }
-
-      res.json({
-        message: 'Cập nhật danh sách voucher thành công',
-      });
+      successResponse(res, 'Cập nhật danh sách voucher thành công', {});
     } catch (error: any) {
-      console.error('Error syncing vouchers:', error);
-      res
-        .status(500)
-        .json({ error: 'Cập nhật danh sách voucher thất bại', detail: error });
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
   // Lấy danh sách voucher của user hiện tại
@@ -134,16 +143,21 @@ const userVoucherController = {
       await userVoucherController.removeExpiredUserVouchers();
       const user_id = req.query.user_id as string;
       if (!user_id) {
-        res.status(400).json({ message: 'Thiếu user id' });
+        errorResponse(res, 'Thiếu user id', {}, httpStatusCodes.BAD_REQUEST);
         return;
       }
       const vouchers = await prisma.userVoucher.findMany({
         where: { user_id },
         include: { voucher: true },
       });
-      res.json(vouchers);
-    } catch (error) {
-      res.status(500).json({ message: 'Lỗi lấy danh sách voucher' });
+      successResponse(res, 'Lấy danh sách voucher thành công', vouchers);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
   // Lấy danh sách tất cả voucher
@@ -198,10 +212,14 @@ const userVoucherController = {
           total_assigned: totalAssignedQuantity, // số lượng đã gán cho tất cả user
         };
       });
-
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ message: 'Lỗi lấy danh sách voucher' });
+      successResponse(res, 'Lấy danh sách voucher thành công', result);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
   async getAssignedUsers(req: Request, res: Response) {
@@ -241,9 +259,18 @@ const userVoucherController = {
         assigned_at: item.assigned_at,
       }));
 
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ message: 'Lỗi gán voucher cho user' });
+      successResponse(
+        res,
+        'Lấy danh sách user thuộc voucher thành công',
+        result,
+      );
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   },
 };

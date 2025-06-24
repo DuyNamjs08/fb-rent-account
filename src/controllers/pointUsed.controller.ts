@@ -120,11 +120,31 @@ const pointUsedController = {
                 voucher_id,
               },
             },
+            include: {
+              voucher: true,
+            },
           });
           if (!userVoucher || userVoucher.quantity <= 0) {
-            throw new Error(
+            errorResponse(
+              res,
               'Bạn không có voucher này hoặc đã hết lượt sử dụng.',
+              {},
+              httpStatusCodes.BAD_REQUEST,
             );
+            return;
+          }
+          if (
+            userVoucher.voucher &&
+            userVoucher.voucher.expires_at &&
+            new Date() > new Date(userVoucher.voucher.expires_at)
+          ) {
+            errorResponse(
+              res,
+              'Voucher đã quá hạn.',
+              {},
+              httpStatusCodes.BAD_REQUEST,
+            );
+            return;
           }
           await tx.userVoucher.update({
             where: {
