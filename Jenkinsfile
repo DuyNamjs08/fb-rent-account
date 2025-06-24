@@ -16,31 +16,14 @@ pipeline {
         stage('Deploy') {
             steps {
                 sshagent (credentials: ["${SSH_CREDENTIALS_ID}"]) {
-                    script {
-                        sh """
-ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "\
-export NVM_DIR='/root/.nvm'; \
-[ -s '\$NVM_DIR/nvm.sh' ] && . '\$NVM_DIR/nvm.sh'; \
-nvm use 20; \
-cd ${DEPLOY_DIR}; \
-git pull origin master; \
-npm run prod"
-                        """
-                    }
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "\
+                    cd ${DEPLOY_DIR}; \
+                    git pull origin master; \
+                    npm run prod"
+                    """
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            echo "Pipeline hoàn tất."
-        }
-        success {
-            echo "Deploy thành công trên branch master!"
-        }
-        failure {
-            echo "Pipeline thất bại. Vui lòng kiểm tra log để biết chi tiết."
         }
     }
 }
