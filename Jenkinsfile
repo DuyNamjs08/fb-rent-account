@@ -8,8 +8,8 @@ pipeline {
     environment {
         DEPLOY_DIR = '/var/www/fb-rent-account'
         SSH_CREDENTIALS_ID = 'vps-ssh-key'
-        VPS_USER = credentials('VPS_USER')  // lấy từ Jenkins Credential (nếu bảo mật)
-        VPS_IP = credentials('VPS_IP')
+        VPS_USER = "${env.VPS_USER}"
+        VPS_IP = "${env.VPS_IP}"
     }
 
     stages {
