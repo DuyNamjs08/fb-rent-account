@@ -17,9 +17,10 @@ pipeline {
             steps {
                 sshagent (credentials: ["${SSH_CREDENTIALS_ID}"]) {
                     script {
-                        sh """
-ssh -t -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "cd ${DEPLOY_DIR} && git pull origin master && npm run prod"
+sh """
+ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "source /root/.bashrc && cd ${DEPLOY_DIR} && git pull origin master && npm run prod"
 """
+
                     }
                 }
             }
