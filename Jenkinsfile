@@ -12,7 +12,6 @@ pipeline {
         VPS_IP = '103.82.24.164' // Địa chỉ IP của VPS
     }
 
-    stages {
     
 stages {
         stage('Deploy') {
@@ -41,4 +40,3 @@ stages {
             echo "Pipeline thất bại. Vui lòng kiểm tra log để biết chi tiết."
         }
     }
-}
