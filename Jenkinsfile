@@ -6,29 +6,30 @@ pipeline {
     }
 
     environment {
-        DEPLOY_DIR = '/var/www/fb-rent-account' // Thư mục deploy trên VPS
-        SSH_CREDENTIALS_ID = 'vps-ssh-key' // ID của SSH credentials trên Jenkins
-        VPS_USER = 'root' // Người dùng trên VPS
-        VPS_IP = '103.82.20.109' // Địa chỉ IP của VPS
+        DEPLOY_DIR = '/var/www/fb-rent-account'
+        SSH_CREDENTIALS_ID = 'vps-ssh-key'
+        VPS_USER = 'root'
+        VPS_IP = '103.82.20.109'
     }
 
-    
-stages {
+    stages {
         stage('Deploy') {
             steps {
                 sshagent (credentials: ["${SSH_CREDENTIALS_ID}"]) {
-                   sh """
-        ssh -o StrictHostKeyChecking=no root@${VPS_IP} '
-        cd ${DEPLOY_DIR} &&
-        git pull origin master &&
-        /usr/local/bin/npm run prod 
-        '
-    """
+                    script {
+                        def sshCommand = "ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} " +
+                            "\"export NVM_DIR='/root/.nvm'; " +
+                            "[ -s '\$NVM_DIR/nvm.sh' ] && . '\$NVM_DIR/nvm.sh'; " +
+                            "cd ${DEPLOY_DIR}; " +
+                            "git pull origin master; " +
+                            "npm run prod\""
+                        sh sshCommand
+                    }
                 }
             }
         }
     }
-    }
+
     post {
         always {
             echo "Pipeline hoàn tất."
@@ -40,3 +41,4 @@ stages {
             echo "Pipeline thất bại. Vui lòng kiểm tra log để biết chi tiết."
         }
     }
+}
