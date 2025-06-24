@@ -93,7 +93,7 @@ app.use('/api/v1/', fbVisaRoutes);
 
 app.get('/', (req: Request, res: Response): void => {
   console.log(`Worker ${process.pid} is processing request`);
-  res.send(`Worker tkqc ${process.pid} is handling this request`);
+  res.send(`Worker tkqc ${process.pid} is handling this request namdz`);
 });
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const VALID_TOKEN_WEB2M = process.env['VALID_TOKEN_WEB2M'];
