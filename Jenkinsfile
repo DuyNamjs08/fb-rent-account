@@ -17,10 +17,15 @@ pipeline {
             steps {
                 sshagent (credentials: ["${SSH_CREDENTIALS_ID}"]) {
                     script {
-sh """
-ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "source /root/.bashrc && cd ${DEPLOY_DIR} && git pull origin master && npm run prod"
-"""
-
+                        sh """
+ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "\
+export NVM_DIR='/root/.nvm'; \
+[ -s '\$NVM_DIR/nvm.sh' ] && . '\$NVM_DIR/nvm.sh'; \
+nvm use 20; \
+cd ${DEPLOY_DIR}; \
+git pull origin master; \
+npm run prod"
+                        """
                     }
                 }
             }
