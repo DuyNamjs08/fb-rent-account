@@ -8,20 +8,26 @@ pipeline {
     environment {
         DEPLOY_DIR = '/var/www/fb-rent-account'
         SSH_CREDENTIALS_ID = 'vps-ssh-key'
-        VPS_USER = 'root'
-        VPS_IP = '103.82.20.109'
+        VPS_USER = credentials('VPS_USER')  // lấy từ Jenkins Credential (nếu bảo mật)
+        VPS_IP = credentials('VPS_IP')
     }
 
     stages {
         stage('Deploy') {
             steps {
                 sshagent (credentials: ["${SSH_CREDENTIALS_ID}"]) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "\
-                    cd ${DEPLOY_DIR}; \
-                    git pull origin master; \
-                    npm run prod"
-                    """
+                    script {
+                        sh """
+ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "\
+export NVM_DIR='/root/.nvm'; \
+[ -s '\$NVM_DIR/nvm.sh' ] && . '\$NVM_DIR/nvm.sh'; \
+nvm use 20; \
+cd ${DEPLOY_DIR}; \
+git pull origin master; \
+npm run migrate; \
+npm run prod"
+                        """
+                    }
                 }
             }
         }
