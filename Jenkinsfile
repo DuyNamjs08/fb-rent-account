@@ -17,12 +17,11 @@ stages {
         stage('Deploy') {
             steps {
                 sshagent (credentials: ["${SSH_CREDENTIALS_ID}"]) {
-                    sh """
+                   sh """
         ssh -o StrictHostKeyChecking=no root@${VPS_IP} '
-        export PATH=\$PATH:/usr/local/bin &&
         cd ${DEPLOY_DIR} &&
         git pull origin master &&
-        npm run prod 
+        /usr/local/bin/npm run prod 
         '
     """
                 }
