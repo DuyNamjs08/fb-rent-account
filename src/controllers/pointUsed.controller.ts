@@ -70,6 +70,7 @@ const pointUsedController = {
         amountPoint,
         bm_origin,
         ads_name,
+        voucher_id,
         bot_id,
       } = req.body;
       const parsed = createChargeSchema.safeParse(req.body);
@@ -111,6 +112,73 @@ const pointUsedController = {
         return;
       }
       const poitsUsedTransaction = await prisma.$transaction(async (tx) => {
+        if (voucher_id) {
+          const userVoucher = await tx.userVoucher.findUnique({
+            where: {
+              user_id_voucher_id: {
+                user_id,
+                voucher_id,
+              },
+            },
+            include: {
+              voucher: true,
+            },
+          });
+          if (!userVoucher || userVoucher.quantity <= 0) {
+            errorResponse(
+              res,
+              'Bạn không có voucher này hoặc đã hết lượt sử dụng.',
+              {},
+              httpStatusCodes.BAD_REQUEST,
+            );
+            return;
+          }
+          if (
+            userVoucher.voucher &&
+            userVoucher.voucher.expires_at &&
+            new Date() > new Date(userVoucher.voucher.expires_at)
+          ) {
+            errorResponse(
+              res,
+              'Voucher đã quá hạn.',
+              {},
+              httpStatusCodes.BAD_REQUEST,
+            );
+            return;
+          }
+          await tx.userVoucher.update({
+            where: {
+              user_id_voucher_id: {
+                user_id,
+                voucher_id,
+              },
+            },
+            data: {
+              quantity: {
+                decrement: 1,
+              },
+            },
+          });
+          const updatedUserVoucher = await tx.userVoucher.findUnique({
+            where: {
+              user_id_voucher_id: {
+                user_id,
+                voucher_id,
+              },
+            },
+          });
+          // Nếu sau khi xóa SL voucher = 0 => xóa voucher
+          if (updatedUserVoucher && updatedUserVoucher.quantity === 0) {
+            await tx.userVoucher.delete({
+              where: {
+                user_id_voucher_id: {
+                  user_id,
+                  voucher_id,
+                },
+              },
+            });
+          }
+        }
         const adsAccount = await tx.adsAccount.findFirst({
           where: {
             account_id: ads_account_id,

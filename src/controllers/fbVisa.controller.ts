@@ -60,6 +60,7 @@ const createChargeSchema = z.object({
   bm_origin: z.string().min(1, 'bm_origin là bắt buộc'),
   ads_name: z.string().min(1, 'ads_name là bắt buộc'),
   bot_id: z.string().min(1, 'bot_id là bắt buộc'),
+  voucher_id: z.string().optional(),
 });
 const visaController = {
   createAndUpadateVisa: async (req: Request, res: Response): Promise<void> => {
@@ -150,6 +151,7 @@ const visaController = {
         ads_account_id,
         user_id,
         amountPoint,
+        voucher_id,
         bm_origin,
         ads_name,
         bot_id,
@@ -172,31 +174,100 @@ const visaController = {
         return;
       }
       const amountVNDchange = Math.floor(Number(amountPoint));
-      const user = await prisma.user.findUnique({
-        where: { id: user_id },
-        select: { points: true },
-      });
 
-      if (!user) {
-        errorResponse(
-          res,
-          'Không tìm thấy người dùng',
-          {},
-          httpStatusCodes.NOT_FOUND,
-        );
-        return;
-      }
-
-      if (user.points < amountVNDchange) {
-        errorResponse(
-          res,
-          'Bạn không đủ điểm để thực hiện giao dịch',
-          {},
-          httpStatusCodes.BAD_REQUEST,
-        );
-        return;
-      }
       const poitsUsedTransaction = await prisma.$transaction(async (tx) => {
+        if (voucher_id) {
+          const userVoucher = await tx.userVoucher.findUnique({
+            where: {
+              user_id_voucher_id: {
+                user_id,
+                voucher_id,
+              },
+            },
+            include: {
+              voucher: true,
+            },
+          });
+
+          if (!userVoucher || userVoucher.quantity <= 0) {
+            errorResponse(
+              res,
+              'Bạn không có voucher này hoặc đã hết lượt sử dụng.',
+              {},
+              httpStatusCodes.BAD_REQUEST,
+            );
+            return;
+          }
+          if (
+            userVoucher.voucher.expires_at &&
+            new Date(userVoucher.voucher.expires_at) < new Date()
+          ) {
+            errorResponse(
+              res,
+              'Voucher đã quá hạn.',
+              {},
+              httpStatusCodes.BAD_REQUEST,
+            );
+            return;
+          }
+          await tx.userVoucher.update({
+            where: {
+              user_id_voucher_id: {
+                user_id,
+                voucher_id,
+              },
+            },
+            data: {
+              quantity: {
+                decrement: 1,
+              },
+            },
+          });
+
+          // Sau khi giảm quantity, nếu = 0 thì xóa luôn userVoucher này
+          const updatedUserVoucher = await tx.userVoucher.findUnique({
+            where: {
+              user_id_voucher_id: {
+                user_id,
+                voucher_id,
+              },
+            },
+          });
+          if (updatedUserVoucher && updatedUserVoucher.quantity === 0) {
+            await tx.userVoucher.delete({
+              where: {
+                user_id_voucher_id: {
+                  user_id,
+                  voucher_id,
+                },
+              },
+            });
+          }
+        }
+        const user = await tx.user.findUnique({
+          where: { id: user_id },
+          select: { points: true },
+        });
+
+        if (!user) {
+          errorResponse(
+            res,
+            'Không tìm thấy người dùng',
+            {},
+            httpStatusCodes.NOT_FOUND,
+          );
+          return;
+        }
+
+        if (user.points < amountVNDchange) {
+          errorResponse(
+            res,
+            'Bạn không đủ điểm để thực hiện giao dịch',
+            {},
+            httpStatusCodes.BAD_REQUEST,
+          );
+          return;
+        }
         const adsAccount = await tx.adsAccount.findFirst({
           where: {
             account_id: ads_account_id,

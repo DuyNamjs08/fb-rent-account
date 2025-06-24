@@ -1,5 +1,3 @@
-
-
 generator client {
   provider = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
@@ -70,6 +68,7 @@ model User {
   list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
   supportRequests   SupportRequests[]
   sentMessages      MessageRequest[]
+  userVouchers UserVoucher[] // Danh sách voucher
 
   transactions   Transaction[]  @relation("UserTransactions")
   budget_id String? // ID ngân sách liên kết với người dùng
@@ -335,4 +334,32 @@ model MessageRequest {
 
   @@map("message_requests")
 }
+model Voucher {
+  id          String     @id @default(uuid())
+  name        String     // Tên voucher
+  code        String     @unique // Mã code nếu cần nhập
+  description String?
+  discount    Float      // Phần trăm hoặc số tiền giảm
+  type        String     // percentage | fixed VD: % | 5.0000
+  max_usage   Int?       // Số lần có thể sử dụng cho toàn hệ thống
+  expires_at  DateTime?  // Ngày hết hạn
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
 
+  userVouchers UserVoucher[]
+  @@map("vouchers")
+}
+model UserVoucher {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     String
+  voucher     Voucher  @relation(fields: [voucher_id], references: [id])
+  voucher_id  String
+
+  quantity    Int      @default(0) // số lượng voucher mà user sở hữu
+  assigned_at DateTime @default(now())
+  used_at     DateTime? // thời điểm sử dụng voucher 
+
+  @@unique([user_id, voucher_id]) // tránh việc 1 user có cùng 1 voucher nhiều lần
+  @@map("user_vouchers")
+}
