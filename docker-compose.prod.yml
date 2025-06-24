@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  jenkins:
+    image: jenkins/jenkins:jdk17
+    container_name: rent-jenkins
+    user: root
+    ports:
+      - '8081:8080'
+      - '50001:50000'
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock # Cho phép Jenkins dùng Docker host
+      - /var/www/fb-rent-account:/var/www/fb-rent-account
+    restart: unless-stopped
   loki:
     image: grafana/loki:2.9.0
     container_name: rent-fb-loki
@@ -206,6 +218,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  jenkins_home:
     driver: local
 
 networks:
