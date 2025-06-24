@@ -9,7 +9,7 @@ pipeline {
         DEPLOY_DIR = '/var/www/fb-rent-account' // Thư mục deploy trên VPS
         SSH_CREDENTIALS_ID = 'vps-ssh-key' // ID của SSH credentials trên Jenkins
         VPS_USER = 'root' // Người dùng trên VPS
-        VPS_IP = '103.82.24.164' // Địa chỉ IP của VPS
+        VPS_IP = '103.82.20.109' // Địa chỉ IP của VPS
     }
 
     

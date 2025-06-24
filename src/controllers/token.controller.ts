@@ -55,7 +55,7 @@ const TokenController = {
           res,
           'Tài khoản hoặc mật khẩu không chính xác',
           {},
-          httpStatusCodes.UNAUTHORIZED,
+          httpStatusCodes.NOT_FOUND,
         );
         return;
       }
