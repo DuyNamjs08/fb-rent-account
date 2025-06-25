@@ -2,7 +2,7 @@ import express from 'express';
 import { uploadMiddleware, uploadToR2 } from '../middlewares/upload.middleware';
 import { Request, Response } from 'express';
 
-const router = express.Router(); //
+const router = express.Router(); //1
 router.post(
   '/upload',
   uploadMiddleware.array('files', 10),
