@@ -14,6 +14,8 @@ const createBudgetSchema = z.object({
   end_date: z.string().min(1, 'Ngày kết thúc là bắt buộc'),
   currency: z.string().min(1, 'Đơn vị tiền tệ là bắt buộc'),
   percentage: z.number(),
+  subtitle: z.string().min(1, 'Phụ đề là bắt buộc'),
+  overview: z.string().min(1, 'Tổng quan là bắt buộc'),
 });
 const getIdSchema = z.object({
   id: z.string().min(1, 'id là bắt buộc'),
@@ -29,6 +31,8 @@ const budgetController = {
         end_date,
         currency,
         percentage,
+        subtitle,
+        overview,
       } = req.body;
       const parsed = createBudgetSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -50,6 +54,8 @@ const budgetController = {
           end_date,
           currency,
           percentage,
+          subtitle,
+          overview,
         },
       });
       successResponse(res, 'Tạo ngân sách thành công', budget);
@@ -130,6 +136,8 @@ const budgetController = {
         end_date,
         currency,
         percentage,
+        subtitle,
+        overview,
       } = req.body;
       const parsed = createBudgetSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -164,6 +172,8 @@ const budgetController = {
           end_date,
           currency,
           percentage,
+          subtitle,
+          overview,
         },
       });
 

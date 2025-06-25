@@ -294,6 +294,8 @@ model Budget {
   end_date     DateTime?  // Ngày kết thúc ngân sách
   percentage   Float  @default(0.1)
   country String? @default("vi")
+  subtitle     String?
+  overview     String?
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
@@ -358,7 +360,7 @@ model UserVoucher {
 
   quantity    Int      @default(0) // số lượng voucher mà user sở hữu
   assigned_at DateTime @default(now())
-  used_at     DateTime? // thời điểm sử dụng voucher 
+  used_at     DateTime? // thời điểm sử dụng voucher
 
   @@unique([user_id, voucher_id]) // tránh việc 1 user có cùng 1 voucher nhiều lần
   @@map("user_vouchers")
