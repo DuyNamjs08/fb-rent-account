@@ -21,6 +21,7 @@ import testRoutes from './routes/test.routes';
 import fbVisaRoutes from './routes/fbVisa.routes';
 import voucherRoutes from './routes/voucher.routes';
 import userVoucherRoutes from './routes/userVoucher.routes';
+import configRoutes from './routes/config.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -99,6 +100,7 @@ async function init() {
   app.use(setLanguageFromConfig);
   // các đầu api
   app.use('/api/v1/', adRoutes);
+  app.use('/api/v1/', configRoutes);
   app.use('/api/v1/', UserRoutes);
   app.use('/api/v1/', TokenRoutes);
   app.use('/api/v1/', RolesRoutes);
