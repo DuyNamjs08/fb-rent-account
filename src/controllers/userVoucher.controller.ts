@@ -14,7 +14,7 @@ const userVoucherController = {
         assigned_at: {
           lt: new Date(now.getTime() - 48 * 60 * 60 * 1000), // 48h trước
         },
-        is_used: false,
+        // is_used: false,
       },
     });
   },
@@ -222,57 +222,57 @@ const userVoucherController = {
       );
     }
   },
-  async getAssignedUsers(req: Request, res: Response) {
-    try {
-      const { id: voucher_id } = req.params;
+  // async getAssignedUsers(req: Request, res: Response) {
+  //   try {
+  //     const { id: voucher_id } = req.params;
 
-      const assignedUsers = await prisma.userVoucher.findMany({
-        where: { voucher_id },
-        select: {
-          id: true,
-          user_id: true,
-          voucher_id: true,
-          is_used: true,
-          assigned_at: true,
-          used_at: true,
-          quantity: true,
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              role: true,
-            },
-          },
-        },
-        orderBy: {
-          assigned_at: 'desc',
-        },
-      });
+  //     const assignedUsers = await prisma.userVoucher.findMany({
+  //       where: { voucher_id },
+  //       select: {
+  //         id: true,
+  //         user_id: true,
+  //         voucher_id: true,
+  //         is_used: true,
+  //         assigned_at: true,
+  //         used_at: true,
+  //         quantity: true,
+  //         user: {
+  //           select: {
+  //             id: true,
+  //             username: true,
+  //             email: true,
+  //             role: true,
+  //           },
+  //         },
+  //       },
+  //       orderBy: {
+  //         assigned_at: 'desc',
+  //       },
+  //     });
 
-      const result = assignedUsers.map((item) => ({
-        user_id: item.user.id,
-        name: item.user.username,
-        email: item.user.email,
-        is_used: item.is_used,
-        quantity: item.quantity,
-        assigned_at: item.assigned_at,
-      }));
+  //     const result = assignedUsers.map((item) => ({
+  //       user_id: item.user.id,
+  //       name: item.user.username,
+  //       email: item.user.email,
+  //       is_used: item.is_used,
+  //       quantity: item.quantity,
+  //       assigned_at: item.assigned_at,
+  //     }));
 
-      successResponse(
-        res,
-        'Lấy danh sách user thuộc voucher thành công',
-        result,
-      );
-    } catch (error: any) {
-      errorResponse(
-        res,
-        error?.message,
-        error,
-        httpStatusCodes.INTERNAL_SERVER_ERROR,
-      );
-    }
-  },
+  //     successResponse(
+  //       res,
+  //       'Lấy danh sách user thuộc voucher thành công',
+  //       result,
+  //     );
+  //   } catch (error: any) {
+  //     errorResponse(
+  //       res,
+  //       error?.message,
+  //       error,
+  //       httpStatusCodes.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // },
 };
 
 export default userVoucherController;
