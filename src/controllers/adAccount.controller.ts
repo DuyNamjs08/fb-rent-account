@@ -85,13 +85,13 @@ function mapItemToAdsAccount(item: any) {
   };
 }
 const getIdSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
 });
 const getUserIdSchema = z.object({
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
+  user_id: z.string().min(1, 'user_id is required'),
 });
 const getBmIdSchema = z.object({
-  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
+  bm_id: z.string().min(1, 'bm_id is required'),
 });
 const TKQCController = {
   getAdsRentedByUser: async (req: Request, res: Response): Promise<void> => {
@@ -102,7 +102,7 @@ const TKQCController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -114,7 +114,7 @@ const TKQCController = {
         },
       });
       if (!user) {
-        errorResponse(res, 'Không tìm thấy user', {}, 404);
+        errorResponse(res, req.t('user_not_found'), {}, 404);
         return;
       }
       const listIdAds = Array.isArray(user.list_ads_account)
@@ -137,7 +137,7 @@ const TKQCController = {
             ) || null,
         };
       });
-      successResponse(res, 'Lấy danh sách Ads đã thuê thành công', result);
+      successResponse(res, req.t('fetch_rented_ads_success'), result);
     } catch (error: any) {
       errorResponse(
         res,
@@ -167,7 +167,7 @@ const TKQCController = {
             ) || null,
         };
       });
-      successResponse(res, 'Lấy danh sách Ads đã thuê thành công', result);
+      successResponse(res, req.t('fetch_rented_ads_success'), result);
     } catch (error: any) {
       errorResponse(
         res,
@@ -186,7 +186,7 @@ const TKQCController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -200,7 +200,7 @@ const TKQCController = {
       if (!systemUserToken) {
         errorResponse(
           res,
-          'Không tìm thấy bm hợp lệ',
+          req.t('valid_bm_not_found'),
           {},
           httpStatusCodes.BAD_REQUEST,
         );
@@ -212,7 +212,7 @@ const TKQCController = {
       if (!systemUserDecode) {
         errorResponse(
           res,
-          'Có lỗi xảy ra decode',
+          req.t('decode_error'),
           {},
           httpStatusCodes.BAD_REQUEST,
         );
@@ -292,7 +292,7 @@ const TKQCController = {
         if (listdata.status !== 200) {
           errorResponse(
             res,
-            'Lỗi đồng bộ từ facebook',
+            req.t('facebook_sync_error'),
             {},
             httpStatusCodes.BAD_REQUEST,
           );
@@ -320,7 +320,7 @@ const TKQCController = {
         console.log('Next cursor >>>', afterCursor);
       }
       console.log('Total synced:', totalCount);
-      successResponse(res, 'Danh sách đồng bộ', {});
+      successResponse(res, req.t('sync_list'), {});
     } catch (error: any) {
       errorResponse(
         res,
@@ -341,7 +341,7 @@ const TKQCController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(res, 'Danh sách tkqc', result);
+      successResponse(res, req.t('ads_account_list'), result);
     } catch (error: any) {
       errorResponse(
         res,
@@ -364,7 +364,7 @@ const TKQCController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(res, 'Danh sách tkqc', result);
+      successResponse(res, req.t('ads_account_list'), result);
     } catch (error: any) {
       errorResponse(
         res,
@@ -387,7 +387,7 @@ const TKQCController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(res, 'Danh sách tkqc', result);
+      successResponse(res, req.t('ads_account_list'), result);
     } catch (error: any) {
       errorResponse(
         res,

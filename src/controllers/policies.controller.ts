@@ -6,16 +6,17 @@ import prisma from '../config/prisma';
 import { z } from 'zod';
 
 const createMessageSchema = z.object({
-  title: z.string().min(1, 'Tiêu đề là bắt buộc'),
-  message: z.string().min(1, 'Nội dung là bắt buộc'),
+  title: z.string().min(1, 'title is required'),
+  message: z.string().min(1, 'content is required'),
 });
+
 const updateMessageSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
-  title: z.string().min(1, 'Tiêu đề là bắt buộc'),
-  message: z.string().min(1, 'Nội dung là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
+  title: z.string().min(1, 'title is required'),
+  message: z.string().min(1, 'content is required'),
 });
 const getIdSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
 });
 const policiesController = {
   createPolicies: async (req: Request, res: Response): Promise<void> => {
@@ -26,7 +27,7 @@ const policiesController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -38,7 +39,7 @@ const policiesController = {
           message,
         },
       });
-      successResponse(res, 'Tạo policies thành công', policies);
+      successResponse(res, req.t('create_policy_success'), policies);
     } catch (error: any) {
       errorResponse(
         res,
@@ -54,7 +55,7 @@ const policiesController = {
       const policiess = await prisma.policies.findMany({
         orderBy: { created_at: 'desc' },
       });
-      successResponse(res, 'Danh policiess', policiess);
+      successResponse(res, req.t('policy_list'), policiess);
     } catch (error: any) {
       errorResponse(
         res,
@@ -73,7 +74,7 @@ const policiesController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -104,7 +105,7 @@ const policiesController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -119,7 +120,7 @@ const policiesController = {
           message,
         },
       });
-      successResponse(res, 'Cập nhật policies công !', policiesNew);
+      successResponse(res, req.t('update_policy_success'), policiesNew);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
@@ -138,7 +139,7 @@ const policiesController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -154,7 +155,7 @@ const policiesController = {
           id,
         },
       });
-      successResponse(res, 'Xóa policies thành công !', policies);
+      successResponse(res, req.t('delete_policy_success'), policies);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {

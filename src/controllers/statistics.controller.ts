@@ -137,7 +137,7 @@ const statisticsController = {
       ) {
         errorResponse(
           res,
-          'Định dạng ngày không hợp lệ. Định dạng yêu cầu: YYYY/MM/DD',
+          req.t('invalid_date_format'),
           httpStatusCodes.BAD_REQUEST,
         );
         return;
@@ -152,7 +152,7 @@ const statisticsController = {
       if (monthsDiff > 6) {
         errorResponse(
           res,
-          'Khoảng thời gian tối đa là 6 tháng',
+          req.t('max_time_range'),
           httpStatusCodes.BAD_REQUEST,
         );
         return;

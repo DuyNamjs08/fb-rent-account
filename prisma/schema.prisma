@@ -362,6 +362,25 @@ model UserVoucher {
   assigned_at DateTime @default(now())
   used_at     DateTime? // thời điểm sử dụng voucher
 
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
   @@unique([user_id, voucher_id]) // tránh việc 1 user có cùng 1 voucher nhiều lần
   @@map("user_vouchers")
+}
+model Config {
+  id          String   @id @default(uuid())
+  name String @default("config-settings") 
+  lang        String @default("vi")
+  // 
+  admin_mail  String 
+  // phần gửi mail về user khi thuê gói
+  user_mail   String
+  user_mail_pass   String
+  email_app_pass   String
+  email_app   String
+
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  @@map("configs")
 }

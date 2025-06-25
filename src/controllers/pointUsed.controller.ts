@@ -9,26 +9,26 @@ import { createRepeatJob, fbCheckAccount } from '../workers/fb-check-account';
 import { z } from 'zod';
 
 const createChargeSchema = z.object({
-  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
-  ads_account_id: z.string().min(1, 'ads_account_id là bắt buộc'),
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
-  amountPoint: z.number().positive('Vui lòng nhập số tiền lớn hơn 0'),
-  bm_origin: z.string().min(1, 'bm_origin là bắt buộc'),
-  ads_name: z.string().min(1, 'ads_name là bắt buộc'),
-  bot_id: z.string().min(1, 'bot_id là bắt buộc'),
+  bm_id: z.string().min(1, 'bm_id is required'),
+  ads_account_id: z.string().min(1, 'ads_account_id is required'),
+  user_id: z.string().min(1, 'user_id is required'),
+  amountPoint: z.number().positive('please enter an amount greater than 0'),
+  bm_origin: z.string().min(1, 'bm_origin is required'),
+  ads_name: z.string().min(1, 'ads_name is required'),
+  bot_id: z.string().min(1, 'bot_id is required'),
 });
 
 const deleteChargeSchema = z.object({
-  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
-  ads_account_id: z.string().min(1, 'ads_account_id là bắt buộc'),
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
-  id: z.string().min(1, 'id là bắt buộc'),
-  bm_origin: z.string().min(1, 'bm_origin là bắt buộc'),
-  ads_name: z.string().min(1, 'ads_name là bắt buộc'),
-  bot_id: z.string().min(1, 'bot_id là bắt buộc'),
+  bm_id: z.string().min(1, 'bm_id is required'),
+  ads_account_id: z.string().min(1, 'ads_account_id is required'),
+  user_id: z.string().min(1, 'user_id is required'),
+  id: z.string().min(1, 'id is required'),
+  bm_origin: z.string().min(1, 'bm_origin is required'),
+  ads_name: z.string().min(1, 'ads_name is required'),
+  bot_id: z.string().min(1, 'bot_id is required'),
 });
 const getUserIdSchema = z.object({
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
+  user_id: z.string().min(1, 'user_id is required'),
 });
 const pointUsedController = {
   checkSpending: async (req: Request, res: Response): Promise<void> => {
@@ -78,7 +78,7 @@ const pointUsedController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -93,7 +93,7 @@ const pointUsedController = {
       if (!user) {
         errorResponse(
           res,
-          'Không tìm thấy người dùng',
+          req.t('user_not_found'),
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -105,7 +105,7 @@ const pointUsedController = {
       if (user.points < amountOrigin) {
         errorResponse(
           res,
-          'Bạn không đủ điểm để thực hiện giao dịch',
+          req.t('not_enough_points'),
           {},
           httpStatusCodes.BAD_REQUEST,
         );
@@ -127,7 +127,7 @@ const pointUsedController = {
           if (!userVoucher || userVoucher.quantity <= 0) {
             errorResponse(
               res,
-              'Bạn không có voucher này hoặc đã hết lượt sử dụng.',
+              req.t('voucher_invalid_or_used'),
               {},
               httpStatusCodes.BAD_REQUEST,
             );
@@ -140,7 +140,7 @@ const pointUsedController = {
           ) {
             errorResponse(
               res,
-              'Voucher đã quá hạn.',
+              req.t('voucher_expired'),
               {},
               httpStatusCodes.BAD_REQUEST,
             );
@@ -205,7 +205,7 @@ const pointUsedController = {
       if (!poitsUsedTransaction) {
         errorResponse(
           res,
-          'Lỗi đổi điểm vui lòng thử lại sau',
+          req.t('point_exchange_error'),
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -227,7 +227,7 @@ const pointUsedController = {
       if (!newBmPartnert) {
         errorResponse(
           res,
-          'Lỗi đổi điểm vui lòng thử lại sau',
+          req.t('point_exchange_error'),
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -248,7 +248,7 @@ const pointUsedController = {
 
       successResponse(
         res,
-        'Quá trình thuê tài khoản đang điễn ra vui lòng đợi giây lát !!',
+        req.t('rent_account_in_progress'),
         poitsUsedTransaction,
       );
     } catch (error: any) {
@@ -300,7 +300,7 @@ const pointUsedController = {
         prisma.pointUsage.count({ where: whereCondition }),
       ]);
 
-      successResponse(res, 'Danh sách transaction points by user', {
+      successResponse(res, req.t('user_transaction_point_list'), {
         data: transactionPoints,
         count,
       });
@@ -321,7 +321,7 @@ const pointUsedController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -333,7 +333,7 @@ const pointUsedController = {
         },
       });
       if (!checkUser) {
-        errorResponse(res, 'User not found !!', {}, 404);
+        errorResponse(res, req.t('user_not_found'), {}, 404);
         return;
       }
       const skip = (Number(page) - 1) * Number(pageSize);
@@ -370,7 +370,7 @@ const pointUsedController = {
         }),
         prisma.pointUsage.count({ where: whereCondition }),
       ]);
-      successResponse(res, 'Danh sách transaction points by user', {
+      successResponse(res, req.t('user_transaction_point_list'), {
         data: transactionPoints,
         count,
       });
@@ -399,7 +399,7 @@ const pointUsedController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -411,7 +411,7 @@ const pointUsedController = {
         },
       });
       if (!user) {
-        errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
+        errorResponse(res, req.t('user_not_found'), {}, 500);
         return;
       }
       await prisma.facebookPartnerBM.update({
@@ -435,7 +435,7 @@ const pointUsedController = {
         bot_id,
         id,
       });
-      successResponse(res, 'Quá trình gỡ tài khoản đang được xử lý!', '');
+      successResponse(res, req.t('remove_account_in_progress'), '');
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {

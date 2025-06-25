@@ -5,20 +5,20 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import prisma from '../config/prisma';
 import { z } from 'zod';
 const createBudgetSchema = z.object({
-  name: z.string().min(1, 'Tên là bắt buộc'),
+  name: z.string().min(1, 'name is required'),
   description: z
-    .array(z.string().min(1, 'Mỗi mô tả không được rỗng'))
-    .min(1, 'Cần ít nhất một mô tả'),
-  amount: z.number().nonnegative('Số tiền không thể âm'),
-  start_date: z.string().min(1, 'Ngày bắt đầu là bắt buộc'),
-  end_date: z.string().min(1, 'Ngày kết thúc là bắt buộc'),
-  currency: z.string().min(1, 'Đơn vị tiền tệ là bắt buộc'),
-  percentage: z.number(),
-  subtitle: z.string().min(1, 'Phụ đề là bắt buộc'),
-  overview: z.string().min(1, 'Tổng quan là bắt buộc'),
+    .array(z.string().min(1, 'each description cannot be empty'))
+    .min(1, 'at least one description is required'),
+  amount: z.number().nonnegative('amount cannot be negative'),
+  start_date: z.string().min(1, 'start date is required'),
+  end_date: z.string().min(1, 'end date is required'),
+  currency: z.string().min(1, 'currency is required'),
+  percentage: z.number().optional(),
+  subtitle: z.string().min(1, 'subtitle is required'),
+  overview: z.string().min(1, 'overview is required'),
 });
 const getIdSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
 });
 const budgetController = {
   createBudget: async (req: Request, res: Response): Promise<void> => {
@@ -39,7 +39,7 @@ const budgetController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -58,7 +58,7 @@ const budgetController = {
           overview,
         },
       });
-      successResponse(res, 'Tạo ngân sách thành công', budget);
+      successResponse(res, req.t('create_budget_success'), budget);
     } catch (error: any) {
       errorResponse(
         res,
@@ -76,7 +76,7 @@ const budgetController = {
           created_at: 'desc',
         },
       });
-      successResponse(res, 'Danh sách ngân sách', budgets);
+      successResponse(res, req.t('budget_list'), budgets);
     } catch (error: any) {
       errorResponse(
         res,
@@ -95,7 +95,7 @@ const budgetController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -144,7 +144,7 @@ const budgetController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -177,7 +177,7 @@ const budgetController = {
         },
       });
 
-      successResponse(res, 'Cập nhật ngân sách thành công !', budgetNew);
+      successResponse(res, req.t('update_budget_success'), budgetNew);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
@@ -196,7 +196,7 @@ const budgetController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -217,7 +217,7 @@ const budgetController = {
       const budget = await prisma.budget.delete({
         where: { id },
       });
-      successResponse(res, 'Xóa ngân sách thành công !', budget);
+      successResponse(res, req.t('delete_budget_success'), budget);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
