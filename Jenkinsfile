@@ -23,7 +23,7 @@ export NVM_DIR='/root/.nvm'; \
 [ -s '\$NVM_DIR/nvm.sh' ] && . '\$NVM_DIR/nvm.sh'; \
 nvm use 20; \
 cd ${DEPLOY_DIR}; \
-git pull origin master; \
+git pull origin main; \
 npm run migrate; \
 npm run prod; \
 docker image prune -af"
