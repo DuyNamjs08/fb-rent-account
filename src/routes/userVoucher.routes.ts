@@ -18,10 +18,10 @@ router.get(
   userVoucherController.getAllVouchers,
 );
 // lấy ra danh sách người dùng thuộc voucher id
-router.get(
-  '/vouchers/:id/assigned-users',
-  requireRoles([UserRole.ADMIN]),
-  userVoucherController.getAssignedUsers,
-);
+// router.get(
+//   '/vouchers/:id/assigned-users',
+//   requireRoles([UserRole.ADMIN]),
+//   userVoucherController.getAssignedUsers,
+// );
 
 export default router;
