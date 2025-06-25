@@ -74,9 +74,16 @@ const voucherController = {
   async updateVoucher(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      // Check code trùng
-      const existing = await prisma.voucher.findUnique({ where: { id } });
-      if (existing) {
+      const { code } = req.body;
+      // Kiểm tra nếu mã code đã tồn tại ở voucher khác
+      const duplicate = await prisma.voucher.findFirst({
+        where: {
+          code,
+          NOT: { id },
+        },
+      });
+
+      if (duplicate) {
         errorResponse(
           res,
           'Mã voucher đã tồn tại',
