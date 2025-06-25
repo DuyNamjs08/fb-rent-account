@@ -64,6 +64,8 @@ const ConfigController = {
             user_mail_pass: encodeUserEmailAppPass,
           },
         });
+        successResponse(res, req.t('create_config_success'), ConfigNew);
+        return;
       } else {
         ConfigNew = await prisma.config.create({
           data: {
