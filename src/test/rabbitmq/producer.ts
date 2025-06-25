@@ -9,7 +9,7 @@ export const runProducer = async () => {
     await channel.assertQueue(queueName, {
       durable: true,
     });
-    // send message to the consumer channel
+    //
     channel.sendToQueue(queueName, Buffer.from(message));
     console.log(`Message sent: ${message}`);
   } catch (error) {
