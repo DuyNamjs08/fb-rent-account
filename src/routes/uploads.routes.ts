@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 const router = express.Router();
 router.post(
   '/upload',
-  uploadMiddleware.array('files', 10), // "files" là field name trong FormData
+  uploadMiddleware.array('files', 10),
   async (req: Request, res: Response): Promise<void> => {
     try {
       if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
