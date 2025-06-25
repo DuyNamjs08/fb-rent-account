@@ -53,13 +53,13 @@ const createChargeSchema = z.object({
   visa_cvv: z.string().regex(/^\d{3,4}$/, 'visa_cvv must be 3 or 4 digits'),
   verify_code: z.string().min(1, 'verify_code is required'),
   //phần visa
-  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
-  ads_account_id: z.string().min(1, 'ads_account_id là bắt buộc'),
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
-  amountPoint: z.number().positive('Vui lòng nhập số tiền lớn hơn 0'),
-  bm_origin: z.string().min(1, 'bm_origin là bắt buộc'),
-  ads_name: z.string().min(1, 'ads_name là bắt buộc'),
-  bot_id: z.string().min(1, 'bot_id là bắt buộc'),
+  bm_id: z.string().min(1, 'bm_id is required'),
+  ads_account_id: z.string().min(1, 'ads_account_id is required'),
+  user_id: z.string().min(1, 'user_id is required'),
+  amount_point: z.number().positive('please enter an amount greater than 0'),
+  bm_origin: z.string().min(1, 'bm_origin is required'),
+  ads_name: z.string().min(1, 'ads_name is required'),
+  bot_id: z.string().min(1, 'bot_id is required'),
   voucher_id: z.string().optional(),
 });
 const visaController = {
@@ -82,7 +82,7 @@ const visaController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -96,7 +96,7 @@ const visaController = {
         if (!existingVisa) {
           errorResponse(
             res,
-            'Visa không tồn tại',
+            req.t('visa_not_found'),
             httpReasonCodes.NOT_FOUND,
             httpStatusCodes.NOT_FOUND,
           );
@@ -117,7 +117,7 @@ const visaController = {
             user_id,
           },
         });
-        successResponse(res, 'Cập nhật visa thành công', visa);
+        successResponse(res, req.t('update_visa_success'), visa);
         return;
       }
       visa = await prisma.facebookVisa.create({
@@ -134,7 +134,7 @@ const visaController = {
           user_id,
         },
       });
-      successResponse(res, 'Tạo visa thành công', visa);
+      successResponse(res, req.t('create_visa_success'), visa);
     } catch (error: any) {
       errorResponse(
         res,
@@ -167,7 +167,7 @@ const visaController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -192,7 +192,7 @@ const visaController = {
           if (!userVoucher || userVoucher.quantity <= 0) {
             errorResponse(
               res,
-              'Bạn không có voucher này hoặc đã hết lượt sử dụng.',
+              req.t('voucher_invalid_or_used'),
               {},
               httpStatusCodes.BAD_REQUEST,
             );
@@ -204,7 +204,7 @@ const visaController = {
           ) {
             errorResponse(
               res,
-              'Voucher đã quá hạn.',
+              req.t('voucher_expired'),
               {},
               httpStatusCodes.BAD_REQUEST,
             );
@@ -252,7 +252,7 @@ const visaController = {
         if (!user) {
           errorResponse(
             res,
-            'Không tìm thấy người dùng',
+            req.t('user_not_found'),
             {},
             httpStatusCodes.NOT_FOUND,
           );
@@ -262,7 +262,7 @@ const visaController = {
         if (user.points < amountVNDchange) {
           errorResponse(
             res,
-            'Bạn không đủ điểm để thực hiện giao dịch',
+            req.t('not_enough_points'),
             {},
             httpStatusCodes.BAD_REQUEST,
           );
@@ -294,7 +294,7 @@ const visaController = {
       if (!poitsUsedTransaction) {
         errorResponse(
           res,
-          'Lỗi đổi điểm vui lòng thử lại sau',
+          req.t('point_exchange_error'),
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -317,7 +317,7 @@ const visaController = {
       if (!newBmPartnert) {
         errorResponse(
           res,
-          'Lỗi đổi điểm vui lòng thử lại sau',
+          req.t('point_exchange_error'),
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -341,7 +341,7 @@ const visaController = {
       });
       successResponse(
         res,
-        'Quá trình thuê tài khoản tự add thẻ visa đang điễn ra vui lòng đợi giây lát !!',
+        req.t('auto_rent_visa_in_progress'),
         poitsUsedTransaction,
       );
     } catch (error: any) {

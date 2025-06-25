@@ -23,12 +23,12 @@ export function decryptToken(ciphertext: string) {
   return originalText;
 }
 const createBmSchema = z.object({
-  bm_id: z.string().min(1, 'bm_id là bắt buộc'),
-  bm_name: z.string().min(1, 'bm_name là bắt buộc'),
-  system_user_token: z.string().min(1, 'system_user_token là bắt buộc'),
+  bm_id: z.string().min(1, 'bm_id is required'),
+  bm_name: z.string().min(1, 'bm_name is required'),
+  system_user_token: z.string().min(1, 'system_user_token is required'),
 });
 const getIdSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
 });
 const facebookBmController = {
   createBM: async (req: Request, res: Response): Promise<void> => {
@@ -39,7 +39,7 @@ const facebookBmController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -54,7 +54,7 @@ const facebookBmController = {
         },
       });
 
-      successResponse(res, 'Tạo facebook BM thành công', facebookBm);
+      successResponse(res, req.t('create_facebook_bm_success'), facebookBm);
     } catch (error: any) {
       errorResponse(
         res,
@@ -68,7 +68,7 @@ const facebookBmController = {
   getAllFacebookBM: async (req: Request, res: Response): Promise<void> => {
     try {
       const facebookBm = await prisma.facebookBM.findMany({});
-      successResponse(res, 'Danh sách facebook bm', facebookBm);
+      successResponse(res, req.t('facebook_bm_list'), facebookBm);
     } catch (error: any) {
       errorResponse(
         res,
@@ -86,7 +86,7 @@ const facebookBmController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -112,7 +112,12 @@ const facebookBmController = {
         },
       });
       if (fbExist) {
-        errorResponse(res, 'BM_ID đã tồn tại', {}, httpStatusCodes.NOT_FOUND);
+        errorResponse(
+          res,
+          req.t('bm_id_already_exists'),
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
         return;
       }
       const encodeSystemUser = await encryptToken(system_user_token);
@@ -126,7 +131,7 @@ const facebookBmController = {
           system_user_token: encodeSystemUser,
         },
       });
-      successResponse(res, 'Cập nhật facebook bm công !', fbBMNew);
+      successResponse(res, req.t('update_facebook_bm_success'), fbBMNew);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
@@ -145,7 +150,7 @@ const facebookBmController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -170,7 +175,7 @@ const facebookBmController = {
           id: id as string,
         },
       });
-      successResponse(res, 'Xóa bm thành công !', true);
+      successResponse(res, req.t('delete_bm_success'), true);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {

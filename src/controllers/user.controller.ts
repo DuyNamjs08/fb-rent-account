@@ -153,7 +153,7 @@ const userController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );

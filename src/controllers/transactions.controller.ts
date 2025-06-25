@@ -12,10 +12,10 @@ const rechargeSchema = z.object({
     (val) => Number(val),
     z.number().positive('Số tiền phải lớn hơn 0'),
   ),
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
+  user_id: z.string().min(1, 'user_id is required'),
 });
 const rechargeIdSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
 });
 
 const transactionController = {
@@ -26,7 +26,7 @@ const transactionController = {
       const errors = parsed.error.flatten().fieldErrors;
       errorResponse(
         res,
-        'Dữ liệu không hợp lệ',
+        req.t('invalid_data'),
         errors,
         httpStatusCodes.BAD_REQUEST,
       );
@@ -83,7 +83,7 @@ const transactionController = {
       const errors = parsed.error.flatten().fieldErrors;
       errorResponse(
         res,
-        'Dữ liệu không hợp lệ',
+        req.t('invalid_data'),
         errors,
         httpStatusCodes.BAD_REQUEST,
       );
@@ -308,7 +308,7 @@ const transactionController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -338,7 +338,7 @@ const transactionController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );

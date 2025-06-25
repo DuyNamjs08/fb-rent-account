@@ -5,15 +5,15 @@ import prisma from '../config/prisma';
 import { httpReasonCodes } from '../helpers/reasonPhrases';
 import { z } from 'zod';
 const createCookieSchema = z.object({
-  email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
+  email: z.string().min(1, 'email is required').email('invalid email'),
   storage_state: z
     .record(z.any())
     .refine((obj) => Object.keys(obj).length > 0, {
-      message: 'Cần ít nhất một phần tử mô tả',
+      message: 'at least one element is required',
     }),
 });
 const getIdSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
 });
 const cookieController = {
   createCookie: async (req: Request, res: Response): Promise<void> => {
@@ -24,7 +24,7 @@ const cookieController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -51,7 +51,7 @@ const cookieController = {
           },
         });
       }
-      successResponse(res, 'Tạo cookies thành công', cookieNew);
+      successResponse(res, req.t('create_cookie_success'), cookieNew);
     } catch (error: any) {
       errorResponse(
         res,
@@ -65,7 +65,7 @@ const cookieController = {
   getAllCookies: async (req: Request, res: Response): Promise<void> => {
     try {
       const cookies = await prisma.cookies.findMany({});
-      successResponse(res, 'Danh sách cookies', cookies);
+      successResponse(res, req.t('cookie_list'), cookies);
     } catch (error: any) {
       errorResponse(
         res,
@@ -83,7 +83,7 @@ const cookieController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -103,7 +103,7 @@ const cookieController = {
           email: true,
         },
       });
-      successResponse(res, 'Xóa cookie thành công !', cookie);
+      successResponse(res, req.t('delete_cookie_success'), cookie);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {

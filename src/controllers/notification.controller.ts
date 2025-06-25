@@ -6,17 +6,17 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { z } from 'zod';
 const createNotificationSchema = z.object({
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
-  title: z.string().min(1, 'title là bắt buộc'),
-  content: z.string().min(1, 'content là bắt buộc'),
-  type: z.string().min(1, 'type là bắt buộc'),
+  user_id: z.string().min(1, 'user_id is required'),
+  title: z.string().min(1, 'title is required'),
+  content: z.string().min(1, 'content is required'),
+  type: z.string().min(1, 'type is required'),
   action_url: z.string().url('action_url phải là một URL hợp lệ').optional(),
 });
 const getIdSchema = z.object({
-  id: z.string().min(1, 'id là bắt buộc'),
+  id: z.string().min(1, 'id is required'),
 });
 const getUserIdSchema = z.object({
-  user_id: z.string().min(1, 'user_id là bắt buộc'),
+  user_id: z.string().min(1, 'user_id is required'),
 });
 const notificationController = {
   getAllNotifications: async (req: Request, res: Response): Promise<void> => {
@@ -57,7 +57,7 @@ const notificationController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -87,7 +87,7 @@ const notificationController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -133,7 +133,7 @@ const notificationController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -182,7 +182,7 @@ const notificationController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );

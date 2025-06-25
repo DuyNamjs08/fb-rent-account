@@ -1,6 +1,6 @@
 import Bull from 'bull';
 import prisma from '../config/prisma';
-import { getIO } from '..';
+// import { getIO } from '..';
 
 export const fbRealtimeTransaction = new Bull('fbRealtimeTransaction', {
   redis: {

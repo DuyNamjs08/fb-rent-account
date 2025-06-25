@@ -239,7 +239,7 @@ const supportController = {
         },
       });
       if (!user) {
-        errorResponse(res, 'Không tìm thấy user', {}, 404);
+        errorResponse(res, req.t('user_not_found'), {}, 404);
         return;
       }
 
@@ -516,7 +516,8 @@ const supportController = {
   },
   sendMailAdmin: async (req: Request, res: Response) => {
     try {
-      const { email, priority, category, content, title, created_at } = req.body;
+      const { email, priority, category, content, title, created_at } =
+        req.body;
       const mailAdmin = process.env.EMAIL_ADMIN as string;
       const user = await UserService.getUserByEmail(email);
       if (!user) {

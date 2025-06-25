@@ -37,7 +37,7 @@ const userVoucherController = {
       ) {
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           {},
           httpStatusCodes.BAD_REQUEST,
         );

@@ -11,13 +11,17 @@ import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
 const createAccessTokenSchema = z.object({
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự'),
+  email: z.string().email('invalid email'),
+  password: z.string().min(6, 'password must be at least 6 characters'),
 });
+
 const updateAccessTokenSchema = z.object({
-  refresh_token: z.string().min(1, 'Refresh token không được để trống'),
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự').optional(),
+  refresh_token: z.string().min(1, 'refresh token is required'),
+  email: z.string().email('invalid email'),
+  password: z
+    .string()
+    .min(6, 'password must be at least 6 characters')
+    .optional(),
 });
 const TokenController = {
   createAccessToken: async (req: Request, res: Response): Promise<void> => {
@@ -28,7 +32,7 @@ const TokenController = {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
           res,
-          'Dữ liệu không hợp lệ',
+          req.t('invalid_data'),
           errors,
           httpStatusCodes.BAD_REQUEST,
         );
@@ -275,7 +279,7 @@ const TokenController = {
       if (!token || !newPassword) {
         errorResponse(
           res,
-          'Token và mật khẩu mới là bắt buộc',
+          'Token và mật khẩu mới is required',
           {},
           httpStatusCodes.BAD_REQUEST,
         );
