@@ -14,7 +14,7 @@ const voucherController = {
       if (existing) {
         errorResponse(
           res,
-          'Mã voucher đã tồn tại',
+          req.t('voucher_code_exists'),
           {},
           httpStatusCodes.CONFLICT,
         );
@@ -23,7 +23,7 @@ const voucherController = {
       const voucher = await prisma.voucher.create({
         data: req.body,
       });
-      successResponse(res, 'Tạo voucher thành công', voucher);
+      successResponse(res, req.t('voucher_created'), voucher);
     } catch (error: any) {
       errorResponse(
         res,
@@ -37,7 +37,7 @@ const voucherController = {
   async getAllVouchers(req: Request, res: Response) {
     try {
       const vouchers = await prisma.voucher.findMany();
-      successResponse(res, 'Lấy danh sách voucher thành công', vouchers);
+      successResponse(res, req.t('voucher_list_retrieved'), vouchers);
     } catch (error: any) {
       errorResponse(
         res,
@@ -55,13 +55,13 @@ const voucherController = {
       if (!voucher) {
         errorResponse(
           res,
-          'Không tìm thấy voucher',
+          req.t('voucher_not_found'),
           {},
           httpStatusCodes.BAD_REQUEST,
         );
         return;
       }
-      successResponse(res, 'Lấy thông tin voucher thành công', voucher);
+      successResponse(res, req.t('voucher_info_retrieved'), voucher);
     } catch (error: any) {
       errorResponse(
         res,
@@ -86,7 +86,7 @@ const voucherController = {
       if (duplicate) {
         errorResponse(
           res,
-          'Mã voucher đã tồn tại',
+          req.t('voucher_code_exists'),
           {},
           httpStatusCodes.CONFLICT,
         );
@@ -96,7 +96,7 @@ const voucherController = {
         where: { id },
         data: req.body,
       });
-      successResponse(res, 'Cập nhật voucher thành công', voucher);
+      successResponse(res, req.t('voucher_updated'), voucher);
     } catch (error: any) {
       errorResponse(
         res,
@@ -111,7 +111,7 @@ const voucherController = {
     try {
       const { id } = req.params;
       await prisma.voucher.delete({ where: { id } });
-      successResponse(res, 'Xóa voucher thành công', {});
+      successResponse(res, req.t('voucher_deleted'), {});
     } catch (error: any) {
       errorResponse(
         res,

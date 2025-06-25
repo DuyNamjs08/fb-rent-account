@@ -71,7 +71,13 @@ const budgetController = {
 
   getAllBudgets: async (req: Request, res: Response): Promise<void> => {
     try {
+      const { lang } = req.query;
+      const where = {
+        country: lang === 'vi' ? 'vi' : { not: 'vi' },
+      };
+
       const budgets = await prisma.budget.findMany({
+        where,
         orderBy: {
           created_at: 'desc',
         },

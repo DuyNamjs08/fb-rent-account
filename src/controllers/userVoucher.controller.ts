@@ -104,7 +104,10 @@ const userVoucherController = {
         if (quantity > availableQuantity) {
           errorResponse(
             res,
-            `Voucher ${voucher.name} chỉ còn lại ${availableQuantity} voucher`,
+            req.t('voucher_quantity_exceeded', {
+              voucherName: voucher.name,
+              availableQuantity,
+            }),
             {},
             httpStatusCodes.BAD_REQUEST,
           );
@@ -127,7 +130,7 @@ const userVoucherController = {
           },
         });
       }
-      successResponse(res, 'Cập nhật danh sách voucher thành công', {});
+      successResponse(res, req.t('voucher_list_updated'), {});
     } catch (error: any) {
       errorResponse(
         res,
@@ -143,14 +146,19 @@ const userVoucherController = {
       await userVoucherController.removeExpiredUserVouchers();
       const user_id = req.query.user_id as string;
       if (!user_id) {
-        errorResponse(res, 'Thiếu user id', {}, httpStatusCodes.BAD_REQUEST);
+        errorResponse(
+          res,
+          req.t('missing_user_id'),
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
         return;
       }
       const vouchers = await prisma.userVoucher.findMany({
         where: { user_id },
         include: { voucher: true },
       });
-      successResponse(res, 'Lấy danh sách voucher thành công', vouchers);
+      successResponse(res, req.t('voucher_list_retrieved'), vouchers);
     } catch (error: any) {
       errorResponse(
         res,
@@ -212,7 +220,7 @@ const userVoucherController = {
           total_assigned: totalAssignedQuantity, // số lượng đã gán cho tất cả user
         };
       });
-      successResponse(res, 'Lấy danh sách voucher thành công', result);
+      successResponse(res, req.t('voucher_list_retrieved'), result);
     } catch (error: any) {
       errorResponse(
         res,

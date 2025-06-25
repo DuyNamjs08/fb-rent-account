@@ -57,7 +57,7 @@ const transactionController = {
       },
     });
     try {
-      successResponse(res, 'Tạo giao dịch thành công', transaction);
+      successResponse(res, req.t('transaction_created'), transaction);
     } catch (error: any) {
       errorResponse(
         res,
@@ -92,7 +92,7 @@ const transactionController = {
     const amountVNDchange = Math.floor(Number(amountVND));
     const canDeposit = await redisClient.incr(`deposit:lock:${short_code}`);
     if (canDeposit > 1) {
-      errorResponse(res, 'Duplicate request', {}, 409);
+      errorResponse(res, req.t('duplicate_request'), {}, 409);
       return;
     }
     try {
@@ -102,7 +102,7 @@ const transactionController = {
     WHERE id = ${short_code}
     FOR UPDATE
   `;
-        if (!user) throw new Error('User Không tồn tại!');
+        if (!user) throw new Error(req.t('user_not_found'));
         await tx.user.update({
           where: { id: short_code },
           data: {
@@ -131,7 +131,7 @@ const transactionController = {
         60,
       );
       await redisClient.del(`deposit:lock:${short_code}`);
-      successResponse(res, 'Giao dịch thành công', transactionExist);
+      successResponse(res, req.t('transaction_success'), transactionExist);
     } catch (error: any) {
       await redisClient.del(`deposit:lock:${short_code}`);
       errorResponse(
@@ -196,7 +196,7 @@ const transactionController = {
         prisma.transaction.count({ where: whereCondition }),
       ]);
 
-      successResponse(res, 'Danh sách transaction by user', {
+      successResponse(res, req.t('transaction_list_by_user'), {
         data: transactions,
         count,
         totalPages: Math.ceil(count / pageSizeNum),
@@ -219,7 +219,7 @@ const transactionController = {
     try {
       const { user_id, pageSize = 10, page = 1, query = '' } = req.query;
       if (!user_id) {
-        errorResponse(res, 'Vui lòng cung cấp user_id', {}, 500);
+        errorResponse(res, req.t('provide_user_id'), {}, 500);
         return;
       }
       const checkUser = await prisma.user.findUnique({
@@ -228,7 +228,7 @@ const transactionController = {
         },
       });
       if (!checkUser) {
-        errorResponse(res, 'User not found !', {}, 404);
+        errorResponse(res, req.t('user_not_found'), {}, 404);
         return;
       }
       const skip = (Number(page) - 1) * Number(pageSize);
@@ -286,7 +286,7 @@ const transactionController = {
         }),
         prisma.transaction.count({ where: whereCondition }),
       ]);
-      successResponse(res, 'Danh sách transaction by user', {
+      successResponse(res, req.t('transaction_list_by_user'), {
         data: transactions,
         count,
       });
@@ -319,7 +319,7 @@ const transactionController = {
           id,
         },
       });
-      successResponse(res, 'Success', transaction);
+      successResponse(res, req.t('transaction_retrieved'), transaction);
     } catch (error: any) {
       errorResponse(
         res,
@@ -350,7 +350,7 @@ const transactionController = {
         },
       });
       if (!transaction) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, {}, 404);
+        errorResponse(res, req.t('not_found'), {}, 404);
         return;
       }
       await prisma.transaction.delete({
@@ -358,11 +358,11 @@ const transactionController = {
           id,
         },
       });
-      successResponse(res, 'Xóa giao dịch thành công !', transaction);
+      successResponse(res, req.t('transaction_deleted'), transaction);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
-        errorResponse(res, httpReasonCodes.NOT_FOUND, error, statusCode);
+        errorResponse(res, req.t('not_found'), error, statusCode);
       } else {
         errorResponse(res, error?.message, error, statusCode);
       }
