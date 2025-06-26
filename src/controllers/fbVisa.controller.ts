@@ -56,7 +56,7 @@ const createChargeSchema = z.object({
   bm_id: z.string().min(1, 'bm_id is required'),
   ads_account_id: z.string().min(1, 'ads_account_id is required'),
   user_id: z.string().min(1, 'user_id is required'),
-  amount_point: z.number().positive('please enter an amount greater than 0'),
+  amountPoint: z.number().positive('please enter an amount greater than 0'),
   bm_origin: z.string().min(1, 'bm_origin is required'),
   ads_name: z.string().min(1, 'ads_name is required'),
   bot_id: z.string().min(1, 'bot_id is required'),
