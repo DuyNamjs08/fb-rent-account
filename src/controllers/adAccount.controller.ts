@@ -360,6 +360,7 @@ const TKQCController = {
       const result = await prisma.adsAccount.findMany({
         where: {
           is_visa_account: true,
+          status_rented: 'available',
         },
         skip,
         take: pageSizeNum,
