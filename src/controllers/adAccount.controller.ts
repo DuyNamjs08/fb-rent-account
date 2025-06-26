@@ -375,6 +375,30 @@ const TKQCController = {
       );
     }
   },
+  getAllTKQCVisaRent: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const data = req.query;
+      const { pageSize = 10, page = 1 } = data;
+      const skip = (Number(page) - 1) * Number(pageSize);
+      const pageSizeNum = Number(pageSize) || 10;
+      const result = await prisma.adsAccount.findMany({
+        where: {
+          is_visa_account: true,
+          status_rented: 'rented',
+        },
+        skip,
+        take: pageSizeNum,
+      });
+      successResponse(res, req.t('ads_account_list'), result);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
   getAllTKQCsimple: async (req: Request, res: Response): Promise<void> => {
     try {
       const data = req.query;
