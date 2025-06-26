@@ -66,9 +66,7 @@ const supportController = {
         );
 
         if (images.length === 0) {
-          throw new Error(
-            'Không có file hình ảnh hợp lệ được tải lên (.jpg, .jpeg, .png)',
-          );
+          throw new Error(req.t('file_type_error'));
         }
 
         // Hàm upload file lên R2
@@ -105,30 +103,26 @@ const supportController = {
         },
       });
 
-      successResponse(res, 'Tạo yêu cầu hỗ trợ thành công', supportRequest);
+      successResponse(res, req.t('create_request_success'), supportRequest);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         errorResponse(
           res,
-          'Dữ liệu đầu vào không hợp lệ',
+          req.t('invalid_input_data'),
           error.errors,
           httpStatusCodes.BAD_REQUEST,
         );
       } else if (
-        error.message.includes('Loại file không được hỗ trợ') ||
-        error.message.includes('hình ảnh hợp lệ')
+        error.message.includes('Unsupported file type') ||
+        error.message.includes('valid image')
       ) {
         errorResponse(res, error.message, error, httpStatusCodes.BAD_REQUEST);
       } else if (error.message.includes('File too large')) {
-        errorResponse(
-          res,
-          'File tải lên quá lớn (tối đa 10MB)',
-          error, // httpStatusCodes.PAYLOAD_TOO_LARGE,
-        );
+        errorResponse(res, req.t('file_too_large'), error);
       } else {
         errorResponse(
           res,
-          error?.message || 'Có lỗi xảy ra khi tạo yêu cầu hỗ trợ',
+          error?.message || req.t('support_creation_error'),
           error,
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -186,7 +180,7 @@ const supportController = {
 
       const totalRecords = await prisma.supportRequests.count({ where });
 
-      successResponse(res, 'Danh sách yêu cầu hỗ trợ', {
+      successResponse(res, req.t('support_list'), {
         data: supportRequests,
         pagination: {
           page: pageNumber,
@@ -198,7 +192,7 @@ const supportController = {
     } catch (error: any) {
       errorResponse(
         res,
-        error?.message || 'Lỗi server',
+        error?.message,
         error,
         httpStatusCodes.INTERNAL_SERVER_ERROR,
       );
@@ -295,7 +289,7 @@ const supportController = {
           updated_at: 'desc',
         },
       });
-      successResponse(res, 'Danh sách yêu cầu hỗ trợ', {
+      successResponse(res, req.t('support_list'), {
         data: supportRequests,
         pagination: {
           page: pageNumber,
@@ -335,7 +329,7 @@ const supportController = {
           id: id,
         },
       });
-      successResponse(res, 'Xóa yêu cầu hỗ trợ thành công !', true);
+      successResponse(res, req.t('delete_success'), true);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
@@ -407,7 +401,7 @@ const supportController = {
         },
       });
 
-      successResponse(res, 'Tạo tin nhắn thành công', newMessage);
+      successResponse(res, req.t('message_created'), newMessage);
     } catch (error: any) {
       errorResponse(
         res,
@@ -457,7 +451,7 @@ const supportController = {
         },
       });
 
-      successResponse(res, 'Lấy tin nhắn thành công', message);
+      successResponse(res, req.t('messages_retrieved'), message);
     } catch (error: any) {
       errorResponse(
         res,
@@ -504,7 +498,7 @@ const supportController = {
         },
       });
 
-      successResponse(res, 'Cập nhật status thành công', updateStatus);
+      successResponse(res, req.t('status_updated'), updateStatus);
     } catch (error: any) {
       errorResponse(
         res,
@@ -523,18 +517,18 @@ const supportController = {
       if (!user) {
         errorResponse(
           res,
-          'Tài khoản không tồn tại',
+          req.t('account_not_exist'),
           {},
           httpStatusCodes.NOT_FOUND,
         );
         return;
       }
 
-      console.log('USER', user);
+      // console.log('USER', user);
       // Đọc template HTML
       const pathhtml = path.resolve(__dirname, '../html/notify-admin.html');
       if (!fs.existsSync(pathhtml)) {
-        throw new Error('File HTML không tồn tại');
+        throw new Error(req.t('html_file_exist'));
       }
       let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
       htmlContent = htmlContent
@@ -569,7 +563,7 @@ const supportController = {
         message: htmlContent,
       });
 
-      successResponse(res, 'Email thông báo cho admin đã được gửi', {});
+      successResponse(res, req.t('admin_email_sent'), {});
     } catch (error: any) {
       errorResponse(
         res,
@@ -586,7 +580,7 @@ const supportController = {
       if (!user) {
         errorResponse(
           res,
-          'Tài khoản không tồn tại',
+          req.t('account_not_exist'),
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -596,7 +590,7 @@ const supportController = {
       // Đọc template HTML
       const pathhtml = path.resolve(__dirname, '../html/notify-user.html');
       if (!fs.existsSync(pathhtml)) {
-        throw new Error('File HTML không tồn tại');
+        throw new Error(req.t('html_file_exist'));
       }
       let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
       htmlContent = htmlContent
@@ -626,7 +620,7 @@ const supportController = {
         message: htmlContent,
       });
 
-      successResponse(res, 'Email thông báo cho admin đã được gửi', {});
+      successResponse(res, req.t('user_email_sent'), {});
     } catch (error: any) {
       errorResponse(
         res,

@@ -47,7 +47,7 @@ const TokenController = {
       if (!user) {
         errorResponse(
           res,
-          'Tài khoản không tồn tại hoặc đã bị khóa',
+          req.t('account_not_found_or_locked'),
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -57,7 +57,7 @@ const TokenController = {
       if (!byHash) {
         errorResponse(
           res,
-          'Tài khoản hoặc mật khẩu không chính xác',
+          req.t('incorrect_credentials'),
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -69,7 +69,7 @@ const TokenController = {
       ) {
         errorResponse(
           res,
-          'Token secrets are not defined in environment variables',
+          req.t('token_secrets_missing'),
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -108,7 +108,7 @@ const TokenController = {
           refresh_token: refreshToken,
         },
       });
-      successResponse(res, 'Success create', Token);
+      successResponse(res, req.t('token_create_success'), Token);
     } catch (error: any) {
       errorResponse(
         res,
@@ -126,7 +126,7 @@ const TokenController = {
       if (!parseResult.success) {
         errorResponse(
           res,
-          'Dữ liệu đầu vào không hợp lệ',
+          req.t('invalid_data'),
           parseResult.error.format(),
           httpStatusCodes.BAD_REQUEST,
         );
@@ -141,7 +141,7 @@ const TokenController = {
       if (!user) {
         errorResponse(
           res,
-          'Tài khoản không tồn tại hoặc đã bị khóa',
+          req.t('account_not_found_or_locked'),
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -153,7 +153,7 @@ const TokenController = {
       ) {
         errorResponse(
           res,
-          'Token secrets are not defined in environment variables',
+          req.t('token_secrets_missing'),
           null,
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -164,7 +164,7 @@ const TokenController = {
         process.env.REFRESH_TOKEN_SECRET,
         async (err: any, data: any) => {
           if (err) {
-            return res.status(405).json('refresh token không hợp lệ');
+            return res.status(405).json(req.t('invalid_refresh_token'));
           }
           const accessToken = jwt.sign(
             { mail: data.email, password: data.password, user_id: user.id },
@@ -183,7 +183,7 @@ const TokenController = {
           );
           successResponse(
             res,
-            'Cập nhật access token thành công',
+            req.t('access_token_updated'),
             updateAccessToken,
           );
           return;
@@ -206,7 +206,7 @@ const TokenController = {
       if (!user) {
         errorResponse(
           res,
-          'Tài khoản không tồn tại',
+          req.t('account_not_found'),
           {},
           httpStatusCodes.NOT_FOUND,
         );
@@ -216,7 +216,7 @@ const TokenController = {
       if (!process.env.ACCESS_TOKEN_SECRET) {
         errorResponse(
           res,
-          'Reset token secret not defined',
+          req.t('reset_token_secret_missing'),
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -234,7 +234,7 @@ const TokenController = {
       // Đọc template HTML
       const pathhtml = path.resolve(__dirname, '../html/reset-password.html');
       if (!fs.existsSync(pathhtml)) {
-        throw new Error('File HTML không tồn tại');
+        throw new Error(req.t('html_file_exist'));
       }
       let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
       htmlContent = htmlContent
@@ -263,7 +263,7 @@ const TokenController = {
         message: htmlContent,
       });
 
-      successResponse(res, 'Email đặt lại mật khẩu đã được gửi', {});
+      successResponse(res, req.t('password_reset_email_sent'), {});
     } catch (error: any) {
       errorResponse(
         res,
@@ -279,7 +279,7 @@ const TokenController = {
       if (!token || !newPassword) {
         errorResponse(
           res,
-          'Token và mật khẩu mới is required',
+          req.t('token_and_password_required'),
           {},
           httpStatusCodes.BAD_REQUEST,
         );
@@ -289,7 +289,7 @@ const TokenController = {
       if (!process.env.ACCESS_TOKEN_SECRET) {
         errorResponse(
           res,
-          'Reset token secret not defined',
+          req.t('reset_token_secret_missing'),
           {},
           httpStatusCodes.INTERNAL_SERVER_ERROR,
         );
@@ -303,7 +303,7 @@ const TokenController = {
           if (err) {
             return errorResponse(
               res,
-              'Token không hợp lệ hoặc đã hết hạn',
+              req.t('invalid_or_expired_token'),
               {},
               httpStatusCodes.FORBIDDEN,
             );
@@ -312,14 +312,14 @@ const TokenController = {
           if (!user) {
             return errorResponse(
               res,
-              'Tài khoản không tồn tại',
+              req.t('account_not_found'),
               {},
               httpStatusCodes.NOT_FOUND,
             );
           }
           const hashedPassword = await bcrypt.hash(newPassword, 10);
           await UserService.updateUser(user.id, { password: hashedPassword });
-          successResponse(res, 'Đặt lại mật khẩu thành công', {});
+          successResponse(res, req.t('password_reset_success'), {});
         },
       );
     } catch (error: any) {

@@ -42,7 +42,12 @@ const userController = {
       // }
       const userExists = await UserService.getUserByEmail(req.body.email);
       if (userExists) {
-        errorResponse(res, 'Email đã tồn tại', {}, httpStatusCodes.CONFLICT);
+        errorResponse(
+          res,
+          req.t('email_already_exists'),
+          {},
+          httpStatusCodes.CONFLICT,
+        );
         return;
       }
       let shortCode: string = '';
@@ -59,7 +64,7 @@ const userController = {
         ...req.body,
         short_code: shortCode,
       });
-      successResponse(res, 'Tạo người dùng thành công', user);
+      successResponse(res, req.t('user_created'), user);
     } catch (error: any) {
       errorResponse(
         res,
@@ -112,7 +117,7 @@ const userController = {
         prisma.user.count({ where: whereClause }),
       ]);
 
-      successResponse(res, 'Danh sách người dùng', {
+      successResponse(res, req.t('user_list'), {
         data: users,
         pagination: {
           total,
@@ -134,7 +139,7 @@ const userController = {
   getUserById: async (req: Request, res: Response): Promise<void> => {
     try {
       const User = await UserService.getUserById(req.params.id);
-      successResponse(res, 'Success', User);
+      successResponse(res, req.t('user_retrieved'), User);
     } catch (error: any) {
       errorResponse(
         res,
@@ -175,7 +180,7 @@ const userController = {
         if (!byHash) {
           errorResponse(
             res,
-            'Tài khoản hoặc mật khẩu không chính xác',
+            req.t('incorrect_credentials'),
             {},
             httpStatusCodes.UNAUTHORIZED,
           );
@@ -190,7 +195,7 @@ const userController = {
             password: hashedPassword,
           },
         });
-        successResponse(res, 'Cập nhật mật khẩu thành công !', newpass);
+        successResponse(res, req.t('password_updated'), newpass);
         return;
       }
       if (!email) {
@@ -202,7 +207,7 @@ const userController = {
             active: req.body.active,
           },
         });
-        successResponse(res, 'Cập nhật người dùng thành công !', updateActive);
+        successResponse(res, req.t('user_updated'), updateActive);
         return;
       }
       const findmail = await prisma.user.findUnique({
@@ -222,14 +227,14 @@ const userController = {
         } else if (findmail) {
           errorResponse(
             res,
-            'Email đã tồn tại vui lòng chọn mail khác',
+            req.t('email_already_exists_choose_another'),
             {},
             httpStatusCodes.CONFLICT,
           );
           return;
         }
         const UserNew = await UserService.updateUser(id, payload);
-        successResponse(res, 'Cập nhật người dùng thành công !', UserNew);
+        successResponse(res, req.t('user_updated'), UserNew);
         return;
       }
       const allFiles = req.files as Express.Multer.File[];
@@ -263,14 +268,14 @@ const userController = {
       } else if (findmail) {
         errorResponse(
           res,
-          'Email đã tồn tại vui lòng chọn mail khác',
+          req.t('email_already_exists_choose_another'),
           {},
           httpStatusCodes.CONFLICT,
         );
         return;
       }
       const newUserImage = await UserService.updateUser(id, payload);
-      successResponse(res, 'Cập nhật người dùng thành công !', newUserImage);
+      successResponse(res, req.t('user_updated'), newUserImage);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
@@ -294,7 +299,7 @@ const userController = {
         return;
       }
       await UserService.deleteUser(req.params.id);
-      successResponse(res, 'Xóa người dùng thành công !', User);
+      successResponse(res, req.t('user_deleted'), User);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;
       if (statusCode === 404) {
