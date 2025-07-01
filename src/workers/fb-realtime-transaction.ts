@@ -23,39 +23,77 @@ const updateDb = async (data: any) => {
     bank,
     type,
     date,
+    usd,
+    net_usd,
   } = data;
   const amountVNDchange = Math.floor(Number(amountVND));
   try {
-    const transactionExist = await prisma.$transaction(async (tx) => {
-      const oldTransaction = await tx.transaction.findUnique({
-        where: { short_code },
+    let transactionExist: any = {};
+    if (bank == 'visa') {
+      transactionExist = await prisma.$transaction(async (tx) => {
+        const oldTransaction = await tx.transaction.findUnique({
+          where: { short_code },
+        });
+        if (!oldTransaction) throw new Error('Transaction Không tồn tại!');
+        await tx.user.update({
+          where: { id: oldTransaction.user_id },
+          data: {
+            amount_usd: { increment: net_usd },
+          },
+        });
+        const transaction = await tx.transaction.update({
+          where: {
+            id: oldTransaction.id,
+          },
+          data: {
+            short_code: short_code,
+            amountVND: 0,
+            points: 0,
+            usd,
+            net_usd,
+            transactionID,
+            description,
+            bank,
+            type,
+            date,
+            status: 'success',
+            user_id: oldTransaction.user_id,
+          },
+        });
+        return transaction;
       });
-      if (!oldTransaction) throw new Error('Transaction Không tồn tại!');
-      const user = await tx.user.update({
-        where: { id: oldTransaction.user_id },
-        data: {
-          points: { increment: amountVNDchange },
-        },
+    } else {
+      transactionExist = await prisma.$transaction(async (tx) => {
+        const oldTransaction = await tx.transaction.findUnique({
+          where: { short_code },
+        });
+        if (!oldTransaction) throw new Error('Transaction Không tồn tại!');
+        const user = await tx.user.update({
+          where: { id: oldTransaction.user_id },
+          data: {
+            points: { increment: amountVNDchange },
+          },
+        });
+        const transaction = await tx.transaction.update({
+          where: {
+            id: oldTransaction.id,
+          },
+          data: {
+            short_code: short_code,
+            amountVND: amountVNDchange,
+            points: amountVNDchange,
+            transactionID,
+            description,
+            bank,
+            type,
+            date,
+            status: 'success',
+            user_id: oldTransaction.user_id,
+          },
+        });
+        return transaction;
       });
-      const transaction = await tx.transaction.update({
-        where: {
-          id: oldTransaction.id,
-        },
-        data: {
-          short_code: short_code,
-          amountVND: amountVNDchange,
-          points: amountVNDchange,
-          transactionID,
-          description,
-          bank,
-          type,
-          date,
-          status: 'success',
-          user_id: oldTransaction.user_id,
-        },
-      });
-      return transaction;
-    });
+    }
     return transactionExist;
   } catch (error) {
     try {
@@ -67,6 +105,8 @@ const updateDb = async (data: any) => {
           short_code,
           amountVND: amountVNDchange,
           points: 0,
+          usd,
+          net_usd,
           transactionID,
           description,
           bank,

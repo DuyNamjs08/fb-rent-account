@@ -65,6 +65,7 @@ fbParnert.process(2, async (job) => {
     ads_name,
     bm_id,
     amountOrigin,
+    currency,
   } = data;
   try {
     console.log('data used point', data);
@@ -103,6 +104,14 @@ fbParnert.process(2, async (job) => {
       });
 
       if (!user) throw new Error('User not found');
+      await prisma.notification.create({
+        data: {
+          user_id: user_id,
+          title: 'Thông báo tài khoản đã thuê',
+          content: `Quý khách đã thuê tài khoản: ${ads_name} thành công`,
+          type: 'ads_success',
+        },
+      });
       await prisma.emailLog.create({
         data: {
           user_id: user.id,
@@ -153,6 +162,14 @@ fbParnert.process(2, async (job) => {
         where: { id: user_id },
       });
       if (!user) throw new Error('User not found');
+      await prisma.notification.create({
+        data: {
+          user_id: user_id,
+          title: 'Thông báo tài khoản đã thuê',
+          content: `Quý khách đã thuê tài khoản: ${ads_name} thất bại`,
+          type: 'ads_faild',
+        },
+      });
       const userRentAds = await prisma.facebookPartnerBM.update({
         where: {
           id: id_partner,
@@ -213,12 +230,21 @@ fbParnert.process(2, async (job) => {
           },
         });
         if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');
-        await tx.user.update({
-          where: { id: user_id },
-          data: {
-            points: { increment: amountOrigin },
-          },
-        });
+        if (currency == 'usd') {
+          await tx.user.update({
+            where: { id: user_id },
+            data: {
+              amount_usd: { increment: amountOrigin },
+            },
+          });
+        } else {
+          await tx.user.update({
+            where: { id: user_id },
+            data: {
+              points: { increment: amountOrigin },
+            },
+          });
+        }
         const pointsUsed = await tx.pointUsage.create({
           data: {
             user_id,
@@ -226,6 +252,7 @@ fbParnert.process(2, async (job) => {
             target_account: ads_account_id,
             description: 'Hoàn điểm tài khoản quảng cáo',
             status: 'success',
+            currency,
           },
         });
         return pointsUsed;

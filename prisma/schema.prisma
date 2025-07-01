@@ -11,7 +11,7 @@ datasource db {
 }
 model Role {
   id        String     @id @default(uuid())
-  name      String  @unique
+  name      String  @unique // tên quyền
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   @@map("roles")
@@ -19,13 +19,13 @@ model Role {
 model EmailLog {
   id            String    @id @default(uuid())
   user          User?     @relation(fields: [user_id], references: [id])
-  user_id       String?   
-  to            String   
-  subject       String    
-  body          String   
+  user_id       String?   // một mail gắn với 1 user 
+  to            String   // tới mail nào
+  subject       String   // chủ đề 
+  body          String   // thân mail
   status        String    @default("pending")  // pending | success | failed
   type          String     // verify | reset_password | ...
-  error_message String?   
+  error_message String?   // lỗi mail 
   created_at    DateTime  @default(now()) 
   updated_at    DateTime  @updatedAt
 
@@ -34,12 +34,12 @@ model EmailLog {
 model Notification {
   id          String    @id @default(uuid())
   user        User      @relation(fields: [user_id], references: [id])
-  user_id     String    
-  title       String    
-  content     String   
+  user_id     String    // 1 thông báo gắn với 1 user
+  title       String    // tiêu đề
+  content     String    // nội dung
   type        String       // info | warning | success | error
-  is_read     Boolean   @default(false) 
-  action_url  String?   
+  is_read     Boolean   @default(false)  // đánh dấu là đọc hay chưa
+  action_url  String?   // hành động nào được mô tả
   created_at  DateTime  @default(now()) 
   updated_at  DateTime  @updatedAt
 
@@ -48,18 +48,19 @@ model Notification {
 
 model User {
   id                      String      @id @default(uuid())
-  email                   String   @unique
-  password                String
+  email                   String   @unique // mail user và là duy nhất
+  password                String // mật khẩu sau khi hash
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
-  phone                   String?
-  username                   String?
-  images                   String?
-  role_id                   String?
+  phone                   String? // sdt
+  username                   String? // tên sau đăng nhập
+  images                   String? // ảnh đại diện
+  role_id                   String? // quyền id
   role                    String? @default("user") // user | admin | super_admin
-  token                   Token[]
-  points     Int           @default(0)
-  short_code    String         @unique
+  token                   Token[] // mảng các token 
+  points     Int           @default(0) // điểm được sử dụng ở vn
+  amount_usd     Float           @default(0) // số tiền nếu sử dụng usd
+  short_code    String         @unique // đã ko cần sd
   percentage   Float?  @default(0.1)        // Phần trăm phí của người dùng
   active        Boolean?   @default(true) // Trạng thái hoạt động của người dùng
   pointUsages  PointUsage[]
@@ -76,32 +77,35 @@ model User {
 }
 model Transaction {
   id          String       @id @default(uuid())
-  short_code      String @unique
-  user_id  String
+  short_code      String @unique // mã ký tự đặc biệt để nạp tiền
+  user_id  String // id user gắn với giao dịch
   user           User @relation("UserTransactions", fields: [user_id], references: [id])
   amountVND   Int       // Số tiền VNĐ nạp vào
+  usd   Float      @default(0)// Số tiền đô nạp vào
+  net_usd   Float   @default(0)    // Số tiền đô thực nhận vào
   points      Int       // Điểm tương ứng nhận được
-  bank        String 
-  description        String 
-  transactionID        Int
-  type        String
-  date        String
-  status     String @default("pending")
-  error_message  String?
+  bank        String    // tên ngân hàng , với nạp bằng visa thì là : 'visa'
+  description        String // mô tả
+  transactionID        Int // id giao dịch nếu ko có thì là 1 điền tay
+  type        String // loại giao dịch là 'in' || 'out'
+  date        String // ngày phát sinh giao dịch
+  status     String @default("pending") // trạng thái giao dịch
+  error_message  String? // lỗi giao dịch từ ngân hàng
    
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
   @@map("transactions")
 }
-model PointUsage {
+model PointUsage {   // bảng này là được dùng để đổi điểm || ngoại tệ => dùng để thuê gói
   id              String    @id @default(uuid())
   user            User      @relation(fields: [user_id], references: [id])
-  user_id          String
-  points_used      Int       // Số điểm đã sử dụng
+  user_id          String // id user muốn thuê
+  points_used      Float       // Số điểm đã sử dụng
   service_type     String    @default("ads_account")// Loại dịch vụ, ví dụ: "facebook_ads", "tiktok_ads", "premium_package"
   target_account   String    // Mã tài khoản quảng cáo hoặc ID mục tiêu
   description     String?   // Mô tả thêm (nếu cần)
   status          String    @default("success") // success | failed | pending
+  currency String @default("vnd") // loại tiền tệ gì => cực kì quan trọng để check dùng gì để thanh toán
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
 
@@ -109,24 +113,24 @@ model PointUsage {
 }
 model Token {
   id          String      @id @default(uuid())
-  user_id     String      @unique
+  user_id     String      @unique // token gắn với 1 user
   user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  access_token  String @default("")
-  refresh_token  String @default("")
+  access_token  String @default("") // tạo accesstoken để đăng nhập
+  refresh_token  String @default("") // tạo refreshtoken để cấp lại token
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
   @@map("tokens")
 }
-model FacebookPartnerBM {
+model FacebookPartnerBM { // bảng liên quan đến mối quan hệ giữa tài khoản thuê và tk hệ thống
   id          String      @id @default(uuid())
-  bm_id       String  
-  bm_origin String?
-  bot_id           String?
-  ads_account_id String 
-  user_id       String
-  status        String
-  status_partner        Int?
+  bm_id       String  // tên bm muốn trở thành đối tác
+  bm_origin String?  // tên bm gốc set quyền cho thuê
+  bot_id           String? // bot id từ bảng cookie để set automation
+  ads_account_id String  // id tài khoản quảng cáo 
+  user_id       String // id của user thuê
+  status        String // trạng thái
+  status_partner        Int? // 
   status_limit_spend        Int?
   status_dischard_limit_spend        Int?
   status_dischard_partner      Int?
@@ -175,9 +179,9 @@ model FacebookVisa {
 }
 model Cookies {
   id          String      @id @default(uuid())
-  email       String   @unique
-  storage_state  Json
-  in_use      Boolean? @default(false)
+  email       String   @unique // email của tài khoản nhận mail và chỉnh sửa automation playwright
+  storage_state  Json  // đây system user của BM được lấy từ facebook 
+  in_use      Boolean? @default(false) // khi nhiều người thuê thì xem cái nào đang sử dụng , phần này đang check vậy
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -185,8 +189,8 @@ model Cookies {
 }
 model Policies {
   id          String      @id @default(uuid())
-  title       String   
-  message     String
+  title       String   // tên chính sách
+  message     String // đoạn mô tả chính sách
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
@@ -292,10 +296,10 @@ model Budget {
   currency    String    // Đơn vị tiền tệ (VD: VND, USD)
   start_date   DateTime?  // Ngày bắt đầu áp dụng ngân sách
   end_date     DateTime?  // Ngày kết thúc ngân sách
-  percentage   Float?  @default(0.1)
-  country String? @default("vi")
-  subtitle     String?
-  overview     String?
+  percentage   Float?  @default(0.1) // phần trăm chiết khấu khi thuê 
+  country String? @default("vi") // tên quốc gia
+  subtitle     String? // phần subtitle
+  overview     String? // phần overview
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
@@ -370,15 +374,15 @@ model UserVoucher {
 }
 model Config {
   id          String   @id @default(uuid())
-  name String @default("config-settings") 
-  lang        String @default("vi")
-  // 
-  admin_mail  String 
-  // phần gửi mail về user khi thuê gói
-  user_mail   String
-  user_mail_pass   String
-  email_app_pass   String
-  email_app   String
+  name String @default("config-settings") // tên của settings
+  lang        String @default("vi") // chọn ngôn ngữ
+  admin_mail  String // phần gửi mail về user khi thuê gói
+  
+  user_mail   String // mail hệ thống gửi về 
+  user_mail_pass   String // app pass
+  email_app   String // mail lấy mã xác nhận của gmail
+  email_app_pass   String  // app pass mail lấy mã xác nhận của gmail
+  
 
   created_at  DateTime   @default(now())
   updated_at  DateTime   @updatedAt

@@ -16,6 +16,7 @@ const createChargeSchema = z.object({
   bm_origin: z.string().min(1, 'bm_origin is required'),
   ads_name: z.string().min(1, 'ads_name is required'),
   bot_id: z.string().min(1, 'bot_id is required'),
+  currency: z.string().min(3, 'currency is required and min 3 character'),
 });
 
 const deleteChargeSchema = z.object({
@@ -72,6 +73,7 @@ const pointUsedController = {
         ads_name,
         voucher_id,
         bot_id,
+        currency,
       } = req.body;
       const parsed = createChargeSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -99,9 +101,10 @@ const pointUsedController = {
         );
         return;
       }
-      const amountOrigin = Math.floor(Number(amountPoint));
+      const amountOrigin = Math.floor(Number(amountPoint)); // số tiền trừ ở hệ thống
+
       const amountVNDchange =
-        amountOrigin - amountOrigin * (user.percentage || 0.1);
+        amountOrigin - amountOrigin * (user.percentage || 0.1); // số tiền chạy tkqc thật ở fb
       if (user.points < amountOrigin) {
         errorResponse(
           res,
@@ -185,12 +188,21 @@ const pointUsedController = {
           },
         });
         if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');
-        await tx.user.update({
-          where: { id: user_id },
-          data: {
-            points: { decrement: amountOrigin },
-          },
-        });
+        if (currency == 'usd') {
+          await tx.user.update({
+            where: { id: user_id },
+            data: {
+              amount_usd: { decrement: amountOrigin },
+            },
+          });
+        } else {
+          await tx.user.update({
+            where: { id: user_id },
+            data: {
+              points: { decrement: amountOrigin },
+            },
+          });
+        }
         const pointsUsed = await tx.pointUsage.create({
           data: {
             user_id,
@@ -198,6 +210,7 @@ const pointUsedController = {
             target_account: ads_account_id,
             description: 'Đổi điểm tài khoản quảng cáo',
             status: 'success',
+            currency,
           },
         });
         return pointsUsed;
@@ -243,6 +256,7 @@ const pointUsedController = {
         ads_name,
         bot_id,
         id_partner: newBmPartnert.id,
+        currency,
       });
       console.log('✅ Job added to fbParnert queue:', job.id);
 
