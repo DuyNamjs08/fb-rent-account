@@ -5,3 +5,4 @@ src/generated/
 dist/
 backups/*
 cookie.md
+.vscode

@@ -44,12 +44,12 @@ async function createPaypalOrder({ amount, id }: any) {
         },
       ],
       application_context: {
-        // return_url: 'https://aka-ads.duynam.store/paypal-verify',
-        // cancel_url: 'https://aka-ads.duynam.store/paypal-verify',
-        return_url:
-          'https://lie-andreas-ment-intend.trycloudflare.com/paypal-verify',
-        cancel_url:
-          'https://lie-andreas-ment-intend.trycloudflare.com/paypal-verify',
+        return_url: 'https://aka-ads.duynam.store/paypal-verify',
+        cancel_url: 'https://aka-ads.duynam.store/paypal-verify',
+        // return_url:
+        //   'https://lie-andreas-ment-intend.trycloudflare.com/paypal-verify',
+        // cancel_url:
+        //   'https://lie-andreas-ment-intend.trycloudflare.com/paypal-verify',
 
         user_action: 'PAY_NOW',
         shipping_preference: 'NO_SHIPPING',
