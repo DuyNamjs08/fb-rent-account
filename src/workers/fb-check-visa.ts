@@ -166,12 +166,28 @@ const updateDb = async (data: any) => {
       //   user_id,
       //   amountPoint,
       // });
+      await prisma.notification.create({
+        data: {
+          user_id: user_id,
+          title: 'Thông báo tài khoản đã thuê',
+          content: `Quý khách đã hết hạn sử dụng tài khoản: ${ads_name}`,
+          type: 'expried_ads',
+        },
+      });
       await removeRepeatJob(job);
     } else if (
       findBm?.budget &&
       Number(result.spend_cap) > Number(findBm?.budget)
     ) {
       console.log('bạn tiêu quá nên có voucher');
+      await prisma.notification.create({
+        data: {
+          user_id: user_id,
+          title: 'Thông báo chi tiêu',
+          content: 'Quý khách đã vượt ngưỡng chi tiêu nên được tặng voucher',
+          type: 'voucher',
+        },
+      });
     }
   } catch (fallbackError) {
     await removeRepeatJob(job);

@@ -61,6 +61,7 @@ const createChargeSchema = z.object({
   ads_name: z.string().min(1, 'ads_name is required'),
   bot_id: z.string().min(1, 'bot_id is required'),
   voucher_id: z.string().optional(),
+  currency: z.string().min(3, 'currency is required and min 3 character'),
 });
 const visaController = {
   createAndUpadateVisa: async (req: Request, res: Response): Promise<void> => {
@@ -161,6 +162,8 @@ const visaController = {
         visa_expiration,
         visa_cvv,
         verify_code,
+        // phần dùng tiền usd
+        currency,
       } = req.body;
       const parsed = createChargeSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -274,12 +277,21 @@ const visaController = {
           },
         });
         if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');
-        await tx.user.update({
-          where: { id: user_id },
-          data: {
-            points: { decrement: amountVNDchange },
-          },
-        });
+        if (currency == 'usd') {
+          await tx.user.update({
+            where: { id: user_id },
+            data: {
+              amount_usd: { decrement: amountVNDchange },
+            },
+          });
+        } else {
+          await tx.user.update({
+            where: { id: user_id },
+            data: {
+              points: { decrement: amountVNDchange },
+            },
+          });
+        }
         const pointsUsed = await tx.pointUsage.create({
           data: {
             user_id,
@@ -287,6 +299,7 @@ const visaController = {
             target_account: ads_account_id,
             description: 'Đổi điểm tài khoản quảng cáo',
             status: 'success',
+            currency,
           },
         });
         return pointsUsed;
@@ -338,6 +351,8 @@ const visaController = {
         visa_expiration,
         visa_cvv,
         verify_code,
+        // phần check tiền tệ
+        currency,
       });
       successResponse(
         res,

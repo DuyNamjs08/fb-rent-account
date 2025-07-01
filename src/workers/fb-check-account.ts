@@ -94,6 +94,14 @@ const updateDb = async (data: any) => {
         },
       });
       console.log('cảnh báo !!!!!!!!!');
+      await prisma.notification.create({
+        data: {
+          user_id: user_id,
+          title: 'Thông báo tài khoản đã thuê',
+          content: `Quý khách đã hết hạn sử dụng đến 95% ngân sách của tài khoản: ${ads_name}`,
+          type: 'limit_ads',
+        },
+      });
       await removeRepeatJob(job);
       return;
     } else if (
@@ -144,6 +152,14 @@ const updateDb = async (data: any) => {
         id: findBm.id,
       });
       await removeRepeatJob(job);
+      await prisma.notification.create({
+        data: {
+          user_id: user_id,
+          title: 'Thông báo tài khoản đã thuê',
+          content: `Quý khách không sử dụng tài khoản: ${ads_name} nên sẽ thu hồi và được hoàn điểm`,
+          type: 'expried_ads',
+        },
+      });
       return;
     }
   } catch (fallbackError) {

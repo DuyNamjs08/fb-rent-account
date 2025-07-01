@@ -22,6 +22,7 @@ import fbVisaRoutes from './routes/fbVisa.routes';
 import voucherRoutes from './routes/voucher.routes';
 import userVoucherRoutes from './routes/userVoucher.routes';
 import configRoutes from './routes/config.routes';
+import paypalRoutes from './routes/paypal.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -117,6 +118,7 @@ async function init() {
   app.use('/api/v1/', fbVisaRoutes);
   app.use('/api/v1/', voucherRoutes);
   app.use('/api/v1/', userVoucherRoutes);
+  app.use('/', paypalRoutes);
 
   app.get('/', (req: Request, res: Response): void => {
     console.log(`Worker ${process.pid} is processing request`);
