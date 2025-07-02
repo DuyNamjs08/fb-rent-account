@@ -156,8 +156,9 @@ const paypalController = {
       const transaction = await prisma.transaction.create({
         data: {
           short_code: shortCode,
-          amountVND: amountVNDchange,
-          points: amountVNDchange,
+          amountVND: 0,
+          points: 0,
+          usd: amountVNDchange,
           transactionID: 0,
           description: '',
           bank: '',

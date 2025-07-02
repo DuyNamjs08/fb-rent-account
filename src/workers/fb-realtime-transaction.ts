@@ -30,6 +30,7 @@ const updateDb = async (data: any) => {
   try {
     let transactionExist: any = {};
     if (bank == 'visa') {
+      console.log('bank', bank);
       transactionExist = await prisma.$transaction(async (tx) => {
         const oldTransaction = await tx.transaction.findUnique({
           where: { short_code },
@@ -62,6 +63,7 @@ const updateDb = async (data: any) => {
         });
         return transaction;
       });
+      return transactionExist;
     } else {
       transactionExist = await prisma.$transaction(async (tx) => {
         const oldTransaction = await tx.transaction.findUnique({
@@ -93,8 +95,8 @@ const updateDb = async (data: any) => {
         });
         return transaction;
       });
+      return transactionExist;
     }
-    return transactionExist;
   } catch (error) {
     try {
       const fallbackTransaction = await prisma.transaction.update({
