@@ -43,29 +43,30 @@ const updateDb = async (data: any) => {
     if (!cookie) {
       throw new Error('Không tìm thấy cookie');
     }
-    const result = await autoChangePartner({
-      bm_id,
-      ads_account_id,
-      bm_origin,
-      ads_name,
-      cookie_origin: cookie.storage_state,
-    });
-    const resultChangeVisa = await autoChangeVisa({
-      visa_name,
-      visa_number,
-      visa_expiration,
-      visa_cvv,
-      // Thêm các thông tin visa vào hàm autoChangeVisa
-      bm_id: bm_origin,
-      ads_account_id,
-      amountPoint,
-      cookie_origin: cookie.storage_state,
-    });
-    console.log('playwright res', {
-      status_visa: result,
-      status_partner: resultChangeVisa,
-    });
-    return { status_visa: resultChangeVisa, status_partner: result };
+    // const result = await autoChangePartner({
+    //   bm_id,
+    //   ads_account_id,
+    //   bm_origin,
+    //   ads_name,
+    //   cookie_origin: cookie.storage_state,
+    // });
+    // const resultChangeVisa = await autoChangeVisa({
+    //   visa_name,
+    //   visa_number,
+    //   visa_expiration,
+    //   visa_cvv,
+    //   // Thêm các thông tin visa vào hàm autoChangeVisa
+    //   bm_id: bm_origin,
+    //   ads_account_id,
+    //   amountPoint,
+    //   cookie_origin: cookie.storage_state,
+    // });
+    // console.log('playwright res', {
+    //   status_visa: result,
+    //   status_partner: resultChangeVisa,
+    // });
+    // return { status_visa: resultChangeVisa, status_partner: result };
+    return { status_visa: 1, status_partner: 1 };
   } catch (fallbackError) {
     console.error('❌ Lỗi khi đổi điểm mã lỗi:', fallbackError);
     throw fallbackError;

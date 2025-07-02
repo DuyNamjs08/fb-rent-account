@@ -32,24 +32,25 @@ const updateDb = async (data: any) => {
     if (!cookie) {
       throw new Error('Không tìm thấy cookie');
     }
-    const result = await autoChangePartner({
-      bm_id,
-      ads_account_id,
-      bm_origin,
-      ads_name,
-      cookie_origin: cookie.storage_state,
-    });
-    const resultChangeLimit = await autoChangeLimitSpend({
-      bm_id: bm_origin,
-      ads_account_id,
-      amountPoint,
-      cookie_origin: cookie.storage_state,
-    });
-    console.log('playwright res', {
-      status_limit_spend: result,
-      status_partner: resultChangeLimit,
-    });
-    return { status_limit_spend: resultChangeLimit, status_partner: result };
+    // const result = await autoChangePartner({
+    //   bm_id,
+    //   ads_account_id,
+    //   bm_origin,
+    //   ads_name,
+    //   cookie_origin: cookie.storage_state,
+    // });
+    // const resultChangeLimit = await autoChangeLimitSpend({
+    //   bm_id: bm_origin,
+    //   ads_account_id,
+    //   amountPoint,
+    //   cookie_origin: cookie.storage_state,
+    // });
+    // console.log('playwright res', {
+    //   status_limit_spend: result,
+    //   status_partner: resultChangeLimit,
+    // });
+    // return { status_limit_spend: resultChangeLimit, status_partner: result };
+    return { status_limit_spend: 1, status_partner: 1 };
   } catch (fallbackError) {
     console.error('❌ Lỗi khi đổi điểm mã lỗi:', fallbackError);
     throw fallbackError;

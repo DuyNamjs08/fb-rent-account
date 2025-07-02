@@ -29,21 +29,25 @@ const updateDb = async (data: any) => {
     if (!cookie) {
       throw new Error('Không tìm thấy cookie');
     }
-    const resultRemoveLimit = await autoDisChardLimitSpend({
-      bm_id: bm_origin,
-      ads_account_id,
-      cookie_origin: cookie.storage_state,
-    });
-    const resultRemoveParnert = await autoRemovePartner({
-      bm_origin,
-      ads_account_id,
-      ads_name,
-      cookie_origin: cookie.storage_state,
-      bm_id,
-    });
+    // const resultRemoveLimit = await autoDisChardLimitSpend({
+    //   bm_id: bm_origin,
+    //   ads_account_id,
+    //   cookie_origin: cookie.storage_state,
+    // });
+    // const resultRemoveParnert = await autoRemovePartner({
+    //   bm_origin,
+    //   ads_account_id,
+    //   ads_name,
+    //   cookie_origin: cookie.storage_state,
+    //   bm_id,
+    // });
+    // return {
+    //   status_remove_spend_limit: resultRemoveLimit,
+    //   status_remove_partner: resultRemoveParnert,
+    // };
     return {
-      status_remove_spend_limit: resultRemoveLimit,
-      status_remove_partner: resultRemoveParnert,
+      status_remove_spend_limit: 1,
+      status_remove_partner: 1,
     };
   } catch (fallbackError) {
     console.error('❌ Lỗi khi đổi điểm mã lỗi:', fallbackError);
