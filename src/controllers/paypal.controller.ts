@@ -45,7 +45,7 @@ async function createPaypalOrder({ amount, id }: any) {
       ],
       application_context: {
         return_url: 'https://aka-ads.duynam.store/paypal-verify',
-        cancel_url: 'https://aka-ads.duynam.store/paypal-verify',
+        cancel_url: 'https://aka-ads.duynam.store',
         // return_url:
         //   'https://ashley-immigrants-closed-alpine.trycloudflare.com/paypal-verify',
         // cancel_url:
