@@ -365,7 +365,16 @@ const TKQCController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(res, req.t('ads_account_list'), result);
+      const count = await prisma.adsAccount.count({
+        where: {
+          is_visa_account: true,
+          status_rented: 'available',
+        },
+      });
+      successResponse(res, req.t('ads_account_list'), {
+        data: result,
+        count,
+      });
     } catch (error: any) {
       errorResponse(
         res,
@@ -389,7 +398,16 @@ const TKQCController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(res, req.t('ads_account_list'), result);
+      const count = await prisma.adsAccount.count({
+        where: {
+          is_visa_account: true,
+          status_rented: 'rented',
+        },
+      });
+      successResponse(res, req.t('ads_account_list'), {
+        data: result,
+        count,
+      });
     } catch (error: any) {
       errorResponse(
         res,
@@ -412,7 +430,15 @@ const TKQCController = {
         skip,
         take: pageSizeNum,
       });
-      successResponse(res, req.t('ads_account_list'), result);
+      const count = await prisma.adsAccount.count({
+        where: {
+          OR: [{ is_visa_account: false }, { is_visa_account: null }],
+        },
+      });
+      successResponse(res, req.t('ads_account_list'), {
+        data: result,
+        count,
+      });
     } catch (error: any) {
       errorResponse(
         res,
