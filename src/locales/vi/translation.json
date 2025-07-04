@@ -60,6 +60,7 @@
 
   "account_not_found_or_locked": "Tài khoản không tồn tại hoặc đã bị khóa",
   "incorrect_credentials": "Tài khoản hoặc mật khẩu không chính xác",
+  "incorrect_old_password": "Mật khẩu cũ không chính xác",
   "token_secrets_missing": "Token secrets are not defined in environment variables",
   "token_create_success": "Success create",
   "token_update_success": "Success",
