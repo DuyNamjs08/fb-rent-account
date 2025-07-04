@@ -6,6 +6,35 @@ import prisma from '../config/prisma';
 import axios from 'axios';
 import { decryptToken } from './facebookBm.controller';
 import { z } from 'zod';
+const querySchema = z.object({
+  page: z
+    .string()
+    .regex(/^\d+$/, { message: 'page is number positive' })
+    .transform(Number)
+    .optional()
+    .default('1'),
+
+  pageSize: z
+    .string()
+    .regex(/^\d+$/, { message: 'pageSize is number positive' })
+    .transform(Number)
+    .optional()
+    .default('10'),
+
+  from: z
+    .string()
+    .regex(/^\d+$/, { message: 'from is number' })
+    .transform(Number)
+    .optional()
+    .default('0'),
+
+  to: z
+    .string()
+    .regex(/^\d+$/, { message: 'to is number' })
+    .transform(Number)
+    .optional()
+    .default('10000000000'),
+});
 function mapItemToAdsAccount(item: any) {
   return {
     id: item.id,
@@ -353,24 +382,43 @@ const TKQCController = {
   },
   getAllTKQCVisa: async (req: Request, res: Response): Promise<void> => {
     try {
-      const data = req.query;
-      const { pageSize = 10, page = 1 } = data;
+      const parsed = querySchema.safeParse(req.query);
+
+      if (!parsed.success) {
+        errorResponse(
+          res,
+          'Tham số không hợp lệ: page, pageSize, from, to phải là số nguyên.',
+          parsed.error.format(),
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+
+      const { page, pageSize, from, to } = parsed.data;
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const result = await prisma.adsAccount.findMany({
-        where: {
-          is_visa_account: true,
-          status_rented: 'available',
-        },
-        skip,
-        take: pageSizeNum,
-      });
-      const count = await prisma.adsAccount.count({
-        where: {
-          is_visa_account: true,
-          status_rented: 'available',
-        },
-      });
+      const result = await prisma.$queryRawUnsafe(`
+        SELECT *
+        FROM "ads_accounts"
+        WHERE
+          is_visa_account = true AND
+          status_rented = 'available' AND
+          spend_cap ~ '^[0-9]+$' AND
+          CAST(spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+        OFFSET ${skip}
+        LIMIT ${pageSizeNum}
+      `);
+      const countRes: any[] = await prisma.$queryRawUnsafe(`
+        SELECT COUNT(*) as total
+        FROM "ads_accounts"
+        WHERE
+          is_visa_account = true AND
+          status_rented = 'available' AND
+          spend_cap ~ '^[0-9]+$' AND
+          CAST(spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+      `);
+
+      const count = Number(countRes[0]?.total || 0);
       successResponse(res, req.t('ads_account_list'), {
         data: result,
         count,
@@ -419,22 +467,47 @@ const TKQCController = {
   },
   getAllTKQCsimple: async (req: Request, res: Response): Promise<void> => {
     try {
-      const data = req.query;
-      const { pageSize = 10, page = 1 } = data;
+      const parsed = querySchema.safeParse(req.query);
+
+      if (!parsed.success) {
+        errorResponse(
+          res,
+          'Tham số không hợp lệ: page, pageSize, from, to phải là số nguyên.',
+          parsed.error.format(),
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+
+      const { page, pageSize, from, to } = parsed.data;
+
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const result = await prisma.adsAccount.findMany({
-        where: {
-          OR: [{ is_visa_account: false }, { is_visa_account: null }],
-        },
-        skip,
-        take: pageSizeNum,
-      });
-      const count = await prisma.adsAccount.count({
-        where: {
-          OR: [{ is_visa_account: false }, { is_visa_account: null }],
-        },
-      });
+      const fromNum = Number(from);
+      const toNum = Number(to);
+
+      const result: any[] = await prisma.$queryRawUnsafe(`
+        SELECT *
+        FROM "ads_accounts"
+        WHERE
+          (is_visa_account = false OR is_visa_account IS NULL) AND
+          spend_cap ~ '^[0-9]+$' AND
+          CAST(spend_cap AS BIGINT) BETWEEN ${fromNum} AND ${toNum}
+        OFFSET ${skip}
+        LIMIT ${pageSizeNum}
+      `);
+
+      const countRes: any[] = await prisma.$queryRawUnsafe(`
+        SELECT COUNT(*) as total
+        FROM "ads_accounts"
+        WHERE
+          (is_visa_account = false OR is_visa_account IS NULL) AND
+          spend_cap ~ '^[0-9]+$' AND
+          CAST(spend_cap AS BIGINT) BETWEEN ${fromNum} AND ${toNum}
+      `);
+
+      const count = Number(countRes[0]?.total || 0);
+
       successResponse(res, req.t('ads_account_list'), {
         data: result,
         count,

@@ -408,7 +408,7 @@ const pointUsedController = {
         id,
         bot_id,
       } = req.query;
-      const parsed = deleteChargeSchema.safeParse(req.body);
+      const parsed = deleteChargeSchema.safeParse(req.query);
       if (!parsed.success) {
         const errors = parsed.error.flatten().fieldErrors;
         errorResponse(
