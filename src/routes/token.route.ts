@@ -178,18 +178,10 @@ router.post('/login', TokenController.createAccessToken);
  *                      type: object
  *                      required:
  *                          - refresh_token
- *                          - email
- *                          - password
  *                      properties:
  *                          refresh_token:
  *                              type: string
  *                              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzMTIzIiwiaWF0IjoxNzQ1ODI2NDc2LCJleHAiOjE3NDU4MjY2NTZ9.MilxSuY_D22mKdyA-kX92Q-NqvFELUAlPkGOWOF93jA
- *                          email:
- *                              type: string
- *                              example: "admin@gmail.com"
- *                          password:
- *                              type: string
- *                              example: "123123"
  *      responses:
  *          201:
  *              description: Cập nhật access token thành công

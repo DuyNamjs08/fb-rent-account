@@ -16,12 +16,7 @@ const createAccessTokenSchema = z.object({
 });
 
 const updateAccessTokenSchema = z.object({
-  refresh_token: z.string().min(1, 'refresh token is required'),
-  email: z.string().email('invalid email'),
-  password: z
-    .string()
-    .min(6, 'password must be at least 6 characters')
-    .optional(),
+  refreshToken: z.string().min(1, 'refresh token is required'),
 });
 const TokenController = {
   createAccessToken: async (req: Request, res: Response): Promise<void> => {
@@ -120,8 +115,7 @@ const TokenController = {
   },
   updateAccessToken: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { refresh_token, email, password } = req.body;
-
+      const { refreshToken } = req.body;
       const parseResult = updateAccessTokenSchema.safeParse(req.body);
       if (!parseResult.success) {
         errorResponse(
@@ -132,21 +126,7 @@ const TokenController = {
         );
         return;
       }
-      const user = await prisma.user.findFirst({
-        where: {
-          email: email,
-          active: true,
-        },
-      });
-      if (!user) {
-        errorResponse(
-          res,
-          req.t('account_not_found_or_locked'),
-          {},
-          httpStatusCodes.NOT_FOUND,
-        );
-        return;
-      }
+
       if (
         !process.env.ACCESS_TOKEN_SECRET ||
         !process.env.REFRESH_TOKEN_SECRET
@@ -160,12 +140,30 @@ const TokenController = {
         return;
       }
       jwt.verify(
-        refresh_token,
+        refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
         async (err: any, data: any) => {
           if (err) {
             return res.status(405).json(req.t('invalid_refresh_token'));
           }
+          // Lấy user từ user_id trong refresh token
+          const user = await prisma.user.findFirst({
+            where: {
+              id: data.user_id,
+              active: true,
+            },
+          });
+
+          if (!user) {
+            errorResponse(
+              res,
+              req.t('account_not_found_or_locked'),
+              {},
+              httpStatusCodes.NOT_FOUND,
+            );
+            return;
+          }
+
           const accessToken = jwt.sign(
             { mail: data.email, password: data.password, user_id: user.id },
             process.env.ACCESS_TOKEN_SECRET as string,
@@ -177,7 +175,7 @@ const TokenController = {
             user.id,
             {
               access_token: accessToken,
-              refresh_token: refresh_token,
+              refresh_token: refreshToken,
               user_id: user.id,
             },
           );

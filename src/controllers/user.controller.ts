@@ -180,7 +180,7 @@ const userController = {
         if (!byHash) {
           errorResponse(
             res,
-            req.t('incorrect_credentials'),
+            req.t('incorrect_old_password'),
             {},
             httpStatusCodes.UNAUTHORIZED,
           );
