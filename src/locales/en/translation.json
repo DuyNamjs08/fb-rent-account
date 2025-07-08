@@ -103,5 +103,6 @@
   "voucher_not_found": "Voucher not found",
   "voucher_info_retrieved": "Successfully retrieved voucher information",
   "voucher_updated": "Voucher updated successfully",
-  "voucher_deleted": "Voucher deleted successfully"
+  "voucher_deleted": "Voucher deleted successfully",
+  "not_invited_by_parent": "MAIN and SUB accounts are not consistent"
 }

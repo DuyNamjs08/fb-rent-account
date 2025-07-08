@@ -4,7 +4,7 @@ class UserService {
     email,
     password,
     role_id,
-    short_code,
+    referral_code,
     username,
     phone = '',
     role,
@@ -12,7 +12,7 @@ class UserService {
     email: string;
     password: string;
     role_id: string;
-    short_code: string;
+    referral_code: string;
     username: string;
     phone: string;
     role: string;
@@ -23,16 +23,16 @@ class UserService {
         password,
         role_id,
         role,
-        short_code,
+        referral_code,
         username,
         phone,
       },
     });
     return User;
   }
-  async getUserByShortCode(code: string) {
+  async getUserByReferralCode(code: string) {
     return prisma.user.findUnique({
-      where: { short_code: code },
+      where: { referral_code: code },
     });
   }
   async getAllUsers() {

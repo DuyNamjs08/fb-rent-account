@@ -45,6 +45,10 @@ model Notification {
 
   @@map("notifications")
 }
+enum AccountType {
+  MAIN
+  SUB
+}
 
 model User {
   id                      String      @id @default(uuid())
@@ -60,7 +64,6 @@ model User {
   token                   Token[] // mảng các token 
   points     Int           @default(0) // điểm được sử dụng ở vn
   amount_usd     Float           @default(0) // số tiền nếu sử dụng usd
-  short_code    String         @unique // đã ko cần sd
   percentage   Float?  @default(0.1)        // Phần trăm phí của người dùng
   active        Boolean?   @default(true) // Trạng thái hoạt động của người dùng
   pointUsages  PointUsage[]
@@ -73,7 +76,36 @@ model User {
 
   transactions   Transaction[]  @relation("UserTransactions")
   budget_id String? // ID ngân sách liên kết với người dùng
+  // --- Phân cấp tài khoản ---
+  account_type    AccountType @default(MAIN)
+   /// Quan hệ tự tham chiếu: một MAIN có nhiều SUB
+  parent         User?       @relation("UserHierarchy", fields: [parent_id], references: [id])
+  parent_id       String?     // null ⇢ bản thân là MAIN
+  subAccounts    User[]      @relation("UserHierarchy")
+  // --- Mã giới thiệu ---
+  referral_code   String      @unique @default(uuid()) // code của chính mình
+  invitedBy      User?       @relation("Invitations", fields: [invited_by_id], references: [id])
+  invited_by_id    String?     // ai đã giới thiệu mình
+  invitedUsers   User[]      @relation("Invitations")
+
+  // --- Chuyển điểm ---
+  transfersOut   PointTransfer[] @relation("TransferFrom")
+  transfersIn    PointTransfer[] @relation("TransferTo")
   @@map("users")
+}
+model PointTransfer {
+  id          String   @id @default(uuid())
+  fromUser    User     @relation("TransferFrom", fields: [from_user_id], references: [id])
+  from_user_id  String
+  toUser      User     @relation("TransferTo", fields: [to_user_id], references: [id])
+  to_user_id    String
+  amount      Int
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@index([from_user_id])
+  @@index([to_user_id])
+  @@map("point_transfer")
 }
 model Transaction {
   id          String       @id @default(uuid())
@@ -130,18 +162,18 @@ model FacebookPartnerBM { // bảng liên quan đến mối quan hệ giữa tà
   ads_account_id String  // id tài khoản quảng cáo 
   user_id       String // id của user thuê
   status        String // trạng thái
-  status_partner        Int? // 
-  status_limit_spend        Int?
-  status_dischard_limit_spend        Int?
-  status_dischard_partner      Int?
-  is_sefl_used_visa      Boolean? @default(false)
-  message      String?
-  budget_id      String?
-  budget      String?
+  status_partner        Int? // tài khoản Bm được gắn đối tác chưa
+  status_limit_spend        Int? //tài khoản Bm được set ngưỡng giới hạn chi tiêu chưa
+  status_dischard_limit_spend        Int? // tài khoản BM được hủy giới hạn chi tiêu hay chưa
+  status_dischard_partner      Int? // tài khoản Bm được hủy đối tác chưa
+  is_sefl_used_visa      Boolean? @default(false) // tài khoản Bm thuê tự gắn thẻ hay ko
+  message      String? // nội dung note
+  budget_id      String? // tài khoản qc gắn với loại ngân sách nào
+  budget      String? // tên ngân sách ấy
   is_email_sent      Boolean? @default(false) // Đã gửi email thông báo hay chưa
   update_package      Int? @default(0) // 0 = không cập nhật, 1 = cập nhật
-  start_date     String[] @default([])
-  end_date       String[] @default([])
+  start_date     String[] @default([]) // ngày bắt đầu 
+  end_date       String[] @default([]) // ngày kết thúc
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -149,12 +181,12 @@ model FacebookPartnerBM { // bảng liên quan đến mối quan hệ giữa tà
 }
 model FacebookBM {
   id          String      @id @default(uuid())
-  bm_name     String
-  bm_id     String      @unique
-  list_ads_account     String[] @default([])
-  system_user_token String 
-  status        String?   @default("success")
-  status_id        Int?   @default(1)
+  bm_name     String // tên BM
+  bm_id     String      @unique // id BM được lấy từ FB
+  list_ads_account     String[] @default([]) // các tài khoản 
+  system_user_token String // stystem user được gắn với tài khoản BM gốc
+  status        String?   @default("success") // trạng thái mặc định là success
+  status_id        Int?   @default(1) // status id mặc định là 1
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
