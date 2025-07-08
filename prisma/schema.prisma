@@ -70,8 +70,8 @@ model User {
   emailLogs      EmailLog[]
   notifications  Notification[]
   list_ads_account String[] @default([]) // Danh sách ID tài khoản quảng cáo
-  supportRequests   SupportRequests[]
-  sentMessages      MessageRequest[]
+  supportRequests   SupportRequests[]   // Danh sách yêu cầu hỗ trợ
+  sentMessages      MessageRequest[]    // Danh sách tin nhắn
   userVouchers UserVoucher[] // Danh sách voucher
 
   transactions   Transaction[]  @relation("UserTransactions")
@@ -340,17 +340,17 @@ model Budget {
 
 model SupportRequests {
   id          String   @id @default(uuid())
-  user_id     String?  @db.Text
-  fullName    String
-  email       String
-  phone       String
-  title       String
-  department  String
-  content     String
-  attachments String[] @default([])
-  status      String   @default("pending")
-  priority    String   @default("medium")
-  category    String   @default("other")
+  user_id     String?  @db.Text // id của user gửi yêu cầu
+  fullName    String    // tên người gửi yêu cầu
+  email       String    // email
+  phone       String    // số điện thoại
+  title       String    // tiêu đề
+  department  String    // bộ phận
+  content     String    // nội dung chi tiết
+  attachments String[] @default([]) // tệp đính kèm
+  status      String   @default("pending")  // trạng thái
+  priority    String   @default("medium")   // mức độ ưu tiên
+  category    String   @default("other")    // danh mục
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   user        User?    @relation(fields: [user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -361,9 +361,9 @@ model SupportRequests {
 
 model MessageRequest {
   id               String   @id @default(uuid())
-  supportRequestId String
-  senderId         String
-  message          String
+  supportRequestId String   // id của yêu cầu
+  senderId         String   // id người gửi
+  message          String   // tin nhắn
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
