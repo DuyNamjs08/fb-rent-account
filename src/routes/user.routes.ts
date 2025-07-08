@@ -566,5 +566,25 @@ router.delete(
   requireRoles([UserRole.ADMIN]),
   userController.deleteUser,
 );
+router.post(
+  '/give-points',
+  requireRoles([UserRole.ADMIN, UserRole.USER]),
+  userController.givePoints,
+);
+router.get(
+  '/give-points/:id',
+  requireRoles([UserRole.ADMIN, UserRole.USER]),
+  userController.listgivePoints,
+);
+router.get(
+  '/retrieve-points/:id',
+  requireRoles([UserRole.ADMIN, UserRole.USER]),
+  userController.listRetrievePoints,
+);
+router.post(
+  '/change-account-type',
+  requireRoles([UserRole.ADMIN, UserRole.USER]),
+  userController.changeAccountType,
+);
 
 export default router;

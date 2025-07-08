@@ -14,6 +14,10 @@ export const generateShortCode = () => {
   const nanoid = customAlphabet('0123456789', 8); // chỉ 4 chữ số
   return `NAP${nanoid()}`; // Ví dụ: NAP4921
 };
+export const generateShortCodeInvite = () => {
+  const nanoid = customAlphabet('0123456789', 8); // chỉ 4 chữ số
+  return `AKA${nanoid()}`;
+};
 const updateUserSchema = z.object({
   email: z.string().email({ message: 'Email không hợp lệ' }).optional(),
   phone: z
@@ -27,10 +31,45 @@ const updateUserSchema = z.object({
     .min(6, 'Old password phải có ít nhất 6 ký tự')
     .optional(),
 });
+const createUserSchema = z.object({
+  email: z.string().email({ message: 'Email không hợp lệ' }),
+  phone: z
+    .string()
+    .regex(/^\+?\d{9,15}$/, { message: 'Số điện thoại không hợp lệ' }),
+  username: z.string().min(3, 'Username phải có ít nhất 3 ký tự'),
+  password: z.string().min(6, 'Password phải có ít nhất 6 ký tự'),
+  code: z.string().min(11, 'Code is not valid ').optional(),
+});
+const transferSchema = z.object({
+  fromId: z.string().uuid({ message: 'fromId phải là UUID hợp lệ' }),
+  toId: z.string().uuid({ message: 'toId phải là UUID hợp lệ' }),
+  amount: z
+    .number({ invalid_type_error: 'amount phải là số' })
+    .positive({ message: 'amount phải lớn hơn 0' }),
+});
+const ChangeAccountSchema = z.object({
+  fromId: z.string().uuid({ message: 'fromId phải là UUID hợp lệ' }),
+  toId: z.string().uuid({ message: 'toId phải là UUID hợp lệ' }),
+  type: z.enum(['SUB', 'MAIN'], {
+    required_error: 'Trường type là bắt buộc',
+    invalid_type_error: 'Type chỉ được là SUB hoặc MAIN',
+  }),
+});
 const userController = {
   createUser: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { role } = req.body;
+      const { email, role, phone, username, code, password } = req.body;
+      const parsed = createUserSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          req.t('invalid_data'),
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
       // if (role === 'admin') {
       //   errorResponse(
       //     res,
@@ -40,7 +79,7 @@ const userController = {
       //   );
       //   return;
       // }
-      const userExists = await UserService.getUserByEmail(req.body.email);
+      const userExists = await UserService.getUserByEmail(email);
       if (userExists) {
         errorResponse(
           res,
@@ -50,19 +89,48 @@ const userController = {
         );
         return;
       }
-      let shortCode: string = '';
+      let referralCode: string = '';
       let isUnique = false;
       while (!isUnique) {
-        shortCode = generateShortCode();
-        const existingUser = await UserService.getUserByShortCode(shortCode);
+        referralCode = generateShortCodeInvite();
+        const existingUser =
+          await UserService.getUserByReferralCode(referralCode);
         if (!existingUser) isUnique = true;
       }
-      const { password } = req.body;
       const hashedPassword = await bcrypt.hash(password, 10);
-      req.body.password = hashedPassword;
-      const user = await UserService.createUser({
-        ...req.body,
-        short_code: shortCode,
+      let inviteByUser = null;
+      if (code) {
+        inviteByUser = await prisma.user.findUnique({
+          where: {
+            referral_code: code,
+          },
+        });
+      }
+      if (inviteByUser) {
+        const user = await prisma.user.create({
+          data: {
+            email,
+            username,
+            password: hashedPassword,
+            phone,
+            referral_code: referralCode,
+            invited_by_id: inviteByUser.id,
+            parent_id: inviteByUser.id,
+            account_type: 'SUB',
+          },
+        });
+        successResponse(res, req.t('user_created'), user);
+        return;
+      }
+      const user = await prisma.user.create({
+        data: {
+          email,
+          username,
+          password: hashedPassword,
+          phone,
+          referral_code: referralCode,
+          account_type: 'MAIN',
+        },
       });
       successResponse(res, req.t('user_created'), user);
     } catch (error: any) {
@@ -138,8 +206,242 @@ const userController = {
 
   getUserById: async (req: Request, res: Response): Promise<void> => {
     try {
-      const User = await UserService.getUserById(req.params.id);
+      if (!req.params.id) {
+        errorResponse(
+          res,
+          req.t('invalid_data'),
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const User = await prisma.user.findUnique({
+        where: { id: req.params.id },
+        include: {
+          invitedBy: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              account_type: true,
+              points: true,
+            },
+          },
+          invitedUsers: {
+            orderBy: {
+              created_at: 'desc',
+            },
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              account_type: true,
+              points: true,
+            },
+          },
+        },
+      });
       successResponse(res, req.t('user_retrieved'), User);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  givePoints: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const parsed = transferSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          req.t('invalid_data'),
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const { fromId, toId, amount } = parsed.data;
+      const invitedChild = await prisma.user.findFirst({
+        where: { id: toId, invited_by_id: fromId },
+        select: { id: true },
+      });
+      if (!invitedChild) {
+        errorResponse(
+          res,
+          req.t('not_invited_by_parent'),
+          null,
+          httpStatusCodes.FORBIDDEN,
+        );
+        return;
+      }
+      const fromUser = await prisma.user.findUnique({
+        where: { id: fromId },
+        select: { points: true },
+      });
+
+      if (!fromUser || fromUser.points < amount) {
+        errorResponse(
+          res,
+          req.t('not_enough_points'),
+          null,
+          httpStatusCodes.FORBIDDEN,
+        );
+        return;
+      }
+      const transaction = await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: fromId },
+          data: { points: { decrement: amount } },
+        });
+        await tx.user.update({
+          where: { id: toId },
+          data: { points: { increment: amount } },
+        });
+        const result = await tx.pointTransfer.create({
+          data: { from_user_id: fromId, to_user_id: toId, amount },
+        });
+        return result;
+      });
+
+      successResponse(res, req.t('user_retrieved'), transaction);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  listgivePoints: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id;
+      if (!id) {
+        errorResponse(
+          res,
+          req.t('invalid_data'),
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const list = await prisma.pointTransfer.findMany({
+        where: {
+          from_user_id: id,
+        },
+        include: {
+          fromUser: {
+            select: {
+              email: true,
+              username: true,
+            },
+          },
+          toUser: {
+            select: {
+              email: true,
+              username: true,
+              account_type: true,
+            },
+          },
+        },
+      });
+
+      successResponse(res, req.t('user_retrieved'), list);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  listRetrievePoints: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id;
+      if (!id) {
+        errorResponse(
+          res,
+          req.t('invalid_data'),
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const list = await prisma.pointTransfer.findMany({
+        where: {
+          to_user_id: id,
+        },
+        include: {
+          toUser: {
+            select: {
+              email: true,
+              username: true,
+            },
+          },
+          fromUser: {
+            select: {
+              email: true,
+              username: true,
+              account_type: true,
+            },
+          },
+        },
+      });
+
+      successResponse(res, req.t('user_retrieved'), list);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  changeAccountType: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const parsed = ChangeAccountSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        errorResponse(
+          res,
+          req.t('invalid_data'),
+          errors,
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const { fromId, toId, type } = parsed.data;
+      const findUser = await prisma.user.findUnique({
+        where: {
+          id: toId,
+          parent_id: fromId,
+        },
+      });
+      if (!findUser) {
+        errorResponse(
+          res,
+          req.t('user_not_found'),
+          {},
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const updateUserType = await prisma.user.update({
+        where: {
+          id: toId,
+          parent_id: fromId,
+        },
+        data: {
+          account_type: type,
+        },
+      });
+      successResponse(res, req.t('user_retrieved'), updateUserType);
     } catch (error: any) {
       errorResponse(
         res,
