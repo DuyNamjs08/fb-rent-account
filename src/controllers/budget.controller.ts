@@ -79,7 +79,7 @@ const budgetController = {
       const budgets = await prisma.budget.findMany({
         where,
         orderBy: {
-          created_at: 'desc',
+          amount: 'asc',
         },
       });
       successResponse(res, req.t('budget_list'), budgets);
