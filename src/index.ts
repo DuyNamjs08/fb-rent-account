@@ -57,6 +57,11 @@ async function init() {
         loadPath: path.join(__dirname, `/locales/{{lng}}/translation.json`),
       },
     });
+  console.log(
+    'i18n path:',
+    path.join(__dirname, `/locales/{{lng}}/translation.json`),
+  );
+
   app.use(middleware.handle(i18next));
   app.use(
     cors({
@@ -100,6 +105,10 @@ async function init() {
   // middlware set ngôn ngữ từ config-settings
   app.use(setLanguageFromConfig);
   // các đầu api
+  app.get('/test-i18n', (req, res) => {
+    const message = req.t('greeting');
+    res.json({ message });
+  });
   app.use('/api/v1/', adRoutes);
   app.use('/api/v1/', configRoutes);
   app.use('/api/v1/', UserRoutes);
