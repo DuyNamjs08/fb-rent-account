@@ -105,5 +105,7 @@
   "voucher_info_retrieved": "Lấy thông tin voucher thành công",
   "voucher_updated": "Cập nhật voucher thành công",
   "voucher_deleted": "Xóa voucher thành công",
-  "not_invited_by_parent": "Tài khoản MAIN and SUB không đồng nhất"
+  "not_invited_by_parent": "Tài khoản MAIN and SUB không đồng nhất",
+
+  "register_success_message": "Đăng ký tài khoản thành công"
 }

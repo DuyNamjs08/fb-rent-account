@@ -104,5 +104,7 @@
   "voucher_info_retrieved": "Successfully retrieved voucher information",
   "voucher_updated": "Voucher updated successfully",
   "voucher_deleted": "Voucher deleted successfully",
-  "not_invited_by_parent": "MAIN and SUB accounts are not consistent"
+  "not_invited_by_parent": "MAIN and SUB accounts are not consistent",
+
+  "register_success_message": "Account registration successful"
 }

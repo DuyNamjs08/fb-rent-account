@@ -324,5 +324,6 @@ router.post('/refresh-token', TokenController.updateAccessToken);
 
 router.post('/forgot-password', TokenController.forgotPassword);
 router.post('/reset-password', TokenController.resetPassword);
+router.post('/register-success', TokenController.registerSuccess);
 
 export default router;
