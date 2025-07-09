@@ -5,8 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
-    "build": "tsc && npm run copy-html",
+    "build": "tsc && npm run copy-html && npm run copy-locales",
     "copy-html": "copyfiles -u 1 src/html/**/* dist/",
+    "copy-locales": "copyfiles -u 1 src/locales/**/* dist/",
     "start": "node dist/index.js",
     "migrate": "npx prisma migrate dev",
     "generate": "npx prisma generate",
