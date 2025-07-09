@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import prisma from '../config/prisma';
 
 export async function setLanguageFromConfig(
   req: Request,
@@ -7,11 +6,7 @@ export async function setLanguageFromConfig(
   next: NextFunction,
 ) {
   try {
-    const config = await prisma.config.findFirst({
-      where: { name: 'config-settings' },
-    });
-    const lang = config?.lang || 'vi';
-    req.headers['accept-language'] = lang;
+    const lang = req.headers['accept-language'] || 'vi';
     req.language = lang;
     req.i18n?.changeLanguage(lang);
 
