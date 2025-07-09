@@ -329,5 +329,60 @@ const TokenController = {
       );
     }
   },
+  registerSuccess: async (req: Request, res: Response) => {
+    try {
+      const { email, createdTime } = req.body;
+      const user = await UserService.getUserByEmail(email);
+      if (!user) {
+        errorResponse(
+          res,
+          req.t('account_not_found'),
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const pathHtml = path.resolve(__dirname, '../html/register-success.html');
+      if (!fs.existsSync(pathHtml)) {
+        throw new Error(req.t('html_file_exist'));
+      }
+
+      let htmlContent = fs.readFileSync(pathHtml, 'utf-8');
+      htmlContent = htmlContent
+        .replace(/{{username}}/g, user.username || '')
+        .replace(/{{email}}/g, email || '')
+        .replace(/{{phone}}/g, user.phone || '')
+        .replace('{{created_at}}', createdTime.toLocaleString());
+
+      // Lưu log email
+      await prisma.emailLog.create({
+        data: {
+          user_id: user.id,
+          to: user.email,
+          subject: 'AKAds Đăng ký tài khoản thành công',
+          body: htmlContent,
+          status: 'success',
+          type: 'register_success',
+        },
+      });
+
+      // Gửi email
+      await sendEmail({
+        email: user.email,
+        subject: 'AKAds Đăng ký tài khoản thành công',
+        message: htmlContent,
+      });
+
+      successResponse(res, req.t('register_success_message'), {});
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
 };
 export default TokenController;
