@@ -106,5 +106,29 @@
   "voucher_deleted": "Voucher deleted successfully",
   "not_invited_by_parent": "MAIN and SUB accounts are not consistent",
 
-  "register_success_message": "Account registration successful"
+  "register_success_message": "Account registration successful",
+  "email": {
+    "success_title": "Account rental successful! 🎉",
+
+    "hello": "Hello",
+    "failed_title": "Account Rental Failed!",
+    "error_notice": "Error Notice",
+    "error_detail": "An error occurred while you were trying to rent an account on AKAds",
+    "rent_success_desc": "You have successfully rented a BM account at AKAds! Your account has been activated and is ready to use.",
+    "account_info": "📋 Account details:",
+    "account_name": "Account name:",
+    "rent_duration": "Rental period:",
+    "start_time": "Start time:",
+    "ads_name": "Ad account name:",
+    "bm_id": "BM ID:",
+    "amount_point": "Limit:",
+    "activated": "✅ Your account has been successfully activated! You can start using it right away.",
+    "need_support": "💬 Need support?",
+    "support_desc": "If you encounter any issues or need assistance, please contact us immediately.",
+    "support_btn": "🔗 Support page",
+    "regards": "Best regards,",
+    "team_name": "AKAds Team"
+  },
+  "subject_add_account_success": "AKAds notification: Successfully added ad account to BM",
+  "subject_add_account_visa_failed": "AKAds notification: Failed to add ad account to BM using Visa"
 }

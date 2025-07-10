@@ -107,5 +107,28 @@
   "voucher_deleted": "Xóa voucher thành công",
   "not_invited_by_parent": "Tài khoản MAIN and SUB không đồng nhất",
 
-  "register_success_message": "Đăng ký tài khoản thành công"
+  "register_success_message": "Đăng ký tài khoản thành công",
+  "email": {
+    "success_title": "Thuê tài khoản thành công! 🎉",
+    "failed_title": "Thuê tài khoản thất bại!",
+    "error_notice": "Thông báo lỗi",
+    "error_detail": "Có lỗi xảy ra khi bạn thực hiện thao tác thuê tài khoản tại AKAds",
+    "hello": "Xin chào",
+    "rent_success_desc": "Bạn đã thuê tài khoản BM thành công tại AKAds! Tài khoản của bạn đã được kích hoạt và sẵn sàng sử dụng.",
+    "account_info": "📋 Thông tin chi tiết về tài khoản:",
+    "account_name": "Tên tài khoản:",
+    "rent_duration": "Thời gian thuê:",
+    "start_time": "Thời gian bắt đầu:",
+    "ads_name": "Tên tài khoản quảng cáo:",
+    "bm_id": "ID BM:",
+    "amount_point": "Hạn mức:",
+    "activated": "✅ Tài khoản đã được kích hoạt thành công! Bạn có thể bắt đầu sử dụng ngay bây giờ.",
+    "need_support": "💬 Cần hỗ trợ?",
+    "support_desc": "Nếu bạn gặp bất kỳ vấn đề gì hoặc cần hỗ trợ, vui lòng liên hệ với chúng tôi ngay.",
+    "support_btn": "🔗 Trang hỗ trợ",
+    "regards": "Trân trọng,",
+    "team_name": "Đội ngũ AKAds"
+  },
+  "subject_add_account_success": "AKAds thông báo thêm tài khoản quảng cáo vào BM",
+  "subject_add_account_visa_failed": "AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại"
 }

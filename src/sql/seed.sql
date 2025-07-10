@@ -45,3 +45,74 @@ INSERT INTO public.ads_accounts (id,account_id,account_status,amount_spent,balan
 	 ('a3baafb8-6072-4c4a-93de-e09860aa340e','admin3@gmail.com','$2b$10$k9d5YrlVvU0l2VK6poq4reQZYkITlhzoih/TOeSMUIZv1Qgb2RdJG','2025-07-07 05:15:17.16','2025-07-07 09:43:45.135','0866621957','Duy Nam',NULL,'user',6000000,0.1,'{}',NULL,NULL,true,0.0,'SUB'::public."AccountType",'e1a41dea-a841-4074-ad07-1a19451ed763','e1a41dea-a841-4074-ad07-1a19451ed763','AKA09281425'),
 	 ('f1be2a71-a28e-4319-adb5-c4f9f7fda427','test2@gmail.com','$2b$10$.mXmJmT1P3kEUNKuGzQELuCRizOBwDnkwr1TxQAc5UAm7NdNYRjxi','2025-07-08 03:24:30.455','2025-07-08 03:24:30.455','0866621957','Kiều trang ',NULL,'user',0,0.1,'{}',NULL,NULL,true,0.0,'MAIN'::public."AccountType",NULL,NULL,'AKA76490408'),
 	 ('772235f6-ce0b-41c5-a692-a8e6dec8a687','test@gmail.com','$2b$10$lqiIXWWx6AoeM//A5GdLn.y8fTiEYrzhcwBYoD3QqA9t3bH0/9cHW','2025-07-08 03:08:13.766','2025-07-08 03:53:08.154','0866621957','Thành đạt',NULL,'user',0,0.1,'{}',NULL,NULL,true,0.0,'MAIN'::public."AccountType",'e1a41dea-a841-4074-ad07-1a19451ed763','e1a41dea-a841-4074-ad07-1a19451ed763','AKA95395863');
+-- Chính sách 
+INSERT INTO public.policies (id,title,message,created_at,updated_at) VALUES
+	 ('ac5272ee-b42d-4b40-9bd9-0a4da8f22192','CHÍNH SÁCH BẢO MẬT','Bảo mật thông tin
+
+Chúng tôi áp dụng các biện pháp bảo mật tiên tiến bao gồm mã hóa dữ liệu, kiểm soát truy cập nội bộ và cập nhật thường xuyên hệ thống nhằm đảm bảo thông tin cá nhân được lưu trữ an toàn, tránh bị truy cập trái phép hoặc rò rỉ.
+
+Quyền của người dùng
+
+Người dùng có quyền truy cập, chỉnh sửa, cập nhật hoặc yêu cầu xóa thông tin cá nhân của mình bất kỳ lúc nào. Ngoài ra, người dùng cũng có quyền phản đối việc xử lý dữ liệu vì mục đích tiếp thị hoặc yêu cầu hạn chế phạm vi sử dụng thông tin.
+
+Thay đổi chính sách
+
+Chính sách bảo mật có thể được cập nhật theo thời gian để phản ánh các thay đổi trong hoạt động hoặc yêu cầu pháp lý. Mọi thay đổi sẽ được thông báo trên website hoặc qua email. Việc tiếp tục sử dụng dịch vụ sau khi có cập nhật đồng nghĩa với việc người dùng chấp thuận chính sách mới.','2025-07-09 07:38:16.128','2025-07-09 07:38:16.128'),
+	 ('ff19fb53-e1f7-4abb-92f8-5cb57319827f','CHÍNH SÁCH HỖ TRỢ & BẢO TRÌ','Mục đích và phạm vi hỗ trợ
+
+AkaAds cam kết cung cấp dịch vụ hỗ trợ kỹ thuật cho tất cả người dùng đang sử dụng hệ thống hoặc sản phẩm do chúng tôi cung cấp. Chính sách hỗ trợ được xây dựng nhằm đảm bảo người dùng luôn nhận được sự trợ giúp kịp thời, chính xác và thân thiện trong suốt quá trình sử dụng. Việc hỗ trợ bao gồm tư vấn kỹ thuật, hướng dẫn sử dụng, giải quyết sự cố hệ thống, kiểm tra hiệu suất tài khoản quảng cáo và xử lý các vấn đề liên quan đến tính năng nền tảng.
+
+Thời gian và hình thức hỗ trợ
+
+Đội ngũ hỗ trợ của AkaAds hoạt động 24/7, sẵn sàng tiếp nhận và xử lý yêu cầu. Người dùng có thể liên hệ với bộ phận hỗ trợ thông qua email, biểu mẫu liên hệ trên website hoặc hệ thống chat trực tuyến. Đối với các sự cố nghiêm trọng như gián đoạn truy cập hoặc mất dữ liệu, hệ thống sẽ ưu tiên xử lý trong thời gian sớm nhất có thể. Các yêu cầu thông thường sẽ được phản hồi trong vòng 24–48 giờ làm việc.
+
+Bảo trì hệ thống
+
+Để đảm bảo dịch vụ luôn ổn định và an toàn, AkaAds định kỳ thực hiện bảo trì hệ thống. Việc bảo trì có thể bao gồm nâng cấp phần mềm, vá lỗi bảo mật, tối ưu hiệu suất máy chủ và cập nhật tính năng mới. Trong trường hợp bảo trì định kỳ có thể ảnh hưởng đến khả năng truy cập hoặc gián đoạn tạm thời dịch vụ, chúng tôi sẽ thông báo trước trên website hoặc qua email, ít nhất 24 giờ trước khi bắt đầu bảo trì, trừ các tình huống khẩn cấp.
+
+Gián đoạn ngoài ý muốn
+
+Trong những trường hợp phát sinh sự cố do lỗi hạ tầng, tấn công mạng hoặc các nguyên nhân bất khả kháng như thiên tai, mất điện trên diện rộng, AkaAds sẽ chủ động xử lý và khắc phục trong thời gian nhanh nhất có thể. Chúng tôi cũng sẽ cập nhật liên tục tình hình xử lý trên các kênh chính thức để người dùng nắm bắt. Trong những trường hợp này, thời gian gián đoạn sẽ không bị xem là vi phạm cam kết dịch vụ, tuy nhiên chúng tôi sẽ hỗ trợ bổ sung nếu có ảnh hưởng đến hiệu quả chiến dịch của khách hàng.
+
+Cập nhật và nâng cấp
+
+Các tính năng mới hoặc cập nhật nền tảng sẽ được triển khai định kỳ nhằm cải thiện trải nghiệm người dùng, nâng cao độ ổn định và tính bảo mật của hệ thống. AkaAds sẽ thông báo các cập nhật quan trọng qua hệ thống quản trị hoặc email để người dùng chuẩn bị và có sự điều chỉnh phù hợp. Trong trường hợp cập nhật làm thay đổi giao diện hoặc quy trình thao tác, đội ngũ kỹ thuật sẽ cung cấp tài liệu hướng dẫn hoặc tổ chức buổi đào tạo ngắn gọn theo nhu cầu.
+
+Trách nhiệm hỗ trợ
+
+AkaAds có trách nhiệm duy trì khả năng vận hành liên tục của hệ thống, hỗ trợ người dùng trong giới hạn năng lực và phạm vi trách nhiệm được công bố. Tuy nhiên, chúng tôi không chịu trách nhiệm với các sự cố phát sinh do lỗi từ bên thứ ba như phần mềm độc hại từ thiết bị người dùng, lỗi mạng riêng của khách hàng hoặc sử dụng dịch vụ sai hướng dẫn. Trong mọi tình huống, AkaAds sẽ nỗ lực hỗ trợ với tinh thần hợp tác và thiện chí cao nhất.','2025-07-09 07:38:44.202','2025-07-09 07:38:44.202'),
+	 ('185bab1b-69b3-45a1-84a5-5a459fcd5996','ĐIỀU KHOẢN DỊCH VỤ','Phạm vi áp dụng
+
+Điều khoản dịch vụ này áp dụng cho tất cả người dùng truy cập, sử dụng website và các nền tảng trực tuyến do AkaAds vận hành. Khi sử dụng bất kỳ dịch vụ nào của AkaAds, người dùng được xem là đã đọc, hiểu và đồng ý với toàn bộ nội dung điều khoản.
+
+Đăng ký tài khoản
+
+Người dùng cần cung cấp thông tin chính xác và chịu trách nhiệm bảo mật tài khoản đã đăng ký. Mọi hành động thực hiện thông qua tài khoản đó sẽ được hiểu là do chính chủ tài khoản thực hiện. AkaAds có quyền từ chối hoặc chấm dứt tài khoản trong trường hợp phát hiện vi phạm hoặc thông tin không trung thực.
+
+Quyền và nghĩa vụ của người dùng
+
+Người dùng có quyền truy cập, sử dụng các tính năng do AkaAds cung cấp và được hưởng hỗ trợ kỹ thuật trong phạm vi dịch vụ đăng ký. Đồng thời, người dùng có nghĩa vụ tuân thủ các quy định của pháp luật, không sử dụng dịch vụ vào mục đích trái phép, không lan truyền nội dung độc hại, xuyên tạc, vi phạm bản quyền hoặc gây hại đến hệ thống.
+
+Quyền và trách nhiệm của AkaAds
+
+AkaAds có quyền thay đổi, nâng cấp hoặc tạm ngừng cung cấp dịch vụ mà không cần thông báo trước trong các trường hợp bất khả kháng hoặc vì lý do bảo trì kỹ thuật. Chúng tôi không chịu trách nhiệm cho những thiệt hại phát sinh do người dùng sử dụng sai mục đích, truyền tải thông tin sai lệch hoặc vi phạm pháp luật.
+
+Nội dung do người dùng cung cấp
+
+Người dùng chịu hoàn toàn trách nhiệm về nội dung mà mình tạo ra hoặc đăng tải thông qua hệ thống. AkaAds có quyền kiểm duyệt, chỉnh sửa hoặc gỡ bỏ bất kỳ nội dung nào được cho là không phù hợp, vi phạm pháp luật hoặc ảnh hưởng tiêu cực đến cộng đồng người dùng khác.
+
+Phí dịch vụ và thanh toán
+
+Một số dịch vụ hoặc tính năng nâng cao có thể yêu cầu người dùng thanh toán. Các mức phí và phương thức thanh toán sẽ được công bố rõ ràng trên nền tảng. Người dùng cần đảm bảo thanh toán đầy đủ, đúng thời hạn để không ảnh hưởng đến quyền truy cập dịch vụ. Trong trường hợp phát sinh hoàn tiền, AkaAds sẽ thực hiện theo chính sách đã công bố tại thời điểm đăng ký.
+
+Giới hạn trách nhiệm
+
+Chúng tôi cam kết cung cấp dịch vụ với chất lượng cao nhất có thể, tuy nhiên AkaAds không chịu trách nhiệm đối với bất kỳ thiệt hại gián tiếp, mất dữ liệu, hoặc các tổn thất khác phát sinh từ việc sử dụng hoặc không thể sử dụng dịch vụ. Người dùng cần chủ động sao lưu thông tin và kiểm tra tính hợp pháp của các nội dung quảng cáo do mình triển khai.
+
+Giải quyết tranh chấp
+
+Mọi tranh chấp phát sinh giữa AkaAds và người dùng sẽ được ưu tiên giải quyết thông qua thương lượng. Nếu không đạt được thỏa thuận, tranh chấp sẽ được chuyển đến cơ quan có thẩm quyền tại Việt Nam theo quy định của pháp luật hiện hành.
+
+Thay đổi điều khoản
+
+AkaAds có thể cập nhật điều khoản dịch vụ bất cứ lúc nào nhằm đáp ứng yêu cầu vận hành hoặc thay đổi về pháp lý. Mọi cập nhật sẽ được công bố trên website. Việc tiếp tục sử dụng dịch vụ sau khi điều khoản thay đổi được xem là sự chấp thuận của người dùng đối với phiên bản mới.','2025-07-09 07:39:08.22','2025-07-09 07:39:08.22');

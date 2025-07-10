@@ -3,8 +3,6 @@ import prisma from '../config/prisma';
 import { autoChangePartner } from '../auto-use-session';
 import { autoChangeLimitSpend } from '../auto-use-sessionV2';
 import { createRepeatJob } from './fb-check-account';
-import fs from 'fs';
-import path from 'path';
 import { sendEmail } from '../controllers/mails.controller';
 import { format } from 'date-fns';
 
@@ -67,13 +65,13 @@ fbParnert.process(2, async (job) => {
     bm_id,
     amountOrigin,
     currency,
+    renderedHtmlSuccess,
+    renderedHtmlError,
+    titlEmailSucces,
+    titlEmailError,
   } = data;
   try {
     console.log('data used point', data);
-    const pathhtml = path.resolve(__dirname, '../html/rent-success.html');
-    const pathhtmlError = path.resolve(__dirname, '../html/rent-error.html');
-    let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
-    let htmlContentV2 = fs.readFileSync(pathhtmlError, 'utf-8');
     const res = await updateDb(data);
     const { status_partner, status_limit_spend } = res;
 
@@ -117,34 +115,16 @@ fbParnert.process(2, async (job) => {
         data: {
           user_id: user.id,
           to: user.email,
-          subject: 'AKAds thông báo đăng nhập',
-          body: htmlContent
-            .replace('{{accountName}}', user.username || 'Người dùng')
-            .replace(
-              '{{rentDuration}}',
-              format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-                new Date().toLocaleString(),
-            )
-            .replace('{{ads_name}}', ads_name || '')
-            .replace('{{amountPoint}}', amountPoint || '')
-            .replace('{{bm_id}}', bm_id || ''),
+          subject: titlEmailSucces,
+          body: renderedHtmlSuccess,
           status: 'success',
           type: 'rent_ads',
         },
       });
       await sendEmail({
         email: user.email,
-        subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM',
-        message: htmlContent
-          .replace('{{accountName}}', user.username || 'Người dùng')
-          .replace(
-            '{{rentDuration}}',
-            format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-              new Date().toLocaleString(),
-          )
-          .replace('{{ads_name}}', ads_name || '')
-          .replace('{{amountPoint}}', amountPoint || '')
-          .replace('{{bm_id}}', bm_id || ''),
+        subject: titlEmailSucces,
+        message: renderedHtmlSuccess,
       });
       const currentList = user.list_ads_account || [];
       const updatedList = currentList.includes(ads_account_id)
@@ -191,38 +171,16 @@ fbParnert.process(2, async (job) => {
         data: {
           user_id: user.id,
           to: user.email,
-          subject:
-            'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
-          body: htmlContentV2
-            .replace('{{accountName}}', user.username || 'Người dùng')
-            .replace('{{accountNameV2}}', user.username || 'Người dùng')
-            .replace('{{errorMessage}}', errorMessage)
-            .replace(
-              '{{rentDuration}}',
-              format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-                new Date().toLocaleString(),
-            )
-            .replace('{{ads_name}}', ads_name || '')
-            .replace('{{bm_id}}', bm_id || ''),
+          subject: titlEmailError,
+          body: renderedHtmlError,
           status: 'success',
           type: 'rent_ads',
         },
       });
       await sendEmail({
         email: user.email,
-        subject:
-          'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
-        message: htmlContentV2
-          .replace('{{accountName}}', user.username || 'Người dùng')
-          .replace('{{accountNameV2}}', user.username || 'Người dùng')
-          .replace('{{errorMessage}}', errorMessage)
-          .replace(
-            '{{rentDuration}}',
-            format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-              new Date().toLocaleString(),
-          )
-          .replace('{{ads_name}}', ads_name || '')
-          .replace('{{bm_id}}', bm_id || ''),
+        subject: titlEmailError,
+        message: renderedHtmlError,
       });
       await prisma.$transaction(async (tx) => {
         const adsAccount = await tx.adsAccount.findFirst({
