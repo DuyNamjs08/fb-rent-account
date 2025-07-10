@@ -7,6 +7,10 @@ import { fbParnert } from '../workers/fb-partner';
 import { fbRemoveParnert } from '../workers/fb-partner-remove';
 import { createRepeatJob, fbCheckAccount } from '../workers/fb-check-account';
 import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+import { format } from 'date-fns';
+import mustache from 'mustache';
 
 const createChargeSchema = z.object({
   bm_id: z.string().min(1, 'bm_id is required'),
@@ -89,7 +93,7 @@ const pointUsedController = {
 
       const user = await prisma.user.findUnique({
         where: { id: user_id },
-        select: { points: true, percentage: true },
+        select: { points: true, percentage: true, username: true },
       });
 
       if (!user) {
@@ -246,6 +250,70 @@ const pointUsedController = {
         );
         return;
       }
+      const pathhtml = path.resolve(__dirname, '../html/rent-success.html');
+      const pathhtmlError = path.resolve(__dirname, '../html/rent-error.html');
+      let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
+      let htmlContentV2 = fs.readFileSync(pathhtmlError, 'utf-8');
+      const renderedHtmlSuccess = mustache.render(htmlContent, {
+        accountName: user.username,
+        rentDuration: format(
+          new Date(newBmPartnert.created_at),
+          'dd/MM/yyyy HH:mm:ss',
+        ),
+        ads_name: ads_name,
+        amountPoint: amountOrigin,
+        bm_id: bm_id,
+        // Truyền từng key đã dịch sẵn
+        success_title: req.t('email.success_title'),
+        failed_title: req.t('email.failed_title'),
+        error_notice: req.t('email.error_notice'),
+        error_detail: req.t('email.error_detail'),
+        hello: req.t('email.hello'),
+        rent_success_desc: req.t('email.rent_success_desc'),
+        account_info: req.t('email.account_info'),
+        account_name: req.t('email.account_name'),
+        rent_duration: req.t('email.rent_duration'),
+        start_time: req.t('email.start_time'),
+        ads_name_text: req.t('email.ads_name'),
+        bm_id_text: req.t('email.bm_id'),
+        amount_point: req.t('email.amount_point'),
+        activated: req.t('email.activated'),
+        need_support: req.t('email.need_support'),
+        support_desc: req.t('email.support_desc'),
+        support_btn: req.t('email.support_btn'),
+        regards: req.t('email.regards'),
+        team_name: req.t('email.team_name'),
+      });
+      const renderedHtmlError = mustache.render(htmlContentV2, {
+        accountName: user.username,
+        rentDuration: format(
+          new Date(newBmPartnert.created_at),
+          'dd/MM/yyyy HH:mm:ss',
+        ),
+        ads_name: ads_name,
+        amountPoint: amountOrigin,
+        bm_id: bm_id,
+        // Truyền từng key đã dịch sẵn
+        success_title: req.t('email.success_title'),
+        failed_title: req.t('email.failed_title'),
+        error_notice: req.t('email.error_notice'),
+        error_detail: req.t('email.error_detail'),
+        hello: req.t('email.hello'),
+        rent_success_desc: req.t('email.rent_success_desc'),
+        account_info: req.t('email.account_info'),
+        account_name: req.t('email.account_name'),
+        rent_duration: req.t('email.rent_duration'),
+        start_time: req.t('email.start_time'),
+        ads_name_text: req.t('email.ads_name'),
+        bm_id_text: req.t('email.bm_id'),
+        amount_point: req.t('email.amount_point'),
+        activated: req.t('email.activated'),
+        need_support: req.t('email.need_support'),
+        support_desc: req.t('email.support_desc'),
+        support_btn: req.t('email.support_btn'),
+        regards: req.t('email.regards'),
+        team_name: req.t('email.team_name'),
+      });
       const job = await fbParnert.add({
         bm_id,
         ads_account_id,
@@ -257,8 +325,11 @@ const pointUsedController = {
         bot_id,
         id_partner: newBmPartnert.id,
         currency,
+        renderedHtmlSuccess,
+        renderedHtmlError,
+        titlEmailSucces: req.t('subject_add_account_success'),
+        titlEmailError: req.t('subject_add_account_visa_failed'),
       });
-      console.log('✅ Job added to fbParnert queue:', job.id);
 
       successResponse(
         res,

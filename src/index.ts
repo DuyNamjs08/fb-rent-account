@@ -41,6 +41,11 @@ import middleware from 'i18next-http-middleware';
 import Backend from 'i18next-fs-backend';
 import path from 'path';
 import { setLanguageFromConfig } from './middlewares/setLanguageFromConfig';
+import mustache from 'mustache';
+import { sendEmail } from './controllers/mails.controller';
+import fs from 'fs';
+import { format } from 'date-fns';
+
 async function init() {
   dotenv.config({ path: `${__dirname}/../.env` });
   const envPath = `${__dirname}/../.env`;
@@ -105,7 +110,45 @@ async function init() {
   // middlware set ngôn ngữ từ config-settings
   app.use(setLanguageFromConfig);
   // các đầu api
-  app.get('/test-i18n', (req, res) => {
+  app.get('/test-i18n', async (req, res) => {
+    const pathhtml = path.resolve(__dirname, './html/rent-success.html');
+    const pathhtmlError = path.resolve(__dirname, './html/rent-error.html');
+    let htmlContentV2 = fs.readFileSync(pathhtmlError, 'utf-8');
+
+    let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
+    const renderedHtml = mustache.render(htmlContentV2, {
+      accountName: 'Duy Nam',
+      rentDuration: format(new Date(), 'dd/MM/yyyy HH:mm:ss'),
+      ads_name: 'test1',
+      amountPoint: '30000',
+      bm_id: '10001',
+      errorMessage: 'Không thể connect được tới bm',
+      // Truyền từng key đã dịch sẵn
+      success_title: req.t('email.success_title'),
+      failed_title: req.t('email.failed_title'),
+      error_notice: req.t('email.error_notice'),
+      error_detail: req.t('email.error_detail'),
+      hello: req.t('email.hello'),
+      rent_success_desc: req.t('email.rent_success_desc'),
+      account_info: req.t('email.account_info'),
+      account_name: req.t('email.account_name'),
+      rent_duration: req.t('email.rent_duration'),
+      start_time: req.t('email.start_time'),
+      ads_name_text: req.t('email.ads_name'),
+      bm_id_text: req.t('email.bm_id'),
+      amount_point: req.t('email.amount_point'),
+      activated: req.t('email.activated'),
+      need_support: req.t('email.need_support'),
+      support_desc: req.t('email.support_desc'),
+      support_btn: req.t('email.support_btn'),
+      regards: req.t('email.regards'),
+      team_name: req.t('email.team_name'),
+    });
+    await sendEmail({
+      email: 'duynam11a11999@gmail.com',
+      subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM',
+      message: renderedHtml,
+    });
     const message = req.t('greeting');
     res.json({ message });
   });

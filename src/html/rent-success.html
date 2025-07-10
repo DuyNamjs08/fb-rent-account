@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thuê tài khoản thành công</title>
+    <title>{{success_title}}</title>
   </head>
   <body
     style="
@@ -26,7 +26,6 @@
           overflow: hidden;
         "
       >
-        <!-- Header with success indicator -->
         <div
           style="
             background: linear-gradient(135deg, #48bb78, #38a169);
@@ -35,36 +34,11 @@
             color: white;
           "
         >
-          <div
-            style="
-              width: 60px;
-              height: 60px;
-              background: rgba(255, 255, 255, 0.2);
-              border-radius: 50%;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              margin-bottom: 15px;
-            "
-          >
-            <svg
-              width="30"
-              height="30"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              stroke-width="3"
-            >
-              <polyline points="20,6 9,17 4,12"></polyline>
-            </svg>
-          </div>
-
           <h1 style="margin: 0; font-size: 24px; font-weight: 600">
-            Thuê tài khoản thành công! 🎉
+            {{success_title}}
           </h1>
         </div>
 
-        <!-- Logo section -->
         <div
           style="text-align: center; padding: 25px 30px; background: #f8f9fa"
         >
@@ -75,10 +49,9 @@
           />
         </div>
 
-        <!-- Main content -->
         <div style="padding: 30px">
           <h2 style="margin: 0 0 20px; font-size: 22px; color: #2d3748">
-            Xin chào
+            {{hello}}
             <span style="color: #48bb78; font-weight: 600">{{accountName}}</span
             >!
           </h2>
@@ -91,11 +64,9 @@
               line-height: 1.6;
             "
           >
-            Bạn đã thuê tài khoản BM thành công tại AKAds! Tài khoản của bạn đã
-            được kích hoạt và sẵn sàng sử dụng.
+            {{rent_success_desc}}
           </p>
 
-          <!-- Account info box -->
           <div
             style="
               background: #f7fafc;
@@ -113,9 +84,8 @@
                 font-weight: 600;
               "
             >
-              📋 Thông tin chi tiết về tài khoản:
+              {{account_info}}
             </h3>
-
             <table style="width: 100%; border-collapse: collapse">
               <tr>
                 <td
@@ -127,7 +97,7 @@
                     width: 40%;
                   "
                 >
-                  Tên tài khoản:
+                  {{account_name}}
                 </td>
                 <td
                   style="
@@ -149,7 +119,7 @@
                     font-weight: 500;
                   "
                 >
-                  Thời gian thuê:
+                  {{rent_duration}}
                 </td>
                 <td
                   style="
@@ -171,7 +141,7 @@
                     font-weight: 500;
                   "
                 >
-                  Thời gian bắt đầu:
+                  {{start_time}}
                 </td>
                 <td
                   style="
@@ -193,7 +163,7 @@
                     font-weight: 500;
                   "
                 >
-                  Tên tài khoản quảng cáo:
+                  {{ads_name_text}}
                 </td>
                 <td
                   style="
@@ -215,7 +185,7 @@
                     font-weight: 500;
                   "
                 >
-                  ID BM:
+                  {{bm_id_text}}
                 </td>
                 <td
                   style="
@@ -230,7 +200,7 @@
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #4a5568; font-weight: 500">
-                  Hạn mức:
+                  {{amount_point}}
                 </td>
                 <td
                   style="
@@ -246,7 +216,6 @@
             </table>
           </div>
 
-          <!-- Success message -->
           <div
             style="
               background: linear-gradient(135deg, #f0fff4, #e6fffa);
@@ -265,12 +234,10 @@
                 font-weight: 500;
               "
             >
-              ✅ Tài khoản đã được kích hoạt thành công! Bạn có thể bắt đầu sử
-              dụng ngay bây giờ.
+              {{activated}}
             </p>
           </div>
 
-          <!-- Support section -->
           <div
             style="
               background: #ebf8ff;
@@ -288,7 +255,7 @@
                 font-weight: 500;
               "
             >
-              💬 Cần hỗ trợ?
+              {{need_support}}
             </p>
             <p
               style="
@@ -298,8 +265,7 @@
                 line-height: 1.5;
               "
             >
-              Nếu bạn gặp bất kỳ vấn đề gì hoặc cần hỗ trợ, vui lòng liên hệ với
-              chúng tôi ngay.
+              {{support_desc}}
             </p>
             <a
               href="https://akamedia.vn/"
@@ -313,12 +279,10 @@
                 font-weight: 600;
                 font-size: 14px;
               "
+              >{{support_btn}}</a
             >
-              🔗 Trang hỗ trợ
-            </a>
           </div>
 
-          <!-- Footer -->
           <div
             style="
               text-align: center;
@@ -328,7 +292,7 @@
             "
           >
             <p style="margin: 0 0 5px; color: #4a5568; font-size: 14px">
-              Trân trọng,
+              {{regards}}
             </p>
             <p
               style="
@@ -338,7 +302,7 @@
                 font-weight: 600;
               "
             >
-              Đội ngũ AKAds
+              {{team_name}}
             </p>
           </div>
         </div>
