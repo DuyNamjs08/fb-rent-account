@@ -10,6 +10,10 @@ import {
   fbCheckAccountVisa,
 } from '../workers/fb-check-visa';
 import { addDays } from 'date-fns';
+import fs from 'fs';
+import path from 'path';
+import { format } from 'date-fns';
+import mustache from 'mustache';
 export const FacebookVisaSchema = z.object({
   id: z.string().uuid().optional(),
   visa_name: z
@@ -176,6 +180,20 @@ const visaController = {
         );
         return;
       }
+      const user = await prisma.user.findUnique({
+        where: { id: user_id },
+        select: { points: true, percentage: true, username: true },
+      });
+
+      if (!user) {
+        errorResponse(
+          res,
+          req.t('user_not_found'),
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
       const amountVNDchange = Math.floor(Number(amountPoint));
 
       const poitsUsedTransaction = await prisma.$transaction(async (tx) => {
@@ -336,6 +354,70 @@ const visaController = {
         );
         return;
       }
+      const pathhtml = path.resolve(__dirname, '../html/rent-success.html');
+      const pathhtmlError = path.resolve(__dirname, '../html/rent-error.html');
+      let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
+      let htmlContentV2 = fs.readFileSync(pathhtmlError, 'utf-8');
+      const renderedHtmlSuccess = mustache.render(htmlContent, {
+        accountName: user.username,
+        rentDuration: format(
+          new Date(newBmPartnert.created_at),
+          'dd/MM/yyyy HH:mm:ss',
+        ),
+        ads_name: ads_name,
+        amountPoint: amountVNDchange,
+        bm_id: bm_id,
+        // Truyền từng key đã dịch sẵn
+        success_title: req.t('email.success_title'),
+        failed_title: req.t('email.failed_title'),
+        error_notice: req.t('email.error_notice'),
+        error_detail: req.t('email.error_detail'),
+        hello: req.t('email.hello'),
+        rent_success_desc: req.t('email.rent_success_desc'),
+        account_info: req.t('email.account_info'),
+        account_name: req.t('email.account_name'),
+        rent_duration: req.t('email.rent_duration'),
+        start_time: req.t('email.start_time'),
+        ads_name_text: req.t('email.ads_name'),
+        bm_id_text: req.t('email.bm_id'),
+        amount_point: req.t('email.amount_point'),
+        activated: req.t('email.activated'),
+        need_support: req.t('email.need_support'),
+        support_desc: req.t('email.support_desc'),
+        support_btn: req.t('email.support_btn'),
+        regards: req.t('email.regards'),
+        team_name: req.t('email.team_name'),
+      });
+      const renderedHtmlError = mustache.render(htmlContentV2, {
+        accountName: user.username,
+        rentDuration: format(
+          new Date(newBmPartnert.created_at),
+          'dd/MM/yyyy HH:mm:ss',
+        ),
+        ads_name: ads_name,
+        amountPoint: amountVNDchange,
+        bm_id: bm_id,
+        // Truyền từng key đã dịch sẵn
+        success_title: req.t('email.success_title'),
+        failed_title: req.t('email.failed_title'),
+        error_notice: req.t('email.error_notice'),
+        error_detail: req.t('email.error_detail'),
+        hello: req.t('email.hello'),
+        rent_success_desc: req.t('email.rent_success_desc'),
+        account_info: req.t('email.account_info'),
+        account_name: req.t('email.account_name'),
+        rent_duration: req.t('email.rent_duration'),
+        start_time: req.t('email.start_time'),
+        ads_name_text: req.t('email.ads_name'),
+        bm_id_text: req.t('email.bm_id'),
+        amount_point: req.t('email.amount_point'),
+        activated: req.t('email.activated'),
+        need_support: req.t('email.need_support'),
+        support_desc: req.t('email.support_desc'),
+        support_btn: req.t('email.support_btn'),
+        regards: req.t('email.regards'),
+        team_name: req.t('email.team_name'),
+      });
       await fbParnertVisa.add({
         bm_id,
         ads_account_id,
@@ -353,6 +435,10 @@ const visaController = {
         verify_code,
         // phần check tiền tệ
         currency,
+        renderedHtmlSuccess,
+        renderedHtmlError,
+        titlEmailSucces: req.t('subject_add_account_visa_success'),
+        titlEmailError: req.t('subject_add_account_visa_failed'),
       });
       successResponse(
         res,

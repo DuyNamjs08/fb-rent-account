@@ -328,7 +328,7 @@ const pointUsedController = {
         renderedHtmlSuccess,
         renderedHtmlError,
         titlEmailSucces: req.t('subject_add_account_success'),
-        titlEmailError: req.t('subject_add_account_visa_failed'),
+        titlEmailError: req.t('subject_add_account_failed'),
       });
 
       successResponse(
