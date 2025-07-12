@@ -10,6 +10,7 @@ import { sendEmail } from './mails.controller';
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
+import mustache from 'mustache';
 const createAccessTokenSchema = z.object({
   email: z.string().email('invalid email'),
   password: z.string().min(6, 'password must be at least 6 characters'),
@@ -235,20 +236,34 @@ const TokenController = {
         throw new Error(req.t('html_file_exist'));
       }
       let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
-      htmlContent = htmlContent
-        .replace('{{NAME}}', user.username || 'Người dùng')
-        .replace('{{RESET_URL}}', resetLink)
-        .replace('{{USER_EMAIL}}', user.email)
-        .replace('{{COMPANY_NAME}}', 'AKA Media')
-        .replace('{{SUPPORT_EMAIL}}', 'support@akads.vn');
-
+      const renderedHtml = mustache.render(htmlContent, {
+        NAME: user.username || 'Người dùng',
+        RESET_URL: resetLink,
+        USER_EMAIL: user.email,
+        COMPANY_NAME: 'AKA Media',
+        bm_id: '10001',
+        SUPPORT_EMAIL: 'support@akads.vn',
+        // Truyền từng key đã dịch sẵn
+        // Các trường i18n
+        reset_password_title: req.t('email.reset_password_title'),
+        reset_password_description: req.t('email.reset_password_description'),
+        greeting: req.t('email.greeting'),
+        reset_password_instruction: req.t('email.reset_password_instruction', {
+          company: 'AKA Media',
+        }),
+        reset_password_button: req.t('email.reset_password_button'),
+        link_expire_notice_title: req.t('email.link_expire_notice_title'),
+        link_expire_notice_description: req.t(
+          'email.link_expire_notice_description',
+        ),
+      });
       // Lưu log email
       await prisma.emailLog.create({
         data: {
           user_id: user.id,
           to: user.email,
           subject: 'AKAds Đặt lại mật khẩu',
-          body: htmlContent,
+          body: renderedHtml,
           status: 'success',
           type: 'reset_password',
         },
@@ -258,7 +273,7 @@ const TokenController = {
       await sendEmail({
         email: user.email,
         subject: 'AKAds Đặt lại mật khẩu',
-        message: htmlContent,
+        message: renderedHtml,
       });
 
       successResponse(res, req.t('password_reset_email_sent'), {});
@@ -349,19 +364,40 @@ const TokenController = {
       }
 
       let htmlContent = fs.readFileSync(pathHtml, 'utf-8');
-      htmlContent = htmlContent
-        .replace(/{{username}}/g, user.username || '')
-        .replace(/{{email}}/g, email || '')
-        .replace(/{{phone}}/g, user.phone || '')
-        .replace('{{created_at}}', createdTime.toLocaleString());
-
+      const renderedHtml = mustache.render(htmlContent, {
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        created_at: createdTime.toLocaleString(),
+        // i18n
+        welcome_title: req.t('register.welcome_title'),
+        welcome_heading: req.t('register.welcome_heading'),
+        registration_success: req.t('register.registration_success'),
+        greeting: req.t('register.greeting'),
+        welcome_description: req.t('register.welcome_description'),
+        account_info: req.t('register.account_info'),
+        fullname: req.t('register.fullname'),
+        phone_label: req.t('register.phone'),
+        email_label: req.t('register.email'),
+        created_at_label: req.t('register.created_at'),
+        need_help: req.t('register.need_help'),
+        hotline: req.t('register.hotline'),
+        support_email: req.t('register.support_email'),
+        working_hours: req.t('register.working_hours'),
+        working_days: req.t('register.working_days'),
+        company_name: req.t('register.company_name'),
+        auto_notice: req.t('register.auto_notice'),
+        company_address: req.t('register.company_address'),
+        website: req.t('register.website'),
+        rights_reserved: req.t('register.rights_reserved'),
+      });
       // Lưu log email
       await prisma.emailLog.create({
         data: {
           user_id: user.id,
           to: user.email,
           subject: 'AKAds Đăng ký tài khoản thành công',
-          body: htmlContent,
+          body: renderedHtml,
           status: 'success',
           type: 'register_success',
         },
@@ -371,7 +407,7 @@ const TokenController = {
       await sendEmail({
         email: user.email,
         subject: 'AKAds Đăng ký tài khoản thành công',
-        message: htmlContent,
+        message: renderedHtml,
       });
 
       successResponse(res, req.t('register_success_message'), {});

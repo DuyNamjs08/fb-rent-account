@@ -82,13 +82,12 @@ fbParnertVisa.process(2, async (job) => {
     ads_name,
     bm_id,
     currency,
+    renderedHtmlSuccess,
+    renderedHtmlError,
+    titlEmailSucces,
+    titlEmailError,
   } = data;
   try {
-    console.log('data used point', data);
-    const pathhtml = path.resolve(__dirname, '../html/rent-success.html');
-    const pathhtmlError = path.resolve(__dirname, '../html/rent-error.html');
-    let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
-    let htmlContentV2 = fs.readFileSync(pathhtmlError, 'utf-8');
     const res = await updateDb(data);
     const { status_partner, status_visa } = res;
 
@@ -133,34 +132,16 @@ fbParnertVisa.process(2, async (job) => {
         data: {
           user_id: user.id,
           to: user.email,
-          subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa',
-          body: htmlContent
-            .replace('{{accountName}}', user.username || 'Người dùng')
-            .replace(
-              '{{rentDuration}}',
-              format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-                new Date().toLocaleString(),
-            )
-            .replace('{{ads_name}}', ads_name || '')
-            .replace('{{amountPoint}}', amountPoint || '')
-            .replace('{{bm_id}}', bm_id || ''),
+          subject: titlEmailSucces,
+          body: renderedHtmlSuccess,
           status: 'success',
           type: 'rent_ads',
         },
       });
       await sendEmail({
         email: user.email,
-        subject: 'AKAds thông báo thêm tài khoản quảng cáo vào BM  bằng visa',
-        message: htmlContent
-          .replace('{{accountName}}', user.username || 'Người dùng')
-          .replace(
-            '{{rentDuration}}',
-            format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-              new Date().toLocaleString(),
-          )
-          .replace('{{ads_name}}', ads_name || '')
-          .replace('{{amountPoint}}', amountPoint || '')
-          .replace('{{bm_id}}', bm_id || ''),
+        subject: titlEmailSucces,
+        message: renderedHtmlSuccess,
       });
       const currentList = user.list_ads_account || [];
       const updatedList = currentList.includes(ads_account_id)
@@ -208,38 +189,16 @@ fbParnertVisa.process(2, async (job) => {
         data: {
           user_id: user.id,
           to: user.email,
-          subject:
-            'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
-          body: htmlContentV2
-            .replace('{{accountName}}', user.username || 'Người dùng')
-            .replace('{{accountNameV2}}', user.username || 'Người dùng')
-            .replace('{{errorMessage}}', errorMessage)
-            .replace(
-              '{{rentDuration}}',
-              format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-                new Date().toLocaleString(),
-            )
-            .replace('{{ads_name}}', ads_name || '')
-            .replace('{{bm_id}}', bm_id || ''),
+          subject: titlEmailError,
+          body: renderedHtmlError,
           status: 'success',
           type: 'rent_ads',
         },
       });
       await sendEmail({
         email: user.email,
-        subject:
-          'AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thất bại',
-        message: htmlContentV2
-          .replace('{{accountName}}', user.username || 'Người dùng')
-          .replace('{{accountNameV2}}', user.username || 'Người dùng')
-          .replace('{{errorMessage}}', errorMessage)
-          .replace(
-            '{{rentDuration}}',
-            format(new Date(userRentAds.created_at), 'dd/MM/yyyy HH:mm:ss') ||
-              new Date().toLocaleString(),
-          )
-          .replace('{{ads_name}}', ads_name || '')
-          .replace('{{bm_id}}', bm_id || ''),
+        subject: titlEmailError,
+        message: renderedHtmlError,
       });
       await prisma.$transaction(async (tx) => {
         const adsAccount = await tx.adsAccount.findFirst({

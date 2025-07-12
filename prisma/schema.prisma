@@ -49,6 +49,42 @@ enum AccountType {
   MAIN
   SUB
 }
+model Chat {
+  id         String        @id @default(cuid())
+  name       String?       // tên của chat, nếu là nhóm thì là tên nhóm
+  is_group    Boolean       @default(false)// là nhóm chat hay không
+  members    ChatMember[] // mảng các thành viên trong chat
+  messages   Message[] // mảng các tin nhắn trong chat
+  created_at  DateTime  @default(now()) 
+  updated_at  DateTime  @updatedAt
+  @@map("chats")
+}
+model ChatMember {
+  id        String   @id @default(cuid())
+  user_id    String// id của user
+  chat_id    String// id của chat
+  joined_at  DateTime @default(now()) // thời gian tham gia chat
+
+  user      User     @relation(fields: [user_id], references: [id]) // quan hệ với user
+  chat      Chat     @relation(fields: [chat_id], references: [id]) // quan hệ với chat
+  created_at  DateTime  @default(now()) 
+  updated_at  DateTime  @updatedAt
+
+  @@unique([user_id, chat_id])
+  @@map("chat_members")
+}
+model Message {
+  id        String   @id @default(cuid())
+  content   String // nội dung tin nhắn
+  chat_id    String // id của chat
+  sender_id  String // id của người gửi
+
+  chat      Chat     @relation(fields: [chat_id], references: [id]) // quan hệ với chat
+  sender    User     @relation(fields: [sender_id], references: [id]) // quan hệ với người gửi
+  created_at  DateTime  @default(now()) 
+  updated_at  DateTime  @updatedAt
+  @@map("messages")
+}
 
 model User {
   id                      String      @id @default(uuid())
@@ -91,6 +127,8 @@ model User {
   // --- Chuyển điểm ---
   transfersOut   PointTransfer[] @relation("TransferFrom")
   transfersIn    PointTransfer[] @relation("TransferTo")
+   members    ChatMember[]
+  messages   Message[]
   @@map("users")
 }
 model PointTransfer {

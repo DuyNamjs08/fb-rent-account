@@ -10,6 +10,7 @@ import UserService from '../services/User.service';
 import fs from 'fs';
 import { sendEmail, sendEmailFromUser } from './mails.controller';
 import { format } from 'date-fns';
+import mustache from 'mustache';
 
 // import roleService from "../services/Roles.service";
 
@@ -543,7 +544,28 @@ const supportController = {
           '{{priority}}',
           priority ? priority.toLocaleString('vi-VN') : '',
         );
-
+      const renderedHtml = mustache.render(htmlContent, {
+        // Biến động
+        title: title,
+        category: category,
+        content: content,
+        NAME: user.username || 'Người dùng',
+        USER_EMAIL: user.email,
+        USER_PHONE: user.phone ?? 'Không có',
+        CREATED_AT: created_at,
+        priority: priority ? priority.toLocaleString('vi-VN') : '',
+        // i18n từ object
+        header_title: req.t('adminsupport.header_title'),
+        header_description: req.t('adminsupport.header_description'),
+        field_title: req.t('adminsupport.field_title'),
+        field_fullname: req.t('adminsupport.field_fullname'),
+        field_email: req.t('adminsupport.field_email'),
+        field_phone: req.t('adminsupport.field_phone'),
+        field_priority: req.t('adminsupport.field_priority'),
+        field_category: req.t('adminsupport.field_category'),
+        field_created_at: req.t('adminsupport.field_created_at'),
+        request_content: req.t('adminsupport.request_content'),
+      });
       // Lưu log email
       await prisma.emailLog.create({
         data: {
@@ -593,21 +615,44 @@ const supportController = {
         throw new Error(req.t('html_file_exist'));
       }
       let htmlContent = fs.readFileSync(pathhtml, 'utf-8');
-      htmlContent = htmlContent
-        .replace('{{title}}', title)
-        .replace('{{status}}', status)
-        .replace('{{updated_at}}', updated_at)
-        .replace('{{name}}', name)
-        .replace('{{email}}', email)
-        .replace('{{phone}}', phone);
+      const renderedHtml = mustache.render(htmlContent, {
+        // Biến động
+        title: title,
+        name: name,
+        email: email,
+        phone: phone,
+        updated_at: updated_at,
+        status: status,
 
+        // i18n từ object usersupport
+        header_title: req.t('usersupport.header_title'),
+        header_subtitle: req.t('usersupport.header_subtitle'),
+        label_title: req.t('usersupport.label_title'),
+        label_name: req.t('usersupport.label_name'),
+        label_email: req.t('usersupport.label_email'),
+        label_phone: req.t('usersupport.label_phone'),
+        label_updated_at: req.t('usersupport.label_updated_at'),
+        label_status: req.t('usersupport.label_status'),
+
+        need_help: req.t('usersupport.need_help'),
+        hotline: req.t('usersupport.hotline'),
+        support_email: req.t('usersupport.support_email'),
+        working_hours: req.t('usersupport.working_hours'),
+        working_days: req.t('usersupport.working_days'),
+
+        company_name: req.t('usersupport.company_name'),
+        auto_notice: req.t('usersupport.auto_notice'),
+        company_address: req.t('usersupport.company_address'),
+        website: req.t('usersupport.website'),
+        rights_reserved: req.t('usersupport.rights_reserved'),
+      });
       // Lưu log email
       await prisma.emailLog.create({
         data: {
           user_id: user?.id,
           to: user.email,
-          subject: 'AKAds Thông Báo',
-          body: htmlContent,
+          subject: req.t('usersupport.header_noti'),
+          body: renderedHtml,
           status: 'success',
           type: 'notify support requests',
         },
@@ -616,8 +661,8 @@ const supportController = {
       // Gửi email
       await sendEmail({
         email: user.email,
-        subject: 'AKAds Thông Báo',
-        message: htmlContent,
+        subject: req.t('usersupport.header_noti'),
+        message: renderedHtml,
       });
 
       successResponse(res, req.t('user_email_sent'), {});

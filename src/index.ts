@@ -23,6 +23,7 @@ import voucherRoutes from './routes/voucher.routes';
 import userVoucherRoutes from './routes/userVoucher.routes';
 import configRoutes from './routes/config.routes';
 import paypalRoutes from './routes/paypal.routes';
+import chatRoutes from './routes/chat.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -45,6 +46,7 @@ import mustache from 'mustache';
 import { sendEmail } from './controllers/mails.controller';
 import fs from 'fs';
 import { format } from 'date-fns';
+import { getIO, initSocket } from './config/socket';
 
 async function init() {
   dotenv.config({ path: `${__dirname}/../.env` });
@@ -62,10 +64,6 @@ async function init() {
         loadPath: path.join(__dirname, `/locales/{{lng}}/translation.json`),
       },
     });
-  console.log(
-    'i18n path:',
-    path.join(__dirname, `/locales/{{lng}}/translation.json`),
-  );
 
   app.use(middleware.handle(i18next));
   app.use(
@@ -77,19 +75,50 @@ async function init() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  const io = new Server(server, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
-    adapter: createAdapter(redisClient, redisClient.duplicate()),
-  });
-  function getIO() {
-    if (!io) {
-      throw new Error('Socket.io not initialized!');
-    }
-    return io;
-  }
+  // const io = new Server(server, {
+  //   cors: {
+  //     origin: '*',
+  //     methods: ['GET', 'POST'],
+  //   },
+  //   adapter: createAdapter(redisClient, redisClient.duplicate()),
+  // });
+  // function getIO() {
+  //   if (!io) {
+  //     throw new Error('Socket.io not initialized!');
+  //   }
+  //   return io;
+  // }
+  // io.use(async (socket, next) => {
+  //   const token = socket.handshake.auth.token;
+  //   if (!token) return next(new Error('No token provided'));
+  //   try {
+  //     const tokenSecret = process.env.ACCESS_TOKEN_SECRET || '';
+  //     const payload = jwt.verify(token, tokenSecret) as JwtPayload;
+  //     socket.data.userId = payload?.user_id || ''; // gắn userId vào socket
+  //     next();
+  //   } catch (err) {
+  //     console.log('lỗi socket');
+  //     next(new Error('Unauthorized'));
+  //   }
+  // });
+
+  // io.on('connection', (socket) => {
+  //   console.log(`Client mới kết nối: ${socket.id}`);
+  //   socket.on('joinRoom', () => {
+  //     const userId = socket.data.userId;
+  //     if (userId) {
+  //       socket.join(`user:${userId}`);
+  //       console.log(`Socket ${socket.id} joined room user:${userId}`);
+  //     } else {
+  //       console.warn(`Socket ${socket.id} missing userId`);
+  //     }
+  //   });
+  //   socket.on('disconnect', () => {
+  //     console.log(`Client ngắt kết nối: ${socket.id}`);
+  //   });
+  // });
+  const io = initSocket(server);
+
   app.use(
     compression({
       threshold: 1024,
@@ -153,6 +182,7 @@ async function init() {
     res.json({ message });
   });
   app.use('/api/v1/', adRoutes);
+  app.use('/api/v1/', chatRoutes);
   app.use('/api/v1/', configRoutes);
   app.use('/api/v1/', UserRoutes);
   app.use('/api/v1/', TokenRoutes);
@@ -237,35 +267,7 @@ async function init() {
       res.status(500).send('Internal Server Error');
     }
   });
-  io.use(async (socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) return next(new Error('No token provided'));
-    try {
-      const tokenSecret = process.env.ACCESS_TOKEN_SECRET || '';
-      const payload = jwt.verify(token, tokenSecret) as JwtPayload;
-      socket.data.userId = payload?.user_id || ''; // gắn userId vào socket
-      next();
-    } catch (err) {
-      console.log('lỗi socket');
-      next(new Error('Unauthorized'));
-    }
-  });
 
-  io.on('connection', (socket) => {
-    console.log(`Client mới kết nối: ${socket.id}`);
-    socket.on('joinRoom', () => {
-      const userId = socket.data.userId;
-      if (userId) {
-        socket.join(`user:${userId}`);
-        console.log(`Socket ${socket.id} joined room user:${userId}`);
-      } else {
-        console.warn(`Socket ${socket.id} missing userId`);
-      }
-    });
-    socket.on('disconnect', () => {
-      console.log(`Client ngắt kết nối: ${socket.id}`);
-    });
-  });
   server.listen(4000, () =>
     console.log(`Worker ${process.pid} started on port ${4000}`),
   );
