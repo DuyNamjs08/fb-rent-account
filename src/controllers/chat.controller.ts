@@ -236,7 +236,93 @@ const ChatController = {
         },
       });
 
-      successResponse(res, 'List chat');
+      successResponse(res, 'List chat', chats);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  getUsersChattedWithAdmin: async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const adminId = req.params.id;
+      const adminChats = await prisma.chatMember.findMany({
+        where: {
+          user_id: adminId,
+        },
+        select: {
+          chat_id: true,
+        },
+      });
+
+      const chatIds = adminChats.map((chat) => chat.chat_id);
+
+      if (chatIds.length === 0) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          req.t('invalid_data'),
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const members = await prisma.chatMember.findMany({
+        where: {
+          chat_id: { in: chatIds },
+          user_id: { not: adminId },
+        },
+        select: {
+          id: true,
+          chat_id: true,
+          joined_at: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+            },
+          },
+          chat: {
+            select: {
+              messages: {
+                where: {
+                  chat_id: { in: chatIds },
+                },
+                select: {
+                  id: true,
+                  content: true,
+                  chat_id: true,
+                  created_at: true,
+                  sender_id: true,
+                  sender: {
+                    select: {
+                      id: true,
+                      username: true,
+                      role: true,
+                    },
+                  },
+                },
+                orderBy: {
+                  created_at: 'asc',
+                },
+              },
+            },
+          },
+        },
+        distinct: ['user_id'], // loại trùng user
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+
+      successResponse(res, 'List chat', members);
     } catch (error: any) {
       errorResponse(
         res,

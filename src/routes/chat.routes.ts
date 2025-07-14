@@ -19,4 +19,9 @@ router.get(
   requireRoles([UserRole.ADMIN, UserRole.USER]),
   ChatController.getAllChatByUserId,
 );
+router.get(
+  '/users-chatted/:id',
+  requireRoles([UserRole.ADMIN]),
+  ChatController.getUsersChattedWithAdmin,
+);
 export default router;
