@@ -24,6 +24,7 @@ import userVoucherRoutes from './routes/userVoucher.routes';
 import configRoutes from './routes/config.routes';
 import paypalRoutes from './routes/paypal.routes';
 import chatRoutes from './routes/chat.routes';
+import adAwardRoutes from './routes/adAward.routes';
 import redisClient from './config/redis-config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -181,6 +182,7 @@ async function init() {
     const message = req.t('greeting');
     res.json({ message });
   });
+  app.use('/api/v1/', adAwardRoutes);
   app.use('/api/v1/', adRoutes);
   app.use('/api/v1/', chatRoutes);
   app.use('/api/v1/', configRoutes);
