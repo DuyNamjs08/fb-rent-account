@@ -134,10 +134,10 @@ model User {
 model PointTransfer {
   id          String   @id @default(uuid())
   fromUser    User     @relation("TransferFrom", fields: [from_user_id], references: [id])
-  from_user_id  String
+  from_user_id  String // id của người gửi điểm map với bảng user
   toUser      User     @relation("TransferTo", fields: [to_user_id], references: [id])
-  to_user_id    String
-  amount      Int
+  to_user_id    String // id của người nhận điểm map với bảng user
+  amount      Int // Số điểm được chuyển
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
 
@@ -232,16 +232,16 @@ model FacebookBM {
 }
 model FacebookVisa {
   id          String      @id @default(uuid())
-  visa_name String
-  visa_number String
-  visa_expiration String
-  visa_cvv String
-  verify_code String
-  bm_name     String
-  bm_origin     String      
-  ads_account_id String 
-  user_id       String
-  status        String?   @default("pending")
+  visa_name String // tên thẻ visa
+  visa_number String // số thẻ visa
+  visa_expiration String // ngày hết hạn thẻ visa
+  visa_cvv String // mã bảo mật thẻ visa
+  verify_code String // mã xác thực thẻ visa
+  bm_name     String // tên BM được gắn với thẻ visa
+  bm_origin     String // tên BM gốc được gắn với thẻ visa  
+  ads_account_id String // id tài khoản quảng cáo được gắn với thẻ visa
+  user_id       String // id của user thuê thẻ visa
+  status        String?   @default("pending") // trạng thái mặc định là pending
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -279,7 +279,7 @@ model Policies {
 //  202 = ANY_CLOSED"
 model AdsAccount {
   id                              String    @id @default(uuid()) // Mã định danh có dạng act_{ad_account_id}
-  account_id                      String    // ID số của tài khoản quảng cáo (không có tiền tố act_)
+  account_id                      String    @unique// ID số của tài khoản quảng cáo (không có tiền tố act_)
   account_status                  Int       @default(1)// Trạng thái tài khoản quảng cáo (1=ACTIVE, 2=DISABLED, v.v.)
   amount_spent                    String    // Tổng chi tiêu hiện tại của tài khoản
   balance                         String    // Số tiền nợ hoặc dư trong tài khoản
@@ -347,16 +347,37 @@ model AdsAccount {
   vertical_name                   String?   // Ngành dọc (retail, ecommerce,...)
 // phần thêm 
   status_rented String? @default("available") // Trạng thái thuê (available, rented, unavailable)
-  spend_limit Int?
-  note_aka    String?
-  active    Boolean? @default(true) 
-  is_visa_account Boolean? @default(false) 
+  spend_limit Int? // Giới hạn chi tiêu cho tài khoản quảng cáo
+  note_aka    String? // Ghi chú hoặc tên khác của tài khoản quảng cáo
+  active    Boolean? @default(true) // Trạng thái hoạt động của tài khoản quảng cáo
+  is_visa_account Boolean? @default(false) // Tài khoản quảng cáo có sử dụng thẻ visa hay không
+  // phần thưởng quảng cáo
+  ad_rewards AdReward[] // Mối quan hệ với bảng AdReward
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-  
   @@map("ads_accounts")
 }
+model AdReward {
+  id                     String   @id @default(uuid())
+  ad_account_id          String // ID tài khoản quảng cáo
+  ad_account             AdsAccount @relation(fields: [ad_account_id], references: [account_id], onDelete: Cascade, onUpdate: Cascade)
+  ad_account_name        String // Tên tài khoản quảng cáo
+  minimum_amount_spent   Float  // Số tiền tối thiểu để đủ điều kiện nhận thưởng
+  qualifying_amount_spent Float // Số tiền đã chi tiêu đủ điều kiện
+  rewards_earned         Float // Phần thưởng đã đạt được
+  featured_product       String // Sản phẩm đáng chú ý
+  promotion              String // Tên khuyến mãi
+  start_period           DateTime? // Thời gian bắt đầu
+  end_period             DateTime? // Thời gian kết thúc
+  date_of_deposit        DateTime? // Ngày thanh toán
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+@@unique([ad_account_id, start_period, end_period], name: "ad_account_id_start_period_end_period")
+  @@map("ad_rewards")
+}
+
 
 model Budget {
   id          String    @id @default(uuid())

@@ -398,16 +398,17 @@ const TKQCController = {
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
       const result = await prisma.$queryRawUnsafe(`
-        SELECT *
-        FROM "ads_accounts"
-        WHERE
-          is_visa_account = true AND
-          status_rented = 'available' AND
-          spend_cap ~ '^[0-9]+$' AND
-          CAST(spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
-        OFFSET ${skip}
-        LIMIT ${pageSizeNum}
-      `);
+  SELECT aa.*, ar.*
+  FROM "ads_accounts" aa
+  LEFT JOIN "ad_rewards" ar ON aa.account_id = ar.ad_account_id
+  WHERE
+    aa.is_visa_account = true AND
+    aa.status_rented = 'available' AND
+    aa.spend_cap ~ '^[0-9]+$' AND
+    CAST(aa.spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+  OFFSET ${skip}
+  LIMIT ${pageSizeNum}
+`);
       const countRes: any[] = await prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as total
         FROM "ads_accounts"
@@ -487,15 +488,16 @@ const TKQCController = {
       const toNum = Number(to);
 
       const result: any[] = await prisma.$queryRawUnsafe(`
-        SELECT *
-        FROM "ads_accounts"
-        WHERE
-          (is_visa_account = false OR is_visa_account IS NULL) AND
-          spend_cap ~ '^[0-9]+$' AND
-          CAST(spend_cap AS BIGINT) BETWEEN ${fromNum} AND ${toNum}
-        OFFSET ${skip}
-        LIMIT ${pageSizeNum}
-      `);
+  SELECT aa.*, ar.*
+  FROM "ads_accounts" aa
+  LEFT JOIN "ad_rewards" ar ON aa.account_id = ar.ad_account_id
+  WHERE
+    (aa.is_visa_account = false OR aa.is_visa_account IS NULL) AND
+    aa.spend_cap ~ '^[0-9]+$' AND
+    CAST(aa.spend_cap AS BIGINT) BETWEEN ${fromNum} AND ${toNum}
+  OFFSET ${skip}
+  LIMIT ${pageSizeNum}
+`);
 
       const countRes: any[] = await prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as total
