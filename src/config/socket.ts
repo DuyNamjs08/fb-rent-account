@@ -43,14 +43,10 @@ export function initSocket(server: HttpServer) {
     });
 
     // lang nghe su kien send_message tu client: ChatModal.tsx (line 92)
-    socket.on('send_message', (data) => {
-      const { message } = data;
-      console.log('Received message from client:', message);
-
-      const receiverRoom = `user:${message.receiver_id}`;
-      if (receiverRoom) {
-        io!.to(receiverRoom).emit('new_message', { message }); // truyen su kien new_message toi client MessageView
-      }
+    socket.on('send_message', ({ message }) => {
+      console.log('Received message from user:', message);
+      // socket.broadcast.emit => gửi đến tất cả client (bao gồm cả admin), nhưng ko gửi lại cho client (đã gửi data này đến server)
+      socket.broadcast.emit('send_message_again', { message });
     });
   });
 
