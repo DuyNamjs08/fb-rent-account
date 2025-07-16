@@ -119,80 +119,80 @@ const ChatController = {
       );
     }
   },
-  getAllChatMessageByUserId: async (
-    req: Request,
-    res: Response,
-  ): Promise<void> => {
-    try {
-      const { user_id, chat_id } = req.query;
-      const findUser = await prisma.user.findUnique({
-        where: { id: user_id as string },
-      });
-      if (!chat_id) {
-        const userChats = await prisma.chat.findMany({
-          where: {
-            members: {
-              some: {
-                user_id: user_id as string,
-              },
-            },
-          },
-        });
-        if (!userChats || userChats.length === 0) {
-          errorResponse(
-            res,
-            httpReasonCodes.NOT_FOUND,
-            req.t('invalid_data'),
-            httpStatusCodes.NOT_FOUND,
-          );
-          return;
-        }
-        const listLatestMessages = await prisma.message.findMany({
-          where: {
-            chat_id: chat_id as string,
-          },
-          // orderBy: {
-          //   created_at: 'desc',
-          // },
-        });
-        successResponse(res, 'List chat message', listLatestMessages);
-        return;
-      }
-
-      const findChat = await prisma.chat.findUnique({
-        where: { id: chat_id as string },
-      });
-      if (!findUser || !findChat) {
-        errorResponse(
-          res,
-          httpReasonCodes.NOT_FOUND,
-          req.t('invalid_data'),
-          httpStatusCodes.NOT_FOUND,
-        );
-        return;
-      }
-      const listLatestMessages = await prisma.message.findMany({
-        where: {
-          chat_id: chat_id as string,
-        },
-        // include: {
-        //   sender: true,
-        // },
-        // orderBy: {
-        //   created_at: 'desc',
-        // },
-      });
-
-      successResponse(res, 'List chat message', listLatestMessages);
-    } catch (error: any) {
-      errorResponse(
-        res,
-        error?.message,
-        error,
-        httpStatusCodes.INTERNAL_SERVER_ERROR,
-      );
-    }
-  },
+  // getAllChatMessageByUserId: async (
+  //   req: Request,
+  //   res: Response,
+  // ): Promise<void> => {
+  //   try {
+  //     const { user_id, chat_id } = req.query;
+  //     const findUser = await prisma.user.findUnique({
+  //       where: { id: user_id as string },
+  //     });
+  //     if (!chat_id) {
+  //       const userChats = await prisma.chat.findMany({
+  //         where: {
+  //           members: {
+  //             some: {
+  //               user_id: user_id as string,
+  //             },
+  //           },
+  //         },
+  //       });
+  //       if (!userChats || userChats.length === 0) {
+  //         errorResponse(
+  //           res,
+  //           httpReasonCodes.NOT_FOUND,
+  //           req.t('invalid_data'),
+  //           httpStatusCodes.NOT_FOUND,
+  //         );
+  //         return;
+  //       }
+  //       const listLatestMessages = await prisma.message.findMany({
+  //         where: {
+  //           chat_id: chat_id as string,
+  //         },
+  //         // orderBy: {
+  //         //   created_at: 'desc',
+  //         // },
+  //       });
+  //       successResponse(res, 'List chat message', listLatestMessages);
+  //       return;
+  //     }
+  //
+  //     const findChat = await prisma.chat.findUnique({
+  //       where: { id: chat_id as string },
+  //     });
+  //     if (!findUser || !findChat) {
+  //       errorResponse(
+  //         res,
+  //         httpReasonCodes.NOT_FOUND,
+  //         req.t('invalid_data'),
+  //         httpStatusCodes.NOT_FOUND,
+  //       );
+  //       return;
+  //     }
+  //     const listLatestMessages = await prisma.message.findMany({
+  //       where: {
+  //         chat_id: chat_id as string,
+  //       },
+  //       // include: {
+  //       //   sender: true,
+  //       // },
+  //       // orderBy: {
+  //       //   created_at: 'desc',
+  //       // },
+  //     });
+  //
+  //     successResponse(res, 'List chat message', listLatestMessages);
+  //   } catch (error: any) {
+  //     errorResponse(
+  //       res,
+  //       error?.message,
+  //       error,
+  //       httpStatusCodes.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // },
   getAllChatByUserId: async (req: Request, res: Response): Promise<void> => {
     try {
       const { user_id } = req.query;
@@ -323,6 +323,115 @@ const ChatController = {
       });
 
       successResponse(res, 'List chat', members);
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+  getAllChatMessageByUserId: async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const { user_id, chat_id } = req.query;
+
+      // check user_id
+      const findUser = await prisma.user.findUnique({
+        where: { id: user_id as string },
+      });
+      if (!findUser) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          req.t('invalid_data'),
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      // check admin
+      const systemUser = await prisma.user.findFirst({
+        where: {
+          role: 'admin',
+          // email: 'admin@gmail.com',
+        },
+      });
+      if (!systemUser) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          req.t('invalid_data'),
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      // Nếu không có chat_id, tìm cuộc trò chuyện giữa user_id và admin
+      if (!chat_id) {
+        const userChats = await prisma.chat.findFirst({
+          where: {
+            is_group: false,
+            members: {
+              every: {
+                user_id: { in: [user_id as string, systemUser.id] },
+              },
+            },
+          },
+          include: {
+            messages: {
+              orderBy: { created_at: 'asc' },
+              include: { sender: true },
+            },
+          },
+        });
+
+        if (!userChats) {
+          errorResponse(
+            res,
+            httpReasonCodes.NOT_FOUND,
+            req.t('invalid_data'),
+            httpStatusCodes.NOT_FOUND,
+          );
+          return;
+        }
+
+        successResponse(res, 'List chat message', userChats.messages);
+        return;
+      }
+
+      // Nếu có chat_id, kiểm tra xem chat có đúng là giữa user_id và admin không
+      const findChat = await prisma.chat.findUnique({
+        where: { id: chat_id as string },
+        include: {
+          members: true,
+          messages: {
+            orderBy: { created_at: 'asc' },
+            include: { sender: true },
+          },
+        },
+      });
+
+      if (
+        !findChat ||
+        findChat.is_group ||
+        findChat.members.length !== 2 ||
+        !findChat.members.some((member) => member.user_id === user_id) ||
+        !findChat.members.some((member) => member.user_id === systemUser.id)
+      ) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          req.t('invalid_data'),
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      successResponse(res, 'List chat message', findChat.messages);
     } catch (error: any) {
       errorResponse(
         res,
