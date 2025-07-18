@@ -462,6 +462,21 @@ const ChatController = {
               },
             },
           });
+          // console.log('userChats', userChats);
+          // Tạo tin nhắn mặc định
+          const defaultMessage = await prisma.message.create({
+            data: {
+              content:
+                'Em Minh Thư AKA Media chào anh/chị ạ. Anh/chị cần em tư vấn gì không ạ',
+              chat_id: userChats.id,
+              sender_id: systemUser.id,
+            },
+            include: {
+              sender: true,
+            },
+          });
+          userChats.messages.push(defaultMessage);
+          console.log('userChats', userChats);
         }
 
         successResponse(res, 'List chat message', userChats.messages);
