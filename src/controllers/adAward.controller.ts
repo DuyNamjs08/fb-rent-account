@@ -9,6 +9,9 @@ import { parse as parseDate, isValid } from 'date-fns';
 import fs from 'fs';
 import { pipeline } from 'stream/promises';
 import readline from 'readline';
+import axios from 'axios';
+import 'dotenv/config';
+import { formatISO } from 'date-fns';
 
 function parseDateString(str: string): Date | null {
   const parsed = parseDate(str.trim(), 'yyyy-MM-dd', new Date());
@@ -116,6 +119,7 @@ async function importLargeCSV(filePath: string) {
 
   await pipeline(input, parser);
 }
+
 const AdAwardsController = {
   createAdAwards: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -145,7 +149,7 @@ const AdAwardsController = {
     }
   },
 
-  getAllAdAwardss: async (req: Request, res: Response): Promise<void> => {
+  getAllAdAwards: async (req: Request, res: Response): Promise<void> => {
     try {
       successResponse(res, 'success', {});
     } catch (error: any) {
@@ -158,5 +162,124 @@ const AdAwardsController = {
     }
   },
 };
+const getLarkBaseAccessToken = async (): Promise<string> => {
+  try {
+    if (!process.env.LARK_APP_ID || !process.env.LARK_APP_SECRET) {
+      throw new Error(
+        'Lark app ID or secret is not set in environment variables',
+      );
+    }
+    const response = await axios.post(
+      'https://open.larksuite.com/open-apis/auth/v3/tenant_access_token/internal',
+      {
+        app_id: process.env.LARK_APP_ID,
+        app_secret: process.env.LARK_APP_SECRET,
+      },
+    );
 
+    const { tenant_access_token, code, msg } = response.data;
+
+    if (code !== 0) {
+      throw new Error(`Lark token error: ${msg}`);
+    }
+
+    return tenant_access_token;
+  } catch (error: any) {
+    console.error('Error fetching Lark access token:', error.message);
+    throw error;
+  }
+};
+const toStringSafe = (val: any): string => {
+  if (!val) return '';
+  if (val instanceof Date) return formatISO(val, { representation: 'date' });
+  return val.toString();
+};
+const fieldMapping = (record: any) => ({
+  'ID tài khoản quảng cáo': toStringSafe(record.ad_account_id),
+  'Tên tài khoản quảng cáo': toStringSafe(record.ad_account_name),
+  'Số tiền tối thiểu để đủ điều kiện': toStringSafe(
+    record.minimum_amount_spent,
+  ),
+  'Số tiền đã chi tiêu đủ điều kiện': toStringSafe(
+    record.qualifying_amount_spent,
+  ),
+  'Phần thưởng đã đạt được': toStringSafe(record.rewards_earned),
+  'Sản phẩm đáng chú ý': toStringSafe(record.featured_product),
+  'Tên khuyến mãi': toStringSafe(record.promotion),
+  'Thời gian bắt đầu': toStringSafe(record.start_period),
+  'Thời gian kết thúc': toStringSafe(record.end_period),
+  'Ngày thanh toán': toStringSafe(record.date_of_deposit),
+});
+export const upsertLarkRecord = async (record: any) => {
+  const APP_ID = process.env.APP_ID!;
+  const TABLE_ID = process.env.TABLE_ID!;
+  const ACCESS_TOKEN = record.ACCESS_TOKEN || '';
+  const keyFilter = {
+    conditions: [
+      {
+        field_name: 'ID tài khoản quảng cáo',
+        operator: 'is',
+        value: [record.ad_account_id],
+      },
+      {
+        field_name: 'Thời gian bắt đầu',
+        operator: 'is',
+        value: [toStringSafe(record.start_period)],
+      },
+      {
+        field_name: 'Thời gian kết thúc',
+        operator: 'is',
+        value: [toStringSafe(record.end_period)],
+      },
+    ],
+    conjunction: 'and',
+  };
+
+  // 1. Kiểm tra record đã tồn tại trên Lark
+  const searchResp = await axios.post(
+    `https://open.larksuite.com/open-apis/bitable/v1/apps/${APP_ID}/tables/${TABLE_ID}/records/search`,
+    { filter: keyFilter, page_size: 1 },
+    { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } },
+  );
+
+  const fields = fieldMapping(record);
+  const existed = searchResp.data?.data?.items?.[0];
+  if (existed) {
+    console.log(1);
+    // 2. Nếu có → update
+    const res = await axios.put(
+      `https://open.larksuite.com/open-apis/bitable/v1/apps/${APP_ID}/tables/${TABLE_ID}/records/${existed.record_id}`,
+      { fields },
+      { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } },
+    );
+  } else {
+    console.log(2);
+    // 3. Nếu chưa có → tạo mới
+    const res = await axios.post(
+      `https://open.larksuite.com/open-apis/bitable/v1/apps/${APP_ID}/tables/${TABLE_ID}/records`,
+      { fields },
+      { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } },
+    );
+  }
+};
+export const asyncAdAwards = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const ACCESS_TOKEN = await getLarkBaseAccessToken();
+    const list = await prisma.adReward.findMany({});
+    for (const item of list) {
+      await upsertLarkRecord({ ...item, ACCESS_TOKEN });
+    }
+    successResponse(res, 'Đồng bộ thành công', {});
+  } catch (error: any) {
+    errorResponse(
+      res,
+      error?.message,
+      error,
+      httpStatusCodes.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
 export default AdAwardsController;
