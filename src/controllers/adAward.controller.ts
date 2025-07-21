@@ -28,11 +28,36 @@ async function importLargeCSV(filePath: string) {
     from_line: 3,
   });
 
+  console.log('🔍 Đang bắt đầu import file:', filePath);
+
   const input = fs.createReadStream(filePath, { encoding: 'utf16le' });
 
   async function insertOrUpdateBatch(batch: any[]) {
     for (const data of batch) {
       try {
+        console.log(
+          '🔑 Upsert với khóa:',
+          data.ad_account_id,
+          data.start_period,
+          data.end_period,
+        );
+
+        await prisma.adsAccount.upsert({
+          where: { account_id: data.ad_account_id },
+          create: {
+            id: `act_${data.ad_account_id}`,
+            account_id: data.ad_account_id,
+            name: data.ad_account_name,
+            amount_spent: '0',
+            balance: '0',
+            age: 0,
+            timezone_name: 'Asia/Ho_Chi_Minh',
+            account_status: 1,
+            created_time: new Date().toISOString(),
+          },
+          update: {},
+        });
+
         await prisma.adReward.upsert({
           where: {
             ad_account_id_start_period_end_period: {
@@ -62,6 +87,8 @@ async function importLargeCSV(filePath: string) {
   parser.on('readable', async () => {
     let row;
     while ((row = parser.read())) {
+      console.log('📥 Row input:', row);
+
       if (!row || row.length !== 10) {
         console.warn('⚠️ Dòng không hợp lệ (không đủ 10 cột):', row);
         continue;
@@ -79,6 +106,7 @@ async function importLargeCSV(filePath: string) {
         end_period,
         date_of_deposit,
       ] = row;
+      console.log('📄 Dòng đã parse:', row);
 
       buffer.push({
         ad_account_id: ad_account_id.replace(/^'/, ''),
@@ -99,6 +127,8 @@ async function importLargeCSV(filePath: string) {
         date_of_deposit: parseDateString(date_of_deposit),
       });
 
+      console.log('✅ Tổng số dòng hợp lệ:', buffer.length);
+
       if (buffer.length >= BATCH_SIZE) {
         await insertOrUpdateBatch(buffer);
         buffer.length = 0;
@@ -107,6 +137,8 @@ async function importLargeCSV(filePath: string) {
   });
 
   parser.on('end', async () => {
+    console.log('✅ Parser ended. Remaining buffer length:', buffer.length);
+
     if (buffer.length > 0) {
       await insertOrUpdateBatch(buffer);
     }
@@ -151,7 +183,109 @@ const AdAwardsController = {
 
   getAllAdAwards: async (req: Request, res: Response): Promise<void> => {
     try {
-      successResponse(res, 'success', {});
+      const { page, limit, search } = req.query;
+      /**
+       * req.query luon la string (string[], undefined) nen phai parse ve string roi parse ve int
+       * tham so 10: hệ cơ số 10, vi neu string bat dau la 0 (08) thi parseInt('08') van tra ve 0
+       * */
+      const pageNumber = parseInt(page as string, 10) || 1;
+      const pageSize = parseInt(limit as string, 10) || 10;
+      const skip = (pageNumber - 1) * pageSize;
+
+      const numericSearch = parseFloat(search as string);
+      const where: any = {};
+      if (search) {
+        where.OR = [
+          // {
+          //   ad_account_name: {
+          //     contains: search as string,
+          //     mode: 'insensitive',
+          //   },
+          // },
+          {
+            minimum_amount_spent: {
+              equals: numericSearch,
+            },
+          },
+          {
+            qualifying_amount_spent: {
+              equals: numericSearch,
+            },
+          },
+          {
+            rewards_earned: {
+              equals: numericSearch,
+            },
+          },
+        ];
+      }
+
+      const allAdAwards = await prisma.adReward.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { updated_at: 'desc' },
+      });
+
+      const totalRecords = await prisma.adReward.count({ where });
+
+      successResponse(res, 'success', {
+        data: allAdAwards,
+        pagination: {
+          page: pageNumber,
+          limit: pageSize,
+          totalRecords,
+          totalPages: Math.ceil(totalRecords / pageSize),
+        },
+      });
+    } catch (error: any) {
+      errorResponse(
+        res,
+        error?.message,
+        error,
+        httpStatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  },
+
+  editReward: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id;
+      const { rewards_earned } = req.body;
+      if (!rewards_earned) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const findReward = await prisma.adReward.findUnique({
+        where: {
+          id: id,
+        },
+      });
+      if (!findReward) {
+        errorResponse(
+          res,
+          httpReasonCodes.NOT_FOUND,
+          {},
+          httpStatusCodes.NOT_FOUND,
+        );
+        return;
+      }
+
+      const updateReward = await prisma.adReward.update({
+        where: { id: id },
+        data: {
+          rewards_earned,
+          updated_at: new Date(),
+        },
+      });
+
+      successResponse(res, 'updated success reward', updateReward);
     } catch (error: any) {
       errorResponse(
         res,
