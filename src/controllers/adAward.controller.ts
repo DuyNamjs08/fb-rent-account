@@ -28,35 +28,26 @@ async function importLargeCSV(filePath: string) {
     from_line: 3,
   });
 
-  console.log('🔍 Đang bắt đầu import file:', filePath);
-
   const input = fs.createReadStream(filePath, { encoding: 'utf16le' });
 
   async function insertOrUpdateBatch(batch: any[]) {
     for (const data of batch) {
       try {
-        console.log(
-          '🔑 Upsert với khóa:',
-          data.ad_account_id,
-          data.start_period,
-          data.end_period,
-        );
-
-        await prisma.adsAccount.upsert({
-          where: { account_id: data.ad_account_id },
-          create: {
-            id: `act_${data.ad_account_id}`,
-            account_id: data.ad_account_id,
-            name: data.ad_account_name,
-            amount_spent: '0',
-            balance: '0',
-            age: 0,
-            timezone_name: 'Asia/Ho_Chi_Minh',
-            account_status: 1,
-            created_time: new Date().toISOString(),
-          },
-          update: {},
-        });
+        // await prisma.adsAccount.upsert({
+        //   where: { account_id: data.ad_account_id },
+        //   create: {
+        //     id: `act_${data.ad_account_id}`,
+        //     account_id: data.ad_account_id,
+        //     name: data.ad_account_name,
+        //     amount_spent: '0',
+        //     balance: '0',
+        //     age: 0,
+        //     timezone_name: 'Asia/Ho_Chi_Minh',
+        //     account_status: 1,
+        //     created_time: new Date().toISOString(),
+        //   },
+        //   update: {},
+        // });
 
         await prisma.adReward.upsert({
           where: {
