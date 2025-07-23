@@ -18,6 +18,11 @@ router.get(
   requireRoles([UserRole.ADMIN]),
   AdAwardsController.getAllAdAwards,
 );
+router.put(
+  '/ad_rewards/:id',
+  requireRoles([UserRole.ADMIN]),
+  AdAwardsController.editReward,
+);
 router.post('/asyc_ad_rewards', requireRoles([UserRole.ADMIN]), asyncAdAwards);
 
 export default router;
