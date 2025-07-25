@@ -21,6 +21,8 @@ const createChargeSchema = z.object({
   ads_name: z.string().min(1, 'ads_name is required'),
   bot_id: z.string().min(1, 'bot_id is required'),
   currency: z.string().min(3, 'currency is required and min 3 character'),
+  start_date: z.string().min(1, 'start_date is required'),
+  end_date: z.string().min(1, 'end_date is required'),
 });
 
 const deleteChargeSchema = z.object({
@@ -78,6 +80,8 @@ const pointUsedController = {
         voucher_id,
         bot_id,
         currency,
+        start_date,
+        end_date,
       } = req.body;
       const parsed = createChargeSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -239,6 +243,8 @@ const pointUsedController = {
           status_limit_spend: 0,
           bm_origin,
           bot_id,
+          start_date,
+          end_date,
         },
       });
       if (!newBmPartnert) {

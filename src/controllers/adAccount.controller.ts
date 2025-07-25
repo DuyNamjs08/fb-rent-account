@@ -125,7 +125,7 @@ const getBmIdSchema = z.object({
 const TKQCController = {
   getAdsRentedByUser: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { user_id } = req.query;
+      const { user_id, status } = req.query;
       const parsed = getUserIdSchema.safeParse({ user_id });
       if (!parsed.success) {
         const errors = parsed.error.flatten().fieldErrors;
@@ -146,27 +146,21 @@ const TKQCController = {
         errorResponse(res, req.t('user_not_found'), {}, 404);
         return;
       }
-      const listIdAds = Array.isArray(user.list_ads_account)
-        ? user.list_ads_account.map((item) => 'act_' + item)
-        : [];
+      // const listIdAds = Array.isArray(user.list_ads_account)
+      //   ? user.list_ads_account.map((item) => 'act_' + item)
+      //   : [];
+      const statusSafe = status && status !== 'all' ? status : undefined;
       const businessManagers = await prisma.facebookPartnerBM.findMany({
         where: {
           user_id: user_id as string,
+          status: statusSafe as string,
+        },
+        include: {
+          ad_account: true,
         },
       });
-      const adsAccount = await prisma.adsAccount.findMany({
-        where: {},
-      });
-      const result = businessManagers.map((item) => {
-        return {
-          ...item,
-          accounts:
-            adsAccount?.find(
-              (adsItem) => adsItem.account_id === item.ads_account_id,
-            ) || null,
-        };
-      });
-      successResponse(res, req.t('fetch_rented_ads_success'), result);
+
+      successResponse(res, req.t('fetch_rented_ads_success'), businessManagers);
     } catch (error: any) {
       errorResponse(
         res,
@@ -248,8 +242,11 @@ const TKQCController = {
         return;
       }
       let totalCount = 0;
+      let totalCountV2 = 0;
       let afterCursor = '';
+      let afterCursorV2 = '';
       const baseUrl = `https://graph.facebook.com/v17.0/${bm_id}/owned_ad_accounts`;
+      const baseUrlV2 = `https://graph.facebook.com/v17.0/${bm_id}/client_ad_accounts`;
       const fields = [
         'name',
         'account_id',
@@ -311,6 +308,7 @@ const TKQCController = {
         'user_tos_accepted',
       ].join(',');
       let hasNextPage = true;
+      let hasNextPageV2 = true;
 
       while (hasNextPage) {
         let url = `${baseUrl}?fields=${fields}&limit=20&access_token=${systemUserDecode}`;
@@ -348,7 +346,43 @@ const TKQCController = {
         hasNextPage = !!afterCursor;
         console.log('Next cursor >>>', afterCursor);
       }
-      console.log('Total synced:', totalCount);
+      while (hasNextPageV2) {
+        let url = `${baseUrlV2}?fields=${fields}&limit=20&access_token=${systemUserDecode}`;
+        if (afterCursorV2) {
+          url += `&after=${afterCursorV2}`;
+        }
+        const listdata = await axios.get(url);
+        if (listdata.status !== 200) {
+          errorResponse(
+            res,
+            req.t('facebook_sync_error'),
+            {},
+            httpStatusCodes.BAD_REQUEST,
+          );
+          return;
+        }
+        const arrayResult = listdata.data.data;
+        if (Array.isArray(arrayResult)) {
+          try {
+            await Promise.all(
+              arrayResult.map((item: any) =>
+                prisma.adsAccount.upsert({
+                  where: { id: item.id },
+                  update: mapItemToAdsAccount(item),
+                  create: mapItemToAdsAccount(item),
+                }),
+              ),
+            );
+          } catch (err: any) {
+            console.error('Failed to post to server:', err.message);
+          }
+          totalCountV2 += arrayResult.length;
+        }
+        afterCursorV2 = listdata.data.paging?.cursors?.after || '';
+        hasNextPageV2 = !!afterCursorV2;
+        console.log('Next cursor >>>', afterCursorV2);
+      }
+      console.log('Total synced:', totalCount, totalCountV2);
       successResponse(res, req.t('sync_list'), {});
     } catch (error: any) {
       errorResponse(
@@ -361,16 +395,44 @@ const TKQCController = {
   },
   getAllTKQC: async (req: Request, res: Response): Promise<void> => {
     try {
-      const data = req.query;
-      const { pageSize = 10, page = 1 } = data;
+      const parsed = querySchema.safeParse(req.query);
+      if (!parsed.success) {
+        errorResponse(
+          res,
+          'Tham số không hợp lệ: page, pageSize, from, to phải là số nguyên.',
+          parsed.error.format(),
+          httpStatusCodes.BAD_REQUEST,
+        );
+        return;
+      }
+      const { page = 1, pageSize = 10, from, to } = parsed.data;
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const result = await prisma.adsAccount.findMany({
-        where: {},
-        skip,
-        take: pageSizeNum,
+      const result = await prisma.$queryRawUnsafe(`
+  SELECT aa.*, ar.*
+  FROM "ads_accounts" aa
+  LEFT JOIN "ad_rewards" ar ON aa.account_id = ar.ad_account_id
+  WHERE
+    aa.status_rented = 'available' AND
+    aa.spend_cap ~ '^[0-9]+$' AND
+    CAST(aa.spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+  OFFSET ${skip}
+  LIMIT ${pageSizeNum}
+`);
+      const countRes: any[] = await prisma.$queryRawUnsafe(`
+        SELECT COUNT(*) as total
+        FROM "ads_accounts"
+        WHERE
+          status_rented = 'available' AND
+          spend_cap ~ '^[0-9]+$' AND
+          CAST(spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+      `);
+
+      const count = Number(countRes[0]?.total || 0);
+      successResponse(res, req.t('ads_account_list'), {
+        data: result,
+        count,
       });
-      successResponse(res, req.t('ads_account_list'), result);
     } catch (error: any) {
       errorResponse(
         res,

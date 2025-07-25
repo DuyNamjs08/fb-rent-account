@@ -100,7 +100,7 @@ model User {
   token                   Token[] // mảng các token 
   points     Int           @default(0) // điểm được sử dụng ở vn
   amount_usd     Float           @default(0) // số tiền nếu sử dụng usd
-  percentage   Float?  @default(0.1)        // Phần trăm phí của người dùng
+  percentage   Float?  @default(0.05)        // Phần trăm phí của người dùng
   active        Boolean?   @default(true) // Trạng thái hoạt động của người dùng
   pointUsages  PointUsage[]
   emailLogs      EmailLog[]
@@ -198,7 +198,8 @@ model FacebookPartnerBM { // bảng liên quan đến mối quan hệ giữa tà
   bm_origin String?  // tên bm gốc set quyền cho thuê
   bot_id           String? // bot id từ bảng cookie để set automation
   ads_account_id String  // id tài khoản quảng cáo 
-  user_id       String // id của user thuê
+  ad_account             AdsAccount @relation(fields: [ads_account_id], references: [account_id])
+  user_id      String // id của user thuê
   status        String // trạng thái
   status_partner        Int? // tài khoản Bm được gắn đối tác chưa
   status_limit_spend        Int? //tài khoản Bm được set ngưỡng giới hạn chi tiêu chưa
@@ -210,8 +211,8 @@ model FacebookPartnerBM { // bảng liên quan đến mối quan hệ giữa tà
   budget      String? // tên ngân sách ấy
   is_email_sent      Boolean? @default(false) // Đã gửi email thông báo hay chưa
   update_package      Int? @default(0) // 0 = không cập nhật, 1 = cập nhật
-  start_date     String[] @default([]) // ngày bắt đầu 
-  end_date       String[] @default([]) // ngày kết thúc
+  start_date     String?  // ngày bắt đầu 
+  end_date       String? // ngày kết thúc
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -353,6 +354,7 @@ model AdsAccount {
   is_visa_account Boolean? @default(false) // Tài khoản quảng cáo có sử dụng thẻ visa hay không
   // phần thưởng quảng cáo
   ad_rewards AdReward[] // Mối quan hệ với bảng AdReward
+  fb_partner_bm FacebookPartnerBM[] // Mối quan hệ với bảng AdReward
 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
