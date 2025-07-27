@@ -196,21 +196,21 @@ const pointUsedController = {
           },
         });
         if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');
-        if (currency == 'usd') {
-          await tx.user.update({
-            where: { id: user_id },
-            data: {
-              amount_usd: { decrement: amountOrigin },
-            },
-          });
-        } else {
-          await tx.user.update({
-            where: { id: user_id },
-            data: {
-              points: { decrement: amountOrigin },
-            },
-          });
-        }
+        // if (currency == 'usd') {
+        //   await tx.user.update({
+        //     where: { id: user_id },
+        //     data: {
+        //       amount_usd: { decrement: amountOrigin },
+        //     },
+        //   });
+        // } else {
+        //   await tx.user.update({
+        //     where: { id: user_id },
+        //     data: {
+        //       points: { decrement: amountOrigin },
+        //     },
+        //   });
+        // }
         const pointsUsed = await tx.pointUsage.create({
           data: {
             user_id,
@@ -331,10 +331,12 @@ const pointUsedController = {
         bot_id,
         id_partner: newBmPartnert.id,
         currency,
-        renderedHtmlSuccess,
-        renderedHtmlError,
-        titlEmailSucces: req.t('subject_add_account_success'),
-        titlEmailError: req.t('subject_add_account_failed'),
+        start_date,
+        end_date,
+        // renderedHtmlSuccess,
+        // renderedHtmlError,
+        // titlEmailSucces: req.t('subject_add_account_success'),
+        // titlEmailError: req.t('subject_add_account_failed'),
       });
 
       successResponse(

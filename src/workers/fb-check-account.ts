@@ -3,7 +3,7 @@ import prisma from '../config/prisma';
 import { decryptToken } from '../controllers/facebookBm.controller';
 import axios from 'axios';
 import { differenceInDays } from 'date-fns';
-import { fbRemoveParnert } from './fb-partner-remove';
+// import { fbRemoveParnert } from './fb-partner-remove';
 function isMoreThan7DaysOld(createdAt: string | Date): boolean {
   const now = new Date();
   const createdDate = new Date(createdAt);
@@ -117,6 +117,14 @@ const updateDb = async (data: any) => {
           },
         });
         if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');
+        await prisma.adsAccount.update({
+          where: {
+            id: adsAccount.id,
+          },
+          data: {
+            status_rented: 'available',
+          },
+        });
         const user = await tx.user.findUnique({
           where: { id: user_id },
         });
@@ -128,6 +136,18 @@ const updateDb = async (data: any) => {
           data: {
             points: { increment: amountVNDchange },
             list_ads_account: newListAds || [],
+          },
+        });
+        await prisma.facebookPartnerBM.update({
+          where: {
+            id: findBm.id as string,
+          },
+          data: {
+            status: 'complete_remove',
+            status_partner: 0,
+            status_limit_spend: null,
+            status_dischard_limit_spend: 1,
+            status_dischard_partner: 1,
           },
         });
         const pointsUsed = await tx.pointUsage.create({
@@ -142,15 +162,15 @@ const updateDb = async (data: any) => {
         return pointsUsed;
       });
       console.log('poitsUsedTransaction', poitsUsedTransaction);
-      await fbRemoveParnert.add({
-        bm_id,
-        ads_account_id,
-        user_id,
-        bm_origin,
-        ads_name,
-        bot_id,
-        id: findBm.id,
-      });
+      // await fbRemoveParnert.add({
+      //   bm_id,
+      //   ads_account_id,
+      //   user_id,
+      //   bm_origin,
+      //   ads_name,
+      //   bot_id,
+      //   id: findBm.id,
+      // });
       await removeRepeatJob(job);
       await prisma.notification.create({
         data: {
@@ -290,7 +310,7 @@ export const createRepeatJob = async (data: any) => {
       },
       {
         repeat: {
-          every: 1 * 60 * 1000, // 1 phút
+          every: 60 * 60 * 1000, // 1 phút
         },
         jobId: `fb-check-account-${bm_id}-${ads_account_id}`, // Unique jobId
         removeOnFail: true,

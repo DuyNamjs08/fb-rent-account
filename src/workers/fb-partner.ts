@@ -4,8 +4,94 @@ import { autoChangePartner } from '../auto-use-session';
 import { autoChangeLimitSpend } from '../auto-use-sessionV2';
 import { createRepeatJob } from './fb-check-account';
 import { sendEmail } from '../controllers/mails.controller';
-import { format } from 'date-fns';
+import { format, formatISO } from 'date-fns';
+import axios from 'axios';
+import 'dotenv/config';
+import { getLarkBaseAccessToken } from '../controllers/adAward.controller';
 
+const toStringSafe = (val: any): string => {
+  if (!val) return '';
+  if (val instanceof Date) return formatISO(val, { representation: 'date' });
+  return val.toString();
+};
+
+const fieldMapping = (record: any) => ({
+  'ID BM GỐC': toStringSafe(record.bm_origin),
+  'TÊN NGƯỜI THUÊ': toStringSafe(record.user_name),
+  'EMAIL THUÊ': toStringSafe(record.user_email),
+  'SỐ ĐIỆN THOẠI NGƯỜI THUÊ': toStringSafe(record.user_phone),
+  'ID BM ĐỐI TÁC': toStringSafe(record.bm_id),
+  'TÊN TKQC': toStringSafe(record.ads_name),
+  'LOẠI TKQC': toStringSafe('TK BM'),
+  'HẠN MỨC CHI': toStringSafe(record.amountPoint),
+  'THỜI GIAN BẮT ĐẦU THUÊ': toStringSafe(record.start_date),
+  'THỜI GIAN KẾT THÚC THUÊ': toStringSafe(record.end_date),
+  'TỔNG THANH TOÁN': toStringSafe(record.amountOrigin),
+  'PHÍ DỊCH VỤ': toStringSafe(record.user_fee),
+  'ID TKQC': toStringSafe(record.ads_account_id),
+});
+
+export const upsertLarkRecord = async (record: any) => {
+  const APP_ID = process.env.APP_ID_RENT!;
+  const TABLE_ID = process.env.TABLE_ID_RENT!;
+  const ACCESS_TOKEN = record.ACCESS_TOKEN || '';
+  const keyFilter = {
+    conditions: [
+      {
+        field_name: 'TÊN NGƯỜI THUÊ',
+        operator: 'is',
+        value: [record.user_name],
+      },
+      {
+        field_name: 'ID TKQC',
+        operator: 'is',
+        value: [record.ads_account_id],
+      },
+      {
+        field_name: 'THỜI GIAN BẮT ĐẦU THUÊ',
+        operator: 'is',
+        value: [toStringSafe(record.start_date)],
+      },
+      {
+        field_name: 'THỜI GIAN KẾT THÚC THUÊ',
+        operator: 'is',
+        value: [toStringSafe(record.end_date)],
+      },
+    ],
+    conjunction: 'and',
+  };
+
+  // 1. Kiểm tra record đã tồn tại trên Lark
+  try {
+    const searchResp = await axios.post(
+      `https://open.larksuite.com/open-apis/bitable/v1/apps/${APP_ID}/tables/${TABLE_ID}/records/search`,
+      { filter: keyFilter, page_size: 1 },
+      { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } },
+    );
+
+    const fields = fieldMapping(record);
+    const existed = searchResp.data?.data?.items?.[0];
+    if (existed) {
+      console.log(1);
+      // 2. Nếu có → update
+      const res = await axios.put(
+        `https://open.larksuite.com/open-apis/bitable/v1/apps/${APP_ID}/tables/${TABLE_ID}/records/${existed.record_id}`,
+        { fields },
+        { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } },
+      );
+    } else {
+      console.log(2);
+      // 3. Nếu chưa có → tạo mới
+      const res = await axios.post(
+        `https://open.larksuite.com/open-apis/bitable/v1/apps/${APP_ID}/tables/${TABLE_ID}/records`,
+        { fields },
+        { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } },
+      );
+    }
+  } catch (error) {
+    throw error;
+  }
+};
 export const fbParnert = new Bull('fb-add-parnert-ads', {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
@@ -65,10 +151,12 @@ fbParnert.process(2, async (job) => {
     bm_id,
     amountOrigin,
     currency,
-    renderedHtmlSuccess,
-    renderedHtmlError,
-    titlEmailSucces,
-    titlEmailError,
+    start_date,
+    end_date,
+    // renderedHtmlSuccess,
+    // renderedHtmlError,
+    // titlEmailSucces,
+    // titlEmailError,
   } = data;
   try {
     console.log('data used point', data);
@@ -86,7 +174,7 @@ fbParnert.process(2, async (job) => {
           status_limit_spend,
         },
       });
-      await createRepeatJob({ ...data });
+      // await createRepeatJob({ ...data });
       await prisma.adsAccount.update({
         where: {
           id: 'act_' + ads_account_id,
@@ -99,7 +187,6 @@ fbParnert.process(2, async (job) => {
       });
       const user = await prisma.user.findUnique({
         where: { id: user_id },
-        // select: { list_ads_account: true, email: true },
       });
 
       if (!user) throw new Error('User not found');
@@ -111,21 +198,31 @@ fbParnert.process(2, async (job) => {
           type: 'ads_success',
         },
       });
-      await prisma.emailLog.create({
-        data: {
-          user_id: user.id,
-          to: user.email,
-          subject: titlEmailSucces,
-          body: renderedHtmlSuccess,
-          status: 'success',
-          type: 'rent_ads',
-        },
+      const ACCESS_TOKEN = await getLarkBaseAccessToken();
+
+      await upsertLarkRecord({
+        user_name: user.username,
+        user_email: user.email,
+        user_phone: user.phone,
+        user_fee: user.percentage,
+        ACCESS_TOKEN,
+        ...data,
       });
-      await sendEmail({
-        email: user.email,
-        subject: titlEmailSucces,
-        message: renderedHtmlSuccess,
-      });
+      // await prisma.emailLog.create({
+      //   data: {
+      //     user_id: user.id,
+      //     to: user.email,
+      //     subject: titlEmailSucces,
+      //     body: renderedHtmlSuccess,
+      //     status: 'success',
+      //     type: 'rent_ads',
+      //   },
+      // });
+      // await sendEmail({
+      //   email: user.email,
+      //   subject: titlEmailSucces,
+      //   message: renderedHtmlSuccess,
+      // });
       const currentList = user.list_ads_account || [];
       const updatedList = currentList.includes(ads_account_id)
         ? currentList
@@ -135,6 +232,7 @@ fbParnert.process(2, async (job) => {
           id: user_id,
         },
         data: {
+          points: { decrement: amountOrigin },
           list_ads_account: updatedList,
         },
       });
@@ -167,21 +265,21 @@ fbParnert.process(2, async (job) => {
       } else if (status_limit_spend == 0) {
         errorMessage = 'Lỗi khi đặt giới hạn chi tiêu cho tài khoản quảng cáo';
       }
-      await prisma.emailLog.create({
-        data: {
-          user_id: user.id,
-          to: user.email,
-          subject: titlEmailError,
-          body: renderedHtmlError,
-          status: 'success',
-          type: 'rent_ads',
-        },
-      });
-      await sendEmail({
-        email: user.email,
-        subject: titlEmailError,
-        message: renderedHtmlError,
-      });
+      // await prisma.emailLog.create({
+      //   data: {
+      //     user_id: user.id,
+      //     to: user.email,
+      //     subject: titlEmailError,
+      //     body: renderedHtmlError,
+      //     status: 'success',
+      //     type: 'rent_ads',
+      //   },
+      // });
+      // await sendEmail({
+      //   email: user.email,
+      //   subject: titlEmailError,
+      //   message: renderedHtmlError,
+      // });
       await prisma.$transaction(async (tx) => {
         const adsAccount = await tx.adsAccount.findFirst({
           where: {
@@ -189,21 +287,21 @@ fbParnert.process(2, async (job) => {
           },
         });
         if (!adsAccount) throw new Error('Tài khoản qc Không tồn tại!');
-        if (currency == 'usd') {
-          await tx.user.update({
-            where: { id: user_id },
-            data: {
-              amount_usd: { increment: amountOrigin },
-            },
-          });
-        } else {
-          await tx.user.update({
-            where: { id: user_id },
-            data: {
-              points: { increment: amountOrigin },
-            },
-          });
-        }
+        // if (currency == 'usd') {
+        //   await tx.user.update({
+        //     where: { id: user_id },
+        //     data: {
+        //       amount_usd: { increment: amountOrigin },
+        //     },
+        //   });
+        // } else {
+        //   await tx.user.update({
+        //     where: { id: user_id },
+        //     data: {
+        //       points: { increment: amountOrigin },
+        //     },
+        //   });
+        // }
         const pointsUsed = await tx.pointUsage.create({
           data: {
             user_id,

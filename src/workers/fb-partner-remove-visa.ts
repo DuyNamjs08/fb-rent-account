@@ -41,7 +41,6 @@ const updateDb = async (data: any) => {
     //   ads_account_id,
     //   cookie_origin: cookie.storage_state,
     // });
-
     // return {
     //   status_remove_spend_limit: resultRemoveLimit,
     //   status_remove_partner: resultRemoveParnert,

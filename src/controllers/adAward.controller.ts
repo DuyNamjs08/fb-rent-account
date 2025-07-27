@@ -287,7 +287,7 @@ const AdAwardsController = {
     }
   },
 };
-const getLarkBaseAccessToken = async (): Promise<string> => {
+export const getLarkBaseAccessToken = async (): Promise<string> => {
   try {
     if (!process.env.LARK_APP_ID || !process.env.LARK_APP_SECRET) {
       throw new Error(
