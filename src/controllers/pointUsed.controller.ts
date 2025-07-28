@@ -17,6 +17,7 @@ const createChargeSchema = z.object({
   ads_account_id: z.string().min(1, 'ads_account_id is required'),
   user_id: z.string().min(1, 'user_id is required'),
   amountPoint: z.number().positive('please enter an amount greater than 0'),
+  fee: z.number().positive('please enter an amount fee greater than 0'),
   bm_origin: z.string().min(1, 'bm_origin is required'),
   ads_name: z.string().min(1, 'ads_name is required'),
   bot_id: z.string().min(1, 'bot_id is required'),
@@ -82,6 +83,7 @@ const pointUsedController = {
         currency,
         start_date,
         end_date,
+        fee,
       } = req.body;
       const parsed = createChargeSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -111,8 +113,8 @@ const pointUsedController = {
       }
       const amountOrigin = Math.floor(Number(amountPoint)); // số tiền trừ ở hệ thống
 
-      const amountVNDchange =
-        amountOrigin - amountOrigin * (user.percentage || 0.1); // số tiền chạy tkqc thật ở fb
+      const amountVNDchange = amountOrigin - fee; // số tiền chạy tkqc thật ở fb
+      console.log('amountVNDchange', amountVNDchange);
       if (user.points < amountOrigin) {
         errorResponse(
           res,
