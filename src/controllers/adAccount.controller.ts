@@ -34,6 +34,7 @@ const querySchema = z.object({
     .transform(Number)
     .optional()
     .default('10000000000'),
+  search: z.string().optional(),
 });
 function mapItemToAdsAccount(item: any) {
   return {
@@ -405,27 +406,57 @@ const TKQCController = {
         );
         return;
       }
-      const { page = 1, pageSize = 10, from, to } = parsed.data;
+      const { page = 1, pageSize = 10, from, to, search } = parsed.data;
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
+      const conditions = [
+        `aa.status_rented = 'available'`,
+        `aa.spend_cap ~ '^[0-9]+$'`,
+        `aa.balance = '0'`,
+      ];
+      if (search) {
+        // Chỉ cho phép chữ và số (regex: ^[a-zA-Z0-9]+$)
+        const isValid = /^[a-zA-Z0-9_ .]+$/.test(search);
+        if (isValid) {
+          const isNumber = /^\d+$/.test(search);
+          if (isNumber) {
+            conditions.push(`aa.account_id = '${search}'`);
+          } else {
+            conditions.push(`aa.name ILIKE '%${search}%'`);
+          }
+        } else {
+          errorResponse(
+            res,
+            'Trường search chỉ được chứa chữ cái và số.',
+            null,
+            httpStatusCodes.BAD_REQUEST,
+          );
+          return;
+        }
+      }
+
+      if (from && to) {
+        conditions.push(
+          `CAST(aa.spend_cap AS BIGINT) BETWEEN ${from} AND ${to}`,
+        );
+      }
+
       const result = await prisma.$queryRawUnsafe(`
   SELECT aa.*, ar.*
   FROM "ads_accounts" aa
   LEFT JOIN "ad_rewards" ar ON aa.account_id = ar.ad_account_id
   WHERE
-    aa.status_rented = 'available' AND
-    aa.spend_cap ~ '^[0-9]+$' AND
-    CAST(aa.spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+    ${conditions.join(' AND ')}
+    
   OFFSET ${skip}
   LIMIT ${pageSizeNum}
 `);
       const countRes: any[] = await prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as total
-        FROM "ads_accounts"
+        FROM "ads_accounts" aa
         WHERE
-          status_rented = 'available' AND
-          spend_cap ~ '^[0-9]+$' AND
-          CAST(spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+          ${conditions.join(' AND ')}
+    
       `);
 
       const count = Number(countRes[0]?.total || 0);
@@ -456,29 +487,54 @@ const TKQCController = {
         return;
       }
 
-      const { page, pageSize, from, to } = parsed.data;
+      const { page, pageSize, from, to, search } = parsed.data;
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
+      const conditions = [
+        `aa.is_visa_account = true`,
+        `aa.status_rented = 'available'`,
+        `aa.spend_cap ~ '^[0-9]+$'`,
+        `aa.balance = '0'`,
+      ];
+      if (search) {
+        // Chỉ cho phép chữ và số (regex: ^[a-zA-Z0-9]+$)
+        const isValid = /^[a-zA-Z0-9_ .]+$/.test(search);
+        if (isValid) {
+          const isNumber = /^\d+$/.test(search);
+          if (isNumber) {
+            conditions.push(`aa.account_id = '${search}'`);
+          } else {
+            conditions.push(`aa.name ILIKE '%${search}%'`);
+          }
+        } else {
+          errorResponse(
+            res,
+            'Trường search chỉ được chứa chữ cái và số.',
+            null,
+            httpStatusCodes.BAD_REQUEST,
+          );
+          return;
+        }
+      }
+      if (from && to) {
+        conditions.push(
+          `CAST(aa.spend_cap AS BIGINT) BETWEEN ${from} AND ${to}`,
+        );
+      }
       const result = await prisma.$queryRawUnsafe(`
   SELECT aa.*, ar.*
   FROM "ads_accounts" aa
   LEFT JOIN "ad_rewards" ar ON aa.account_id = ar.ad_account_id
   WHERE
-    aa.is_visa_account = true AND
-    aa.status_rented = 'available' AND
-    aa.spend_cap ~ '^[0-9]+$' AND
-    CAST(aa.spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+    ${conditions.join(' AND ')}
   OFFSET ${skip}
   LIMIT ${pageSizeNum}
 `);
       const countRes: any[] = await prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as total
-        FROM "ads_accounts"
+        FROM "ads_accounts" aa
         WHERE
-          is_visa_account = true AND
-          status_rented = 'available' AND
-          spend_cap ~ '^[0-9]+$' AND
-          CAST(spend_cap AS BIGINT) BETWEEN ${from} AND ${to}
+          ${conditions.join(' AND ')}
       `);
 
       const count = Number(countRes[0]?.total || 0);
@@ -495,7 +551,7 @@ const TKQCController = {
       );
     }
   },
-  getAllTKQCVisaRent: async (req: Request, res: Response): Promise<void> => {
+  getAllTKQCRent: async (req: Request, res: Response): Promise<void> => {
     try {
       const data = req.query;
       const { pageSize = 10, page = 1 } = data;
@@ -503,7 +559,6 @@ const TKQCController = {
       const pageSizeNum = Number(pageSize) || 10;
       const result = await prisma.adsAccount.findMany({
         where: {
-          is_visa_account: true,
           status_rented: 'rented',
         },
         skip,
@@ -511,7 +566,6 @@ const TKQCController = {
       });
       const count = await prisma.adsAccount.count({
         where: {
-          is_visa_account: true,
           status_rented: 'rented',
         },
       });
@@ -542,32 +596,57 @@ const TKQCController = {
         return;
       }
 
-      const { page, pageSize, from, to } = parsed.data;
+      const { page, pageSize, from, to, search } = parsed.data;
 
       const skip = (Number(page) - 1) * Number(pageSize);
       const pageSizeNum = Number(pageSize) || 10;
-      const fromNum = Number(from);
-      const toNum = Number(to);
+      const conditions = [
+        `(aa.is_visa_account = false OR aa.is_visa_account IS NULL)`,
+        `aa.status_rented = 'available'`,
+        `aa.spend_cap ~ '^[0-9]+$'`,
+        `aa.balance = '0'`,
+      ];
+      if (search) {
+        // Chỉ cho phép chữ và số (regex: ^[a-zA-Z0-9]+$)
+        const isValid = /^[a-zA-Z0-9_ .]+$/.test(search);
+        if (isValid) {
+          const isNumber = /^\d+$/.test(search);
+          if (isNumber) {
+            conditions.push(`aa.account_id = '${search}'`);
+          } else {
+            conditions.push(`aa.name ILIKE '%${search}%'`);
+          }
+        } else {
+          errorResponse(
+            res,
+            'Trường search chỉ được chứa chữ cái và số.',
+            null,
+            httpStatusCodes.BAD_REQUEST,
+          );
+          return;
+        }
+      }
+      if (from && to) {
+        conditions.push(
+          `CAST(aa.spend_cap AS BIGINT) BETWEEN ${from} AND ${to}`,
+        );
+      }
 
       const result: any[] = await prisma.$queryRawUnsafe(`
   SELECT aa.*, ar.*
   FROM "ads_accounts" aa
   LEFT JOIN "ad_rewards" ar ON aa.account_id = ar.ad_account_id
   WHERE
-    (aa.is_visa_account = false OR aa.is_visa_account IS NULL) AND
-    aa.spend_cap ~ '^[0-9]+$' AND
-    CAST(aa.spend_cap AS BIGINT) BETWEEN ${fromNum} AND ${toNum}
+    ${conditions.join(' AND ')}
   OFFSET ${skip}
   LIMIT ${pageSizeNum}
 `);
 
       const countRes: any[] = await prisma.$queryRawUnsafe(`
         SELECT COUNT(*) as total
-        FROM "ads_accounts"
+        FROM "ads_accounts" aa
         WHERE
-          (is_visa_account = false OR is_visa_account IS NULL) AND
-          spend_cap ~ '^[0-9]+$' AND
-          CAST(spend_cap AS BIGINT) BETWEEN ${fromNum} AND ${toNum}
+         ${conditions.join(' AND ')}
       `);
 
       const count = Number(countRes[0]?.total || 0);

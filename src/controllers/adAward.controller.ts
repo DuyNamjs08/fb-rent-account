@@ -33,21 +33,16 @@ async function importLargeCSV(filePath: string) {
   async function insertOrUpdateBatch(batch: any[]) {
     for (const data of batch) {
       try {
-        // await prisma.adsAccount.upsert({
-        //   where: { account_id: data.ad_account_id },
-        //   create: {
-        //     id: `act_${data.ad_account_id}`,
-        //     account_id: data.ad_account_id,
-        //     name: data.ad_account_name,
-        //     amount_spent: '0',
-        //     balance: '0',
-        //     age: 0,
-        //     timezone_name: 'Asia/Ho_Chi_Minh',
-        //     account_status: 1,
-        //     created_time: new Date().toISOString(),
-        //   },
-        //   update: {},
-        // });
+        const exists = await prisma.adsAccount.findUnique({
+          where: { account_id: data.ad_account_id },
+          select: { account_id: true },
+        });
+        if (!exists) {
+          console.warn(
+            `⛔ Bỏ qua vì không tồn tại account: ${data.ad_account_id}`,
+          );
+          continue; // Bỏ qua nếu tài khoản không tồn tại
+        }
 
         await prisma.adReward.upsert({
           where: {
