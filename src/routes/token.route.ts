@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import TokenController from '../controllers/token.controller';
+import { setLanguageFromConfig } from '../middlewares/setLanguageFromConfig';
 
 /**
  * @swagger
@@ -322,8 +323,20 @@ router.post('/login', TokenController.createAccessToken);
  */
 router.post('/refresh-token', TokenController.updateAccessToken);
 
-router.post('/forgot-password', TokenController.forgotPassword);
-router.post('/reset-password', TokenController.resetPassword);
-router.post('/register-success', TokenController.registerSuccess);
+router.post(
+  '/forgot-password',
+  setLanguageFromConfig,
+  TokenController.forgotPassword,
+);
+router.post(
+  '/reset-password',
+  setLanguageFromConfig,
+  TokenController.resetPassword,
+);
+router.post(
+  '/register-success',
+  setLanguageFromConfig,
+  TokenController.registerSuccess,
+);
 
 export default router;

@@ -3,33 +3,276 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{t('header_title')}}</title>
+    <title>{{header_title}}</title>
     <style>
-      /* Giữ nguyên style như ban đầu */
-      /* ... (phần CSS như bạn đã viết, mình không lặp lại để ngắn gọn) ... */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+        line-height: 1.6;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+        border: 1px solid #d1d5db;
+      }
+
+      .email-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+      }
+
+      .email-header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      .email-header p {
+        margin: 10px 0 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .alert-icon {
+        width: 60px;
+        height: 60px;
+        background-color: #ff6b6b;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .alert-icon::before {
+        content: "!";
+        color: white;
+        font-size: 30px;
+        font-weight: bold;
+      }
+
+      .email-body {
+        padding: 10px;
+      }
+
+      .notification-text {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+      }
+
+      .notification-text h2 {
+        color: #2c3e50;
+        margin: 0 0 10px 0;
+        font-size: 20px;
+      }
+
+      .notification-text p {
+        color: #666;
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .info-table tr {
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .info-table tr:last-child {
+        border-bottom: none;
+      }
+
+      .info-table td {
+        padding: 15px;
+        vertical-align: top;
+      }
+
+      .info-table .label {
+        font-weight: bold;
+        color: #2c3e50;
+        width: 30%;
+        background-color: #f1f3f4;
+      }
+
+      .info-table .value {
+        color: #555;
+        width: 70%;
+      }
+
+      .priority-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .priority-high {
+        background-color: #ff6b6b;
+        color: white;
+      }
+
+      .priority-medium {
+        background-color: #feca57;
+        color: white;
+      }
+
+      .priority-low {
+        background-color: #48cae4;
+        color: white;
+      }
+
+      .message-content {
+        background-color: #f8f9fa;
+        border-left: 4px solid #3498db;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 0 5px 5px 0;
+      }
+
+      .action-buttons {
+        text-align: center;
+        margin: 30px 0;
+        padding: 20px 0;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 30px;
+        margin: 0 10px;
+        text-decoration: none;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 14px;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+      }
+
+      .btn-secondary {
+        background-color: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+      }
+
+      .timestamp {
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+
+      .email-footer {
+        background-color: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        color: #666;
+        font-size: 12px;
+      }
+
+      .email-footer p {
+        /*margin: 5px 0;*/
+      }
+
+      .system-info {
+        background-color: #e3f2fd;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 20px 0;
+        border-left: 4px solid #2196f3;
+      }
+
+      .system-info h4 {
+        margin: 0 0 10px 0;
+        color: #1976d2;
+        font-size: 14px;
+      }
+
+      .system-info p {
+        margin: 5px 0;
+        font-size: 12px;
+        color: #555;
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        .email-container {
+          margin: 0;
+          border-radius: 0;
+        }
+
+        .email-header, .email-body {
+          padding: 20px 15px;
+        }
+
+        .btn {
+          display: block;
+          margin: 10px 0;
+        }
+
+        .info-table .label,
+        .info-table .value {
+          display: block;
+          width: 100%;
+        }
+
+        .info-table .label {
+          padding-bottom: 5px;
+          background-color: transparent;
+          font-size: 12px;
+        }
+
+        .info-table .value {
+          padding-top: 5px;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="email-container">
       <!-- Header -->
       <div class="email-header">
-        <h1>{{t('header_title')}}</h1>
-        <p>{{t('header_description')}}</p>
+        <h1>{{header_title}}</h1>
+        <p>{{header_description}}</p>
       </div>
 
       <!-- Body -->
       <div class="email-body">
         <table class="info-table">
           <tr>
-            <td class="label">{{t('field_title')}}:</td>
+            <td class="label">{{field_title}}:</td>
             <td class="value"><strong>{{title}}</strong></td>
           </tr>
           <tr>
-            <td class="label">{{t('field_fullname')}}:</td>
+            <td class="label">{{field_fullname}}:</td>
             <td class="value">{{NAME}}</td>
           </tr>
           <tr>
-            <td class="label">{{t('field_email')}}:</td>
+            <td class="label">{{field_email}}:</td>
             <td class="value">
               <a style="color: #3498db; text-decoration: none"
                 >{{USER_EMAIL}}</a
@@ -37,27 +280,27 @@
             </td>
           </tr>
           <tr>
-            <td class="label">{{t('field_phone')}}:</td>
+            <td class="label">{{field_phone}}:</td>
             <td class="value">{{USER_PHONE}}</td>
           </tr>
           <tr>
-            <td class="label">{{t('field_priority')}}:</td>
+            <td class="label">{{field_priority}}:</td>
             <td class="value">
               <span class="priority-badge priority-high">{{priority}}</span>
             </td>
           </tr>
           <tr>
-            <td class="label">{{t('field_category')}}:</td>
+            <td class="label">{{field_category}}:</td>
             <td class="value">{{category}}</td>
           </tr>
           <tr>
-            <td class="label">{{t('field_created_at')}}:</td>
+            <td class="label">{{field_created_at}}:</td>
             <td class="value">{{CREATED_AT}}</td>
           </tr>
         </table>
 
         <h3 style="color: #2c3e50; font-size: 16px">
-          {{t('request_content')}}:
+          {{request_content}}:
         </h3>
         <div class="message-content">
           <p style="margin: 0; color: #555; font-size: 14px">{{content}}</p>

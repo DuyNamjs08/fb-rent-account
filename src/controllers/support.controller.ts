@@ -140,6 +140,8 @@ const supportController = {
         priority = '',
       } = req.query;
 
+      // console.log('test123: ', req.t('usersupport.header_title'));
+
       const pageNumber = parseInt(page as string, 10) || 1;
       const pageSize = parseInt(limit as string, 10) || 10;
       const skip = (pageNumber - 1) * pageSize;
@@ -511,6 +513,12 @@ const supportController = {
   },
   sendMailAdmin: async (req: Request, res: Response) => {
     try {
+      const lang = (req.headers['accept-language'] || 'vi')
+        .split(',')[0]
+        .split('-')[0]
+        .trim();
+      req.i18n?.changeLanguage(lang);
+
       const { email, priority, category, content, title, created_at } =
         req.body;
       const mailAdmin = process.env.EMAIL_ADMIN as string;
@@ -571,8 +579,8 @@ const supportController = {
         data: {
           user_id: user?.id,
           to: mailAdmin,
-          subject: 'AKAds Thông Báo',
-          body: htmlContent,
+          subject: req.t('adminsupport.akaNotify'),
+          body: renderedHtml,
           status: 'success',
           type: 'notify support requests',
         },
@@ -581,8 +589,8 @@ const supportController = {
       // Gửi email
       await sendEmailFromUser({
         email: user.email,
-        subject: 'AKAds Thông Báo',
-        message: htmlContent,
+        subject: req.t('adminsupport.akaNotify'),
+        message: renderedHtml,
       });
 
       successResponse(res, req.t('admin_email_sent'), {});
@@ -597,6 +605,12 @@ const supportController = {
   },
   sendMailUser: async (req: Request, res: Response) => {
     try {
+      const lang = (req.headers['accept-language'] || 'vi')
+        .split(',')[0]
+        .split('-')[0]
+        .trim();
+      req.i18n?.changeLanguage(lang);
+
       const { title, status, updated_at, name, email, phone } = req.body;
       const user = await UserService.getUserByEmail(email);
       if (!user) {

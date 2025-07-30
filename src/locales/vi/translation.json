@@ -134,10 +134,11 @@
     "reset_password_title": "Yêu cầu đặt lại mật khẩu",
     "reset_password_description": "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn",
     "greeting": "Xin chào,",
-    "reset_password_instruction": "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản {{company}} của mình. Nhấp vào nút bên dưới để tạo mật khẩu mới:",
+    "reset_password_instruction": "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản {{company_name}} của mình. Nhấp vào nút bên dưới để tạo mật khẩu mới:",
     "reset_password_button": "Đặt lại mật khẩu",
     "link_expire_notice_title": "Liên kết này sẽ hết hạn sau 15 phút",
-    "link_expire_notice_description": "Vì lý do bảo mật, liên kết đặt lại mật khẩu chỉ có hiệu lực trong 15 phút kể từ khi gửi email này."
+    "link_expire_notice_description": "Vì lý do bảo mật, liên kết đặt lại mật khẩu chỉ có hiệu lực trong 15 phút kể từ khi gửi email này.",
+    "resetPassTitle": "AKAds Đặt lại mật khẩu"
   },
   "register": {
     "welcome_title": "Chào mừng bạn đến với AKA Ads",
@@ -159,7 +160,8 @@
     "auto_notice": "Email này được gửi tự động, vui lòng không trả lời trực tiếp",
     "company_address": "Địa chỉ: Tòa nhà Việt Hương, số 1 Làng nghề, Triều Khúc, Thanh Trì, Hà Nội",
     "website": "Website:",
-    "rights_reserved": "Bảo lưu mọi quyền."
+    "rights_reserved": "Bảo lưu mọi quyền.",
+    "registerSuccess": "AKAds Đăng ký tài khoản thành công"
   },
   "usersupport": {
     "header_noti": "Thông báo từ AKAds",
@@ -192,7 +194,8 @@
     "field_priority": "Mức độ ưu tiên",
     "field_category": "Danh mục",
     "field_created_at": "Thời gian gửi",
-    "request_content": "Nội dung yêu cầu"
+    "request_content": "Nội dung yêu cầu",
+    "akaNotify": "AKAds Hỗ trợ"
   },
   "subject_add_account_success": "AKAds thông báo thêm tài khoản quảng cáo vào BM",
   "subject_add_account_visa_success": "AKAds thông báo thêm tài khoản quảng cáo vào BM bằng visa thành công",
