@@ -3,6 +3,7 @@ import { uploadMiddleware } from '../middlewares/upload.middleware';
 import supportController from '../controllers/support.controller';
 import { requireRoles } from '../middlewares/auth.middleware';
 import UserRole from '../constants/UserRole';
+import {setLanguageFromConfig} from "../middlewares/setLanguageFromConfig";
 
 const router = express.Router();
 
@@ -20,7 +21,15 @@ router.get('/support/message/:id', supportController.getMessageByRequestId);
 router.delete('/support/:id', supportController.deleteSupport);
 
 // send mail
-router.post('/support/mail-admin', supportController.sendMailAdmin);
-router.post('/support/mail-user', supportController.sendMailUser);
+router.post(
+  '/support/mail-admin',
+  setLanguageFromConfig,
+  supportController.sendMailAdmin,
+);
+router.post(
+  '/support/mail-user',
+  setLanguageFromConfig,
+  supportController.sendMailUser,
+);
 
 export default router;

@@ -202,6 +202,14 @@ const TokenController = {
       const BaseUrl = process.env.VITE_URL;
       const { email } = req.body;
       const user = await UserService.getUserByEmail(email);
+
+      const lang = (req.headers['accept-language'] || 'vi')
+        .split(',')[0]
+        .split('-')[0]
+        .trim();
+      req.i18n?.changeLanguage(lang);
+      // console.log('headers:', req.headers['accept-language']);
+
       if (!user) {
         errorResponse(
           res,
@@ -262,7 +270,7 @@ const TokenController = {
         data: {
           user_id: user.id,
           to: user.email,
-          subject: 'AKAds Đặt lại mật khẩu',
+          subject: req.t('email.resetPassTitle'),
           body: renderedHtml,
           status: 'success',
           type: 'reset_password',
@@ -272,7 +280,7 @@ const TokenController = {
       // Gửi email
       await sendEmail({
         email: user.email,
-        subject: 'AKAds Đặt lại mật khẩu',
+        subject: req.t('email.resetPassTitle'),
         message: renderedHtml,
       });
 
@@ -289,6 +297,13 @@ const TokenController = {
   resetPassword: async (req: Request, res: Response) => {
     try {
       const { token, newPassword } = req.body;
+
+      const lang = (req.headers['accept-language'] || 'vi')
+        .split(',')[0]
+        .split('-')[0]
+        .trim();
+      req.i18n?.changeLanguage(lang);
+
       if (!token || !newPassword) {
         errorResponse(
           res,
@@ -347,6 +362,13 @@ const TokenController = {
   registerSuccess: async (req: Request, res: Response) => {
     try {
       const { email, createdTime } = req.body;
+
+      const lang = (req.headers['accept-language'] || 'vi')
+        .split(',')[0]
+        .split('-')[0]
+        .trim();
+      req.i18n?.changeLanguage(lang);
+
       const user = await UserService.getUserByEmail(email);
       if (!user) {
         errorResponse(
@@ -396,7 +418,7 @@ const TokenController = {
         data: {
           user_id: user.id,
           to: user.email,
-          subject: 'AKAds Đăng ký tài khoản thành công',
+          subject: req.t('register.registerSuccess'),
           body: renderedHtml,
           status: 'success',
           type: 'register_success',
@@ -406,7 +428,7 @@ const TokenController = {
       // Gửi email
       await sendEmail({
         email: user.email,
-        subject: 'AKAds Đăng ký tài khoản thành công',
+        subject: req.t('register.registerSuccess'),
         message: renderedHtml,
       });
 

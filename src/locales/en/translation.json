@@ -136,7 +136,8 @@
     "reset_password_instruction": "You have requested to reset the password for your {{company}} account. Click the button below to create a new password:",
     "reset_password_button": "Reset Password",
     "link_expire_notice_title": "This link will expire in 15 minutes",
-    "link_expire_notice_description": "For security reasons, the password reset link is only valid for 15 minutes after this email is sent."
+    "link_expire_notice_description": "For security reasons, the password reset link is only valid for 15 minutes after this email is sent.",
+    "resetPassTitle": "AKAds Reset Password"
   },
   "register": {
     "welcome_title": "Welcome to AKA Ads",
@@ -158,7 +159,8 @@
     "auto_notice": "This email is sent automatically, please do not reply.",
     "company_address": "Address: Viet Huong Building, No.1 Lang Nghe, Trieu Khuc, Thanh Tri, Hanoi",
     "website": "Website:",
-    "rights_reserved": "All rights reserved."
+    "rights_reserved": "All rights reserved.",
+    "registerSuccess": "AKAds Account registration successful"
   },
   "usersupport": {
     "header_noti": "AKAds Notification",
@@ -191,7 +193,8 @@
     "field_priority": "Priority",
     "field_category": "Category",
     "field_created_at": "Submitted At",
-    "request_content": "Request Content"
+    "request_content": "Request Content",
+    "akaNotify": "AKAds Support"
   },
   "subject_add_account_success": "AKAds notification: Advertising account added to BM",
   "subject_add_account_visa_success": "AKAds notification: Advertising account successfully added to BM via Visa",
