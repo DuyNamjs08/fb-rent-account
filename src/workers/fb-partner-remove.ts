@@ -87,10 +87,15 @@ fbRemoveParnert.process(2, async (job) => {
           subject: 'AKAds thông báo hủy đối tác vào BM',
           body: htmlContent
             .replace('{{accountName}}', user.username || 'Người dùng')
+            .replace('{{accountNameInfo}}', user.username || 'Người dùng')
             .replace(
               '{{rentDuration}}',
               format(new Date(), 'dd/MM/yyyy HH:mm:ss') ||
                 new Date().toLocaleString(),
+            )
+            .replace(
+              '{{rent_success_desc}}',
+              'Bạn đã hủy đối tác vào BM thành công',
             )
             .replace('{{ads_name}}', ads_name || '')
             .replace('{{amountPoint}}', amountPoint || '')
@@ -104,10 +109,15 @@ fbRemoveParnert.process(2, async (job) => {
         subject: 'AKAds thông báo hủy đối tác vào BM',
         message: htmlContent
           .replace('{{accountName}}', user.username || 'Người dùng')
+          .replace('{{accountNameInfo}}', user.username || 'Người dùng')
           .replace(
             '{{rentDuration}}',
             format(new Date(), 'dd/MM/yyyy HH:mm:ss') ||
               new Date().toLocaleString(),
+          )
+          .replace(
+            '{{rent_success_desc}}',
+            'Bạn đã hủy đối tác vào BM thành công',
           )
           .replace('{{amountPoint}}', amountPoint || '')
           .replace('{{ads_name}}', ads_name || '')
