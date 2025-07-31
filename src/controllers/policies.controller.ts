@@ -21,7 +21,7 @@ const getIdSchema = z.object({
 const policiesController = {
   createPolicies: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { title, message } = req.body;
+      const { title, message, country } = req.body;
       const parsed = createMessageSchema.safeParse(req.body);
       if (!parsed.success) {
         const errors = parsed.error.flatten().fieldErrors;
@@ -37,6 +37,7 @@ const policiesController = {
         data: {
           title,
           message,
+          country,
         },
       });
       successResponse(res, req.t('create_policy_success'), policies);
@@ -51,8 +52,10 @@ const policiesController = {
   },
 
   getAllpoliciess: async (req: Request, res: Response): Promise<void> => {
+    const { lang } = req.query;
     try {
       const policiess = await prisma.policies.findMany({
+        where: lang ? { country: lang.toString() } : undefined,
         orderBy: { created_at: 'desc' },
       });
       successResponse(res, req.t('policy_list'), policiess);
@@ -99,7 +102,7 @@ const policiesController = {
   updatePolicies: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { title, message } = req.body;
+      const { title, message, country } = req.body;
       const parsed = updateMessageSchema.safeParse({ ...req.body, id });
       if (!parsed.success) {
         const errors = parsed.error.flatten().fieldErrors;
@@ -118,6 +121,7 @@ const policiesController = {
         data: {
           title,
           message,
+          country,
         },
       });
       successResponse(res, req.t('update_policy_success'), policiesNew);
