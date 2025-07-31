@@ -203,13 +203,6 @@ const TokenController = {
       const { email } = req.body;
       const user = await UserService.getUserByEmail(email);
 
-      const lang = (req.headers['accept-language'] || 'vi')
-        .split(',')[0]
-        .split('-')[0]
-        .trim();
-      req.i18n?.changeLanguage(lang);
-      // console.log('headers:', req.headers['accept-language']);
-
       if (!user) {
         errorResponse(
           res,
@@ -297,13 +290,6 @@ const TokenController = {
   resetPassword: async (req: Request, res: Response) => {
     try {
       const { token, newPassword } = req.body;
-
-      const lang = (req.headers['accept-language'] || 'vi')
-        .split(',')[0]
-        .split('-')[0]
-        .trim();
-      req.i18n?.changeLanguage(lang);
-
       if (!token || !newPassword) {
         errorResponse(
           res,
@@ -362,12 +348,6 @@ const TokenController = {
   registerSuccess: async (req: Request, res: Response) => {
     try {
       const { email, createdTime } = req.body;
-
-      const lang = (req.headers['accept-language'] || 'vi')
-        .split(',')[0]
-        .split('-')[0]
-        .trim();
-      req.i18n?.changeLanguage(lang);
 
       const user = await UserService.getUserByEmail(email);
       if (!user) {
