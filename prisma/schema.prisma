@@ -262,7 +262,7 @@ model Policies {
   id          String      @id @default(uuid())
   title       String   // tên chính sách
   message     String // đoạn mô tả chính sách
-
+  country String? @default("vi") // tên quốc gia
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
