@@ -36,7 +36,7 @@ const querySchema = z.object({
     .default('10000000000'),
   search: z.string().optional(),
 });
-function mapItemToAdsAccount(item: any) {
+export function mapItemToAdsAccount(item: any) {
   return {
     id: item.id,
     account_id: item.account_id,
@@ -413,6 +413,7 @@ const TKQCController = {
         `aa.status_rented = 'available'`,
         `aa.spend_cap ~ '^[0-9]+$'`,
         `aa.balance = '0'`,
+        `aa.account_status = '1'`,
       ];
       if (search) {
         // Chỉ cho phép chữ và số (regex: ^[a-zA-Z0-9]+$)
@@ -495,6 +496,7 @@ const TKQCController = {
         `aa.status_rented = 'available'`,
         `aa.spend_cap ~ '^[0-9]+$'`,
         `aa.balance = '0'`,
+        `aa.account_status = '1'`,
       ];
       if (search) {
         // Chỉ cho phép chữ và số (regex: ^[a-zA-Z0-9]+$)
@@ -605,6 +607,7 @@ const TKQCController = {
         `aa.status_rented = 'available'`,
         `aa.spend_cap ~ '^[0-9]+$'`,
         `aa.balance = '0'`,
+        `aa.account_status = '1'`,
       ];
       if (search) {
         // Chỉ cho phép chữ và số (regex: ^[a-zA-Z0-9]+$)

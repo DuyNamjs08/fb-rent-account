@@ -55,7 +55,7 @@ const policiesController = {
     const { lang } = req.query;
     try {
       const policiess = await prisma.policies.findMany({
-        where: lang ? { country: lang.toString() } : undefined,
+        where: {},
         orderBy: { created_at: 'desc' },
       });
       successResponse(res, req.t('policy_list'), policiess);

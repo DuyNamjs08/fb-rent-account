@@ -48,6 +48,7 @@ import { sendEmail } from './controllers/mails.controller';
 import fs from 'fs';
 import { format } from 'date-fns';
 import { getIO, initSocket } from './config/socket';
+import { fbRealtimeCheckDisable } from './workers/fb-check-disable';
 
 async function init() {
   dotenv.config({ path: `${__dirname}/../.env` });
@@ -269,7 +270,15 @@ async function init() {
       res.status(500).send('Internal Server Error');
     }
   });
-
+  await fbRealtimeCheckDisable.add(
+    {},
+    {
+      delay: 5 * 60 * 1000,
+      attempts: 1,
+      removeOnComplete: true,
+      removeOnFail: true,
+    },
+  );
   server.listen(4000, () =>
     console.log(`Worker ${process.pid} started on port ${4000}`),
   );
