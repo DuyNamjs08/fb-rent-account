@@ -270,10 +270,11 @@ async function init() {
       res.status(500).send('Internal Server Error');
     }
   });
+  await fbRealtimeCheckDisable.obliterate({ force: true });
   await fbRealtimeCheckDisable.add(
     {},
     {
-      delay: 5 * 60 * 1000,
+      delay: 15 * 60 * 1000,
       attempts: 1,
       removeOnComplete: true,
       removeOnFail: true,
