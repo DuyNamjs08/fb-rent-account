@@ -318,12 +318,12 @@ const TKQCController = {
         }
         const listdata = await axios.get(url);
         if (listdata.status !== 200) {
-          errorResponse(
-            res,
-            req.t('facebook_sync_error'),
-            {},
-            httpStatusCodes.BAD_REQUEST,
-          );
+          // errorResponse(
+          //   res,
+          //   req.t('facebook_sync_error'),
+          //   {},
+          //   httpStatusCodes.BAD_REQUEST,
+          // );
           return;
         }
         const arrayResult = listdata.data.data;
@@ -347,42 +347,42 @@ const TKQCController = {
         hasNextPage = !!afterCursor;
         console.log('Next cursor >>>', afterCursor);
       }
-      while (hasNextPageV2) {
-        let url = `${baseUrlV2}?fields=${fields}&limit=20&access_token=${systemUserDecode}`;
-        if (afterCursorV2) {
-          url += `&after=${afterCursorV2}`;
-        }
-        const listdata = await axios.get(url);
-        if (listdata.status !== 200) {
-          errorResponse(
-            res,
-            req.t('facebook_sync_error'),
-            {},
-            httpStatusCodes.BAD_REQUEST,
-          );
-          return;
-        }
-        const arrayResult = listdata.data.data;
-        if (Array.isArray(arrayResult)) {
-          try {
-            await Promise.all(
-              arrayResult.map((item: any) =>
-                prisma.adsAccount.upsert({
-                  where: { id: item.id },
-                  update: mapItemToAdsAccount(item),
-                  create: mapItemToAdsAccount(item),
-                }),
-              ),
-            );
-          } catch (err: any) {
-            console.error('Failed to post to server:', err.message);
-          }
-          totalCountV2 += arrayResult.length;
-        }
-        afterCursorV2 = listdata.data.paging?.cursors?.after || '';
-        hasNextPageV2 = !!afterCursorV2;
-        console.log('Next cursor >>>', afterCursorV2);
-      }
+      // while (hasNextPageV2) {
+      //   let url = `${baseUrlV2}?fields=${fields}&limit=20&access_token=${systemUserDecode}`;
+      //   if (afterCursorV2) {
+      //     url += `&after=${afterCursorV2}`;
+      //   }
+      //   const listdata = await axios.get(url);
+      //   if (listdata.status !== 200) {
+      //     errorResponse(
+      //       res,
+      //       req.t('facebook_sync_error'),
+      //       {},
+      //       httpStatusCodes.BAD_REQUEST,
+      //     );
+      //     return;
+      //   }
+      //   const arrayResult = listdata.data.data;
+      //   if (Array.isArray(arrayResult)) {
+      //     try {
+      //       await Promise.all(
+      //         arrayResult.map((item: any) =>
+      //           prisma.adsAccount.upsert({
+      //             where: { id: item.id },
+      //             update: mapItemToAdsAccount(item),
+      //             create: mapItemToAdsAccount(item),
+      //           }),
+      //         ),
+      //       );
+      //     } catch (err: any) {
+      //       console.error('Failed to post to server:', err.message);
+      //     }
+      //     totalCountV2 += arrayResult.length;
+      //   }
+      //   afterCursorV2 = listdata.data.paging?.cursors?.after || '';
+      //   hasNextPageV2 = !!afterCursorV2;
+      //   console.log('Next cursor >>>', afterCursorV2);
+      // }
       console.log('Total synced:', totalCount, totalCountV2);
       successResponse(res, req.t('sync_list'), {});
     } catch (error: any) {

@@ -88,7 +88,7 @@ const updateDb = async (data: any) => {
   try {
     const systemUserToken = await prisma.facebookBM.findUnique({
       where: {
-        bm_id: '9906754416026994',
+        bm_id: '1571278653620894',
       },
     });
     if (!systemUserToken) {
@@ -200,35 +200,46 @@ const updateDb = async (data: any) => {
       console.log('Next cursor >>>', afterCursor);
     }
     while (hasNextPageV2) {
-      let url = `${baseUrlV2}?fields=${fields}&limit=20&access_token=${systemUserDecode}`;
-      if (afterCursorV2) {
-        url += `&after=${afterCursorV2}`;
-      }
-      const listdata = await axios.get(url);
-      if (listdata.status !== 200) {
-        throw new Error(`Lỗi API FB (V2) - status: ${listdata.status}`);
-      }
-      const arrayResult = listdata.data.data;
-      if (Array.isArray(arrayResult)) {
-        try {
-          await Promise.all(
-            arrayResult.map((item: any) =>
-              prisma.adsAccount.upsert({
-                where: { id: item.id },
-                update: mapItemToAdsAccount(item),
-                create: mapItemToAdsAccount(item),
-              }),
-            ),
-          );
-        } catch (err: any) {
-          console.error('Failed to post to server:', err.message);
+      try {
+        let url = `${baseUrlV2}?fields=${fields}&limit=20&access_token=${systemUserDecode}`;
+        if (afterCursorV2) {
+          url += `&after=${afterCursorV2}`;
         }
-        totalCountV2 += arrayResult.length;
+
+        const listdata = await axios.get(url);
+
+        if (listdata.status !== 200) {
+          console.error(`Lỗi API FB (V2) - status: ${listdata.status}`);
+          break; // dừng vòng lặp
+        }
+
+        const arrayResult = listdata.data.data;
+        if (Array.isArray(arrayResult)) {
+          try {
+            await Promise.all(
+              arrayResult.map((item: any) =>
+                prisma.adsAccount.upsert({
+                  where: { id: item.id },
+                  update: mapItemToAdsAccount(item),
+                  create: mapItemToAdsAccount(item),
+                }),
+              ),
+            );
+          } catch (err: any) {
+            console.error('Failed to post to server:', err.message);
+          }
+          totalCountV2 += arrayResult.length;
+        }
+
+        afterCursorV2 = listdata.data.paging?.cursors?.after || '';
+        hasNextPageV2 = !!afterCursorV2;
+        console.log('Next cursor >>>', afterCursorV2);
+      } catch (err: any) {
+        console.error(`Lỗi khi gọi API FB (V2): ${err.message}`);
+        break; // dừng vòng lặp luôn nếu API bị lỗi
       }
-      afterCursorV2 = listdata.data.paging?.cursors?.after || '';
-      hasNextPageV2 = !!afterCursorV2;
-      console.log('Next cursor >>>', afterCursorV2);
     }
+
     console.log('Total synced:', totalCount, totalCountV2);
     const listAds = await prisma.adsAccount.findMany({
       // where: {
