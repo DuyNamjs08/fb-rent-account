@@ -274,10 +274,8 @@ async function init() {
   await fbRealtimeCheckDisable.add(
     {},
     {
-      delay: 15 * 60 * 1000,
-      attempts: 1,
-      removeOnComplete: true,
-      removeOnFail: true,
+      delay: 10 * 60 * 1000,
+      attempts: 3,
     },
   );
   server.listen(4000, () =>

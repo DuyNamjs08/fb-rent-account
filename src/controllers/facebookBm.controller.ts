@@ -5,6 +5,7 @@ import { httpStatusCodes } from '../helpers/statusCodes';
 import CryptoJS from 'crypto-js';
 import prisma from '../config/prisma';
 import { z } from 'zod';
+import { fbRealtimeCheckDisable } from '../workers/fb-check-disable';
 const SECRET_KEY = process.env.ENCRYPTION_KEY_SECRET;
 
 export function encryptToken(token: string) {
@@ -80,7 +81,7 @@ const facebookBmController = {
   },
   updateFacebookBM: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id, bm_name, bm_id, system_user_token } = req.body;
+      const { bm_name, bm_id, system_user_token } = req.body;
       const parsed = createBmSchema.safeParse(req.body);
       if (!parsed.success) {
         const errors = parsed.error.flatten().fieldErrors;
@@ -92,26 +93,12 @@ const facebookBmController = {
         );
         return;
       }
-      const facebookBm = await prisma.facebookBM.findUnique({
-        where: {
-          id: id,
-        },
-      });
-      if (!facebookBm) {
-        errorResponse(
-          res,
-          httpReasonCodes.NOT_FOUND,
-          {},
-          httpStatusCodes.NOT_FOUND,
-        );
-        return;
-      }
       const fbExist = await prisma.facebookBM.findUnique({
         where: {
           bm_id: bm_id,
         },
       });
-      if (fbExist) {
+      if (!fbExist) {
         errorResponse(
           res,
           req.t('bm_id_already_exists'),
@@ -123,14 +110,22 @@ const facebookBmController = {
       const encodeSystemUser = await encryptToken(system_user_token);
       const fbBMNew = await prisma.facebookBM.update({
         where: {
-          id: id,
+          id: fbExist.id,
         },
         data: {
-          bm_name,
-          bm_id,
+          bm_name: bm_name || (fbExist.bm_name as string),
+          bm_id: bm_id || (fbExist.bm_id as string),
           system_user_token: encodeSystemUser,
         },
       });
+      await fbRealtimeCheckDisable.obliterate({ force: true });
+      await fbRealtimeCheckDisable.add(
+        {},
+        {
+          delay: 10 * 60 * 1000,
+          attempts: 3,
+        },
+      );
       successResponse(res, req.t('update_facebook_bm_success'), fbBMNew);
     } catch (error: any) {
       const statusCode = error.message.includes('not found') ? 404 : 400;

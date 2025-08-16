@@ -271,7 +271,7 @@ fbRealtimeCheckDisable.process(1, async (job) => {
     throw err;
   }
 });
-const retryJob = async (job: Job, maxRetry = 3, delayMs = 15 * 60 * 1000) => {
+const retryJob = async (job: Job, maxRetry = 3, delayMs = 10 * 60 * 1000) => {
   const data = {
     ...job.data,
     retryCount: (job.data.retryCount || 0) + 1,
