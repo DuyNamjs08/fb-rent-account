@@ -124,6 +124,10 @@ const facebookBmController = {
         {
           delay: 10 * 60 * 1000,
           attempts: 3,
+          backoff: {
+            type: 'fixed',
+            delay: 10 * 60 * 1000, // 10 phút
+          },
         },
       );
       successResponse(res, req.t('update_facebook_bm_success'), fbBMNew);

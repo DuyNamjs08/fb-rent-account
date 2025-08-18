@@ -266,7 +266,6 @@ fbRealtimeCheckDisable.process(1, async (job) => {
     return res;
   } catch (err) {
     console.error(`❌ Lỗi khi check disable`, err);
-    await retryJob(job);
 
     throw err;
   }

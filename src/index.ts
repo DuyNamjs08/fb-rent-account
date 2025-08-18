@@ -276,6 +276,10 @@ async function init() {
     {
       delay: 10 * 60 * 1000,
       attempts: 3,
+      backoff: {
+        type: 'fixed',
+        delay: 10 * 60 * 1000, // 10 phút
+      },
     },
   );
   server.listen(4000, () =>
