@@ -34,21 +34,21 @@ export const upsertLarkRecord = async (record: any) => {
   const ACCESS_TOKEN = record.ACCESS_TOKEN || '';
   const keyFilter = {
     conditions: [
-      {
-        field_name: 'TÊN TKQC',
-        operator: 'is',
-        value: [record.name],
-      },
+      // {
+      //   field_name: 'TÊN TKQC',
+      //   operator: 'is',
+      //   value: [record.name],
+      // },
       {
         field_name: 'ID TKQC',
         operator: 'is',
         value: [record.account_id],
       },
-      {
-        field_name: 'TÌNH TRẠNG TK',
-        operator: 'is',
-        value: [record.account_status],
-      },
+      // {
+      //   field_name: 'TÌNH TRẠNG TK',
+      //   operator: 'is',
+      //   value: [record.account_status],
+      // },
     ],
     conjunction: 'and',
   };
