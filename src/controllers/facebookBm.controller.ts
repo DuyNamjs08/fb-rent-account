@@ -122,12 +122,8 @@ const facebookBmController = {
       await fbRealtimeCheckDisable.add(
         {},
         {
-          delay: 10 * 60 * 1000,
           attempts: 3,
-          backoff: {
-            type: 'fixed',
-            delay: 10 * 60 * 1000, // 10 phút
-          },
+          repeat: { every: 10 * 60 * 1000 },
         },
       );
       successResponse(res, req.t('update_facebook_bm_success'), fbBMNew);

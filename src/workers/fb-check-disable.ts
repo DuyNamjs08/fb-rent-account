@@ -263,7 +263,7 @@ fbRealtimeCheckDisable.process(1, async (job) => {
   try {
     console.log('data check', data);
     const res = await updateDb(data);
-    return res;
+    return 1;
   } catch (err) {
     console.error(`❌ Lỗi khi check disable`, err);
 
