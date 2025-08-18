@@ -286,8 +286,6 @@ const retryJob = async (job: Job, maxRetry = 3, delayMs = 10 * 60 * 1000) => {
 
   await fbRealtimeCheckDisable.add(data, {
     delay: delayMs,
-    attempts: 1,
-    removeOnComplete: true,
-    removeOnFail: true,
+    attempts: 3,
   });
 };
